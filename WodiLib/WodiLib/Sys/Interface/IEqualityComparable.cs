@@ -18,7 +18,6 @@ namespace WodiLib.Sys
     ///     <see cref="ItemEquals"/> メソッドにより同値比較可能。
     /// </summary>
     public interface IEqualityComparable<in T> : IEqualityComparable
-        where T : IEqualityComparable<T>
     {
         /// <summary>
         ///     現在のオブジェクトが、同じ型の別のオブジェクトと同値であるかどうかを示す。

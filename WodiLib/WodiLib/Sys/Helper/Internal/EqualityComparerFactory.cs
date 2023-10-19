@@ -30,14 +30,15 @@ namespace WodiLib.Sys
         /// </summary>
         /// <typeparam name="T">比較対象型</typeparam>
         /// <returns>比較処理実装クラスインスタンス</returns>
-        public static IEqualityComparer<T> Create<T>() where T : IEqualityComparable<T>
+        public static IEqualityComparer<T> Create<T>()
+            where T : IEqualityComparable<T>
         {
             IEqualityComparer<T> result;
             var type = typeof(T);
 
-            if (EqualityGenericComparerDic.ContainsKey(type))
+            if (EqualityGenericComparerDic.TryGetValue(type, out var value))
             {
-                result = (IEqualityComparer<T>)EqualityGenericComparerDic[type];
+                result = (IEqualityComparer<T>)value;
             }
             else
             {
@@ -74,9 +75,9 @@ namespace WodiLib.Sys
             IEqualityComparer<TEnum> result;
             var type = typeof(TEnum);
 
-            if (EqualityGenericComparerDic.ContainsKey(type))
+            if (EqualityGenericComparerDic.TryGetValue(type, out var value))
             {
-                result = (IEqualityComparer<TEnum>)EqualityGenericComparerDic[type];
+                result = (IEqualityComparer<TEnum>)value;
             }
             else
             {
