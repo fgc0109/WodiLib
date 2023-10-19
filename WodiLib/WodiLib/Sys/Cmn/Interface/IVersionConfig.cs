@@ -20,7 +20,7 @@ namespace WodiLib.Sys.Cmn
         /// <summary>
         ///     設定キー名
         /// </summary>
-        public WodiLibContainerKeyName KeyName { get; }
+        public string KeyName { get; }
 
         /// <summary>
         ///     設定バージョン

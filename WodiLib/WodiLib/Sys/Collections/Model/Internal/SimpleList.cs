@@ -26,8 +26,6 @@ namespace WodiLib.Sys.Collections
         //      Public Properties
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        public WodiLibContainerKeyName? ContainerKeyName { get; set; }
-
         public DelegateMakeListDefaultItem<T> MakeDefaultItem { get; }
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
@@ -284,7 +282,7 @@ namespace WodiLib.Sys.Collections
         {
             var oldItem = Items[index];
             PreOutItem(oldItem);
-            
+
             base.SetItem(index, item);
             PostInItem(item);
         }

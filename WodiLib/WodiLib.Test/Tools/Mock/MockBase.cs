@@ -21,8 +21,6 @@ namespace WodiLib.Test.Tools
     {
         public IReadOnlyList<string> CalledMemberHistory => calledMemberHistory;
 
-        public WodiLibContainerKeyName? ContainerKeyName { get; set; }
-
         private readonly List<string> calledMemberHistory = new();
 
         protected void AddCalledHistory(string methodName)

@@ -41,9 +41,6 @@ namespace WodiLib.Sys
             remove => _propertyChanged -= value;
         }
 
-        /// <inheritdoc/>
-        public WodiLibContainerKeyName? ContainerKeyName { get; set; } = null;
-
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Constructors
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/

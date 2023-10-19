@@ -13,9 +13,17 @@ namespace WodiLib.Sys.Cmn
     /// <summary>
     ///     WodiLib全体のバージョン設定
     /// </summary>
-    public class VersionConfig : IVersionConfig,
-        IContainerCreatable
+    public class VersionConfig : IVersionConfig
     {
+        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        //     Private Constant
+        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        /// <summary>
+        ///     デフォルト設定キー名
+        /// </summary>
+        private static string DefaultKeyName => "default";
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Public Static Property
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
@@ -26,7 +34,7 @@ namespace WodiLib.Sys.Cmn
         /// <remarks>
         ///     キー名の変更は <see cref="ChangeTargetKey"/> メソッドで行う。
         /// </remarks>
-        public static WodiLibContainerKeyName TargetKeyName => WodiLibContainer.TargetKeyName;
+        public static string TargetKeyName { get; private set; } = default!;
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Public Property
@@ -35,15 +43,21 @@ namespace WodiLib.Sys.Cmn
         /// <summary>
         ///     設定キー名
         /// </summary>
-        public WodiLibContainerKeyName KeyName { get; }
+        public string KeyName { get; }
 
         /// <summary>
         ///     設定バージョン
         /// </summary>
         public WoditorVersion Version { get; private set; }
 
-        /// <inheritdoc/>
-        public WodiLibContainerKeyName? ContainerKeyName { get; set; }
+        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        //     Private Static Property
+        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        /// <summary>
+        ///     コンフィグコンテナ
+        /// </summary>
+        private static WodiLibContainer ConfigContainer { get; } = new();
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Public Static Method
@@ -57,8 +71,15 @@ namespace WodiLib.Sys.Cmn
         ///     <paramref name="keyName"/> が <see langword="null"/> の場合。
         /// </exception>
         /// <exception cref="ArgumentException"><paramref name="keyName"/> が空文字の場合。</exception>
-        public static void ChangeTargetKey(WodiLibContainerKeyName keyName)
-            => WodiLibContainer.ChangeTargetKey(keyName);
+        public static void ChangeTargetKey(string keyName)
+        {
+            ThrowHelper.ValidateArgumentNotNull(keyName is null, nameof(keyName));
+            ThrowHelper.ValidateArgumentNotEmpty(keyName.IsEmpty(), nameof(keyName));
+
+            TargetKeyName = keyName;
+
+            RegisterConfigInstanceIfNeeded(keyName);
+        }
 
         /// <summary>
         ///     設定したウディタバージョンを取得する。
@@ -68,7 +89,7 @@ namespace WodiLib.Sys.Cmn
         ///     <see langword="null"/> の場合 <see cref="TargetKeyName"/> の値を使用する。
         /// </param>
         /// <returns>ウディタバージョン</returns>
-        public static WoditorVersion GetConfigWoditorVersion(WodiLibContainerKeyName? keyName = null)
+        public static WoditorVersion GetConfigWoditorVersion(string? keyName = null)
         {
             var config = GetConfig(keyName ?? TargetKeyName);
             return config.Version;
@@ -86,7 +107,7 @@ namespace WodiLib.Sys.Cmn
         /// <exception cref="ArgumentNullException">
         ///     <paramref name="version"/> が <see langword="null"/> の場合。
         /// </exception>
-        public static void SetConfigWoditorVersion(WoditorVersion version, WodiLibContainerKeyName? keyName = null)
+        public static void SetConfigWoditorVersion(WoditorVersion version, string? keyName = null)
         {
             ThrowHelper.ValidateArgumentNotNull(version is null, nameof(version));
 
@@ -106,7 +127,7 @@ namespace WodiLib.Sys.Cmn
         /// <exception cref="ArgumentNullException">
         ///     <paramref name="version"/> が <see langword="null"/> の場合。
         /// </exception>
-        public static bool IsOverVersion(WoditorVersion version, WodiLibContainerKeyName? keyName = null)
+        public static bool IsOverVersion(WoditorVersion version, string? keyName = null)
         {
             ThrowHelper.ValidateArgumentNotNull(version is null, nameof(version));
 
@@ -126,7 +147,7 @@ namespace WodiLib.Sys.Cmn
         /// <exception cref="ArgumentNullException">
         ///     <paramref name="version"/> が <see langword="null"/> の場合。
         /// </exception>
-        public static bool IsGreaterVersion(WoditorVersion version, WodiLibContainerKeyName? keyName = null)
+        public static bool IsGreaterVersion(WoditorVersion version, string? keyName = null)
         {
             ThrowHelper.ValidateArgumentNotNull(version is null, nameof(version));
 
@@ -146,7 +167,7 @@ namespace WodiLib.Sys.Cmn
         /// <exception cref="ArgumentNullException">
         ///     <paramref name="version"/> が <see langword="null"/> の場合。
         /// </exception>
-        public static bool IsSameVersion(WoditorVersion version, WodiLibContainerKeyName? keyName = null)
+        public static bool IsSameVersion(WoditorVersion version, string? keyName = null)
         {
             ThrowHelper.ValidateArgumentNotNull(version is null, nameof(version));
 
@@ -166,7 +187,7 @@ namespace WodiLib.Sys.Cmn
         /// <exception cref="ArgumentNullException">
         ///     <paramref name="version"/> が <see langword="null"/> の場合。
         /// </exception>
-        public static bool IsLessVersion(WoditorVersion version, WodiLibContainerKeyName? keyName = null)
+        public static bool IsLessVersion(WoditorVersion version, string? keyName = null)
         {
             ThrowHelper.ValidateArgumentNotNull(version is null, nameof(version));
 
@@ -186,7 +207,7 @@ namespace WodiLib.Sys.Cmn
         /// <exception cref="ArgumentNullException">
         ///     <paramref name="version"/> が <see langword="null"/> の場合。
         /// </exception>
-        public static bool IsUnderVersion(WoditorVersion version, WodiLibContainerKeyName? keyName = null)
+        public static bool IsUnderVersion(WoditorVersion version, string? keyName = null)
         {
             ThrowHelper.ValidateArgumentNotNull(version is null, nameof(version));
 
@@ -199,30 +220,47 @@ namespace WodiLib.Sys.Cmn
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
         /// <summary>
+        ///     指定した設定キー名の設定インスタンスがコンテナに登録されていなければ登録する。
+        /// </summary>
+        /// <param name="keyName">設定キー名</param>
+        private static void RegisterConfigInstanceIfNeeded(string keyName)
+        {
+            if (!ConfigContainer.HasCreateMethod<VersionConfig>(keyName))
+            {
+                ConfigContainer.Register(
+                    () => new VersionConfig(),
+                    WodiLibContainer.Lifetime.Container,
+                    keyName
+                );
+            }
+        }
+
+        /// <summary>
         ///     設定キー名から設定インスタンスを取得する。
         /// </summary>
         /// <param name="keyName">設定キー名</param>
         /// <returns>設定インスタンス</returns>
-        private static VersionConfig GetConfig(WodiLibContainerKeyName keyName)
+        private static VersionConfig GetConfig(string keyName)
         {
-            WodiLibContainer.RegisterIfNotHas(
-                () => new VersionConfig(keyName),
-                WodiLibContainer.Lifetime.Container,
-                keyName
-            );
-            return WodiLibContainer.Resolve<VersionConfig>(keyName);
+            RegisterConfigInstanceIfNeeded(keyName);
+            return ConfigContainer.Resolve<VersionConfig>(keyName);
         }
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Constructor
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
+        static VersionConfig()
+        {
+            ChangeTargetKey(DefaultKeyName);
+        }
+
         /// <summary>
         ///     コンストラクタ
         /// </summary>
-        private VersionConfig(WodiLibContainerKeyName keyName)
+        private VersionConfig()
         {
-            KeyName = keyName;
+            KeyName = "";
             Version = WoditorVersion.Default;
         }
     }
