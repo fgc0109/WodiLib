@@ -19,8 +19,10 @@ namespace WodiLib.Sys
     /// </summary>
     /// <typeparam name="TChild">Model実装クラス型</typeparam>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public abstract partial class ModelBase<TChild> : IModelBase<TChild>,
-        IEqualityComparable<ModelBase<TChild>>
+    public abstract partial class ModelBase<TChild> :
+        INotifyPropertyChanged,
+        IEqualityComparable<TChild>,
+        IDeepCloneable<TChild>
         where TChild : ModelBase<TChild>
     {
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
@@ -60,20 +62,11 @@ namespace WodiLib.Sys
         public abstract bool ItemEquals(TChild? other);
 
         /// <inheritdoc/>
-        public bool ItemEquals(ModelBase<TChild>? other)
-        {
-            if (ReferenceEquals(other, this)) return true;
-            if (ReferenceEquals(other, null)) return false;
-
-            return ItemEquals((TChild)other);
-        }
-
-        /// <inheritdoc/>
         public virtual bool ItemEquals(object? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return ItemEquals(other as ModelBase<TChild>);
+            return ItemEquals(other as TChild);
         }
 
         /// <inheritdoc/>
@@ -115,6 +108,31 @@ namespace WodiLib.Sys
 
             source = value;
             NotifyPropertyChanged(propertyName);
+        }
+
+        /// <summary>
+        /// フィールドに要素をセットする。
+        /// 値が変化する場合、引数で受け取った名前のプロパティ変更通知を発火させる。
+        /// </summary>
+        /// <remarks>
+        /// 値が変更しているかどうかは
+        ///     <ul>
+        ///     <li><typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していれば <see cref="IEqualityComparable.ItemEquals"/> による比較により決定する</li>
+        ///     <li><typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していなければ <see cref="EqualityComparer{T}.Default"/> による比較により決定する</li>
+        ///     </ul>
+        /// </remarks>
+        /// <param name="source"></param>
+        /// <param name="value"></param>
+        /// <param name="notifyChangePropertyNames"></param>
+        /// <typeparam name="T"></typeparam>
+        protected void SetField<T>(ref T source, T value, IEnumerable<string> notifyChangePropertyNames)
+        {
+            var isNotDifference = EqualsHelper.NullableEquals(source, value);
+
+            if (isNotDifference) return;
+
+            source = value;
+            notifyChangePropertyNames.ForEach(NotifyPropertyChanged);
         }
 
         /// <summary>
@@ -242,9 +260,5 @@ namespace WodiLib.Sys
                 notifyArgs?.ForEach(arg => _propertyChanged?.Invoke(this, arg));
             };
         }
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     }
 }
