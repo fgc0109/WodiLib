@@ -72,7 +72,6 @@ namespace WodiLib.Sys.Collections
         protected RestrictedCapacityList()
         {
             var validator = GenerateValidatorForItems();
-            ThrowHelper.ValidateArgumentNotNull(validator is null, $"{nameof(GenerateValidatorForItems)}");
 
             var initItems = GetMinCapacity().Iterate(MakeDefaultItem);
             Items = new ExtendedList<T>(MakeDefaultItem, validator, initItems);
@@ -91,7 +90,6 @@ namespace WodiLib.Sys.Collections
         protected RestrictedCapacityList(int length)
         {
             var validator = GenerateValidatorForItems();
-            ThrowHelper.ValidateArgumentNotNull(validator is null, $"{nameof(GenerateValidatorForItems)}");
 
             var initItems = length.Iterate(MakeDefaultItem);
             Items = new ExtendedList<T>(MakeDefaultItem, validator, initItems);
@@ -116,7 +114,6 @@ namespace WodiLib.Sys.Collections
             ThrowHelper.ValidateArgumentNotNull(initItems is null, nameof(initItems));
 
             var validator = GenerateValidatorForItems();
-            ThrowHelper.ValidateArgumentNotNull(validator is null, $"{nameof(GenerateValidatorForItems)}");
 
             Items = new ExtendedList<T>(MakeDefaultItem, validator, initItems);
 
@@ -124,10 +121,10 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
         /// <remarks>
-        /// 別のリストからリスト実装インスタンスの参照を保ったままインスタンスを作成したい場合に利用する。
+        ///     別のリストからリスト実装インスタンスの参照を保ったままインスタンスを作成したい場合に利用する。
         /// </remarks>
         /// <param name="itemsImpl">リスト実装インスタンス</param>
         internal RestrictedCapacityList(IExtendedList<T> itemsImpl)
@@ -147,21 +144,22 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <summary>
-        /// 格納対象のデフォルトインスタンスを生成する。
+        ///     格納対象のデフォルトインスタンスを生成する。
         /// </summary>
         /// <param name="index">挿入インデックス</param>
         /// <returns>デフォルトインスタンス</returns>
         protected abstract T MakeDefaultItem(int index);
 
         /// <summary>
-        /// <see cref="Items"/>.<see cref="IExtendedList{T}.Validator"/> に設定するためのバリデーション実装を返す。
+        ///     <see cref="Items"/>.<see cref="IExtendedList{T}.Validator"/> に設定するためのバリデーション実装を返す。
         /// </summary>
         /// <remarks>
         ///     このメソッドはコンストラクタから呼ばれる。
         ///     継承先のクラスで実装しない場合、RestrictedCapacityListValidator を返す。
         /// </remarks>
         /// <returns>バリデーション実装</returns>
-        protected virtual IWodiLibListValidator<T> GenerateValidatorForItems()
+        // ReSharper disable once ReturnTypeCanBeNotNullable
+        protected virtual IWodiLibListValidator<T>? GenerateValidatorForItems()
         {
             return new RestrictedCapacityListValidator<T>(this, GetMinCapacity(), GetMaxCapacity());
         }
@@ -220,6 +218,9 @@ namespace WodiLib.Sys.Collections
 
         /// <inheritdoc/>
         public void Reset(IEnumerable<T> initItems) => Items.Reset(initItems);
+
+        /// <inheritdoc/>
+        public void Reset() => Items.Reset(Count);
 
         /// <inheritdoc/>
         public void Clear() => Items.Clear();
@@ -374,10 +375,6 @@ namespace WodiLib.Sys.Collections
         public IEnumerator<T> GetEnumerator() => Items.GetEnumerator();
 
         /// <inheritdoc/>
-        public bool ItemEquals(IRestrictedCapacityList<T>? other)
-            => ItemEquals((IEnumerable<T>?)other);
-
-        /// <inheritdoc/>
         public override bool ItemEquals(TImpl? other)
             => ItemEquals(other);
 
@@ -396,13 +393,6 @@ namespace WodiLib.Sys.Collections
         #region GetEnumerator
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        #endregion
-
-        #region GetEnumerator
-
-        IRestrictedCapacityList<T> IDeepCloneable<IRestrictedCapacityList<T>>.DeepClone()
-            => DeepClone();
 
         #endregion
     }

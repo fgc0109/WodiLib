@@ -8,14 +8,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using WodiLib.Sys;
 using WodiLib.Sys.Collections;
 
 namespace WodiLib.Map
 {
     /// <summary>
-    /// タイル通行設定リストクラス
+    ///     タイル通行設定リストクラス
     /// </summary>
     public class TilePathSettingList : RestrictedCapacityList<TilePathSetting, TilePathSettingList>,
         IFixedLengthTilePathSettingList
@@ -35,14 +34,14 @@ namespace WodiLib.Map
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
         public TilePathSettingList()
         {
         }
 
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
         /// <param name="items">初期リスト</param>
         /// <exception cref="TypeInitializationException">派生クラスの設定値が不正な場合</exception>
@@ -59,26 +58,26 @@ namespace WodiLib.Map
         //     Public Override Method
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public override int GetMaxCapacity() => MaxCapacity;
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public override int GetMinCapacity() => MinCapacity;
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Protected Override Method
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         protected override TilePathSetting MakeDefaultItem(int index)
-            => new TilePathSetting();
+            => new();
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Public Method
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
         /// <summary>
-        /// 容量を返す。
+        ///     容量を返す。
         /// </summary>
         /// <returns>容量</returns>
         public int GetCapacity() => Count;
@@ -88,14 +87,8 @@ namespace WodiLib.Map
             throw new NotImplementedException();
         }
 
-        /// <inheritdoc />
-        IFixedLengthList<TilePathSetting> IDeepCloneable<IFixedLengthList<TilePathSetting>>.DeepClone()
-        {
-            throw new NotImplementedException();
-        }
-
         /// <summary>
-        /// 値を比較する。
+        ///     値を比較する。
         /// </summary>
         /// <param name="other">比較対象</param>
         /// <returns>一致する場合、true</returns>
@@ -106,16 +99,16 @@ namespace WodiLib.Map
             return ItemEquals(other);
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public bool ItemEquals(IFixedLengthList<TilePathSetting>? other)
-            => Equals((IEnumerable<TilePathSetting>?)other);
+            => Equals(other);
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Common
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
         /// <summary>
-        /// バイナリ変換する。
+        ///     バイナリ変換する。
         /// </summary>
         /// <returns>バイナリデータ</returns>
         public byte[] ToBinary()

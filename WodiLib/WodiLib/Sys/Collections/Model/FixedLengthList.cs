@@ -70,7 +70,6 @@ namespace WodiLib.Sys.Collections
         protected FixedLengthList(int count)
         {
             var validator = GenerateValidatorForItems();
-            ThrowHelper.ValidateArgumentNotNull(validator is null, $"{nameof(GenerateValidatorForItems)}");
 
             var initItems = count.Iterate(MakeDefaultItem);
             Items = new ExtendedList<T>(MakeDefaultItem, validator, initItems);
@@ -91,7 +90,6 @@ namespace WodiLib.Sys.Collections
             ThrowHelper.ValidateArgumentNotNull(initItems is null, nameof(initItems));
 
             var validator = GenerateValidatorForItems();
-            ThrowHelper.ValidateArgumentNotNull(validator is null, $"{nameof(GenerateValidatorForItems)}");
 
             Items = new ExtendedList<T>(MakeDefaultItem, validator, initItems);
 
@@ -123,7 +121,6 @@ namespace WodiLib.Sys.Collections
             );
 
             var validator = GenerateValidatorForItems();
-            ThrowHelper.ValidateArgumentNotNull(validator is null, $"{nameof(GenerateValidatorForItems)}");
 
             Items = new ExtendedList<T>(MakeDefaultItem, validator, initItemArray);
 
@@ -159,7 +156,6 @@ namespace WodiLib.Sys.Collections
             );
 
             var validator = GenerateValidatorForItems();
-            ThrowHelper.ValidateArgumentNotNull(validator is null, $"{nameof(GenerateValidatorForItems)}");
 
             Items = new ExtendedList<T>(MakeDefaultItem, validator, initItemArray);
 
@@ -167,10 +163,10 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
         /// <remarks>
-        /// 別のリストからリスト実装インスタンスの参照を保ったままインスタンスを作成したい場合に利用する。
+        ///     別のリストからリスト実装インスタンスの参照を保ったままインスタンスを作成したい場合に利用する。
         /// </remarks>
         /// <param name="itemsImpl">リスト実装インスタンス</param>
         internal FixedLengthList(IExtendedList<T> itemsImpl)
@@ -190,20 +186,24 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <summary>
-        /// 格納対象のデフォルトインスタンスを生成する。
+        ///     格納対象のデフォルトインスタンスを生成する。
         /// </summary>
         /// <param name="index">挿入インデックス</param>
         /// <returns>デフォルトインスタンス</returns>
         protected abstract T MakeDefaultItem(int index);
 
         /// <summary>
-        /// <see cref="Items"/>.<see cref="IExtendedList{T}.Validator"/> に設定するためのバリデーション実装を返す。
+        ///     <see cref="Items"/>.<see cref="IExtendedList{T}.Validator"/> に設定するためのバリデーション実装を返す。
         /// </summary>
         /// <remarks>
         ///     このメソッドはコンストラクタから呼ばれる。
         /// </remarks>
         /// <returns>バリデーション実装</returns>
-        protected abstract IWodiLibListValidator<T> GenerateValidatorForItems();
+        // ReSharper disable once ReturnTypeCanBeNotNullable
+        protected virtual IWodiLibListValidator<T>? GenerateValidatorForItems()
+        {
+            return new FixedLengthListValidator<T>(this, () => Count);
+        }
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //      Public Methods
@@ -225,7 +225,7 @@ namespace WodiLib.Sys.Collections
         public void Reset(IEnumerable<T> initItems) => Items.Reset(initItems);
 
         /// <inheritdoc/>
-        public void Reset() => Reset(Count.Iterate(MakeDefaultItem));
+        public void Reset() => Items.Reset(Count);
 
         /// <inheritdoc/>
         [EditorBrowsable(EditorBrowsableState.Advanced)]
@@ -289,12 +289,8 @@ namespace WodiLib.Sys.Collections
         public IEnumerator<T> GetEnumerator() => Items.GetEnumerator();
 
         /// <inheritdoc/>
-        public bool ItemEquals(IFixedLengthList<T>? other)
-            => ItemEquals((IEnumerable<T>?)other);
-
-        /// <inheritdoc/>
         public override bool ItemEquals(TImpl? other)
-            => ItemEquals((IEnumerable<T>?)other);
+            => ItemEquals(other);
 
         /// <inheritdoc cref="IEqualityComparable{T}.ItemEquals(T?)"/>
         public bool ItemEquals(IEnumerable<T>? other)
@@ -311,13 +307,6 @@ namespace WodiLib.Sys.Collections
         #region GetEnumerator
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        #endregion
-
-        #region GetEnumerator
-
-        IFixedLengthList<T> IDeepCloneable<IFixedLengthList<T>>.DeepClone()
-            => DeepClone();
 
         #endregion
     }

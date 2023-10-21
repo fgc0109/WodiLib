@@ -173,12 +173,5 @@ namespace WodiLib.Sys.Collections
             => GetEnumerator();
 
         #endregion
-
-        #region DeepClone
-
-        IExtendedList<T> IDeepCloneable<IExtendedList<T>>.DeepClone()
-            => DeepClone();
-
-        #endregion
     }
 }

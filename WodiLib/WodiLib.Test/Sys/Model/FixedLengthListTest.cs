@@ -120,21 +120,6 @@ namespace WodiLib.Test.Sys
                 );
         }
 
-        [TestCase(9, 10, true)]
-        [TestCase(10, 10, false)]
-        [TestCase(11, 10, true)]
-        public static void ConstructorTest_InitItemsAndCapacity(int initItemLength, int capacity, bool isError)
-        {
-            TestTemplate.Constructor(
-                () => new InitInstance.PropagateTestFixedLengthList(
-                    initItemLength.Iterate(i => new StubModel(i.ToString())),
-                    capacity
-                ),
-                expectedThrowCreateNewInstance: isError,
-                logger
-            );
-        }
-
         #endregion
 
         #region Indexer
@@ -290,6 +275,7 @@ namespace WodiLib.Test.Sys
             TestTemplateWithMock.AssertEqualsCalledMemberHistory(
                 instance.ExtendedListMock,
                 nameof(IExtendedList<StubModel>.Count),
+                nameof(IExtendedList<StubModel>.MakeDefaultItem),
                 nameof(IExtendedList<StubModel>.Validator),
                 nameof(IExtendedList<StubModel>.ResetCore)
             );
@@ -538,8 +524,8 @@ namespace WodiLib.Test.Sys
             }
 
             /// <summary>
-            /// 内部で使用する <see cref="IExtendedList{T}"/> をモックに差し替えただけ。
-            /// 本来継承先で実装すべきメソッドはいずれも未実装。
+            ///     内部で使用する <see cref="IExtendedList{T}"/> をモックに差し替えただけ。
+            ///     本来継承先で実装すべきメソッドはいずれも未実装。
             /// </summary>
             public class TransportMembersTestFixedLengthList :
                 FixedLengthList<StubModel, TransportMembersTestFixedLengthList>
@@ -556,7 +542,7 @@ namespace WodiLib.Test.Sys
                             i => new StubModel(i.ToString()),
                             null,
                             5.Iterate(i => new StubModel(i.ToString()))
-                        ),
+                        )
                     };
                 }
 
@@ -577,9 +563,9 @@ namespace WodiLib.Test.Sys
             public static PropagateTestFixedLengthList GenerateForPropagateTest(int count = 0) => new(count);
 
             /// <summary>
-            /// 内部で使用する <see cref="IExtendedList{T}"/> を差し替えないバージョン。
-            /// <see cref="IExtendedList{T}"/> の通知が <see cref="FixedLengthList{T,TImpl}"/> に伝播することを確認するためのクラス。
-            /// また、要素数を引数とするコンストラクタのテスト用クラスを兼ねる。
+            ///     内部で使用する <see cref="IExtendedList{T}"/> を差し替えないバージョン。
+            ///     <see cref="IExtendedList{T}"/> の通知が <see cref="FixedLengthList{T,TImpl}"/> に伝播することを確認するためのクラス。
+            ///     また、要素数を引数とするコンストラクタのテスト用クラスを兼ねる。
             /// </summary>
             public class PropagateTestFixedLengthList : FixedLengthList<StubModel, PropagateTestFixedLengthList>
             {
@@ -590,13 +576,6 @@ namespace WodiLib.Test.Sys
                 }
 
                 public PropagateTestFixedLengthList(IExtendedList<StubModel> itemsImpl) : base(itemsImpl)
-                {
-                }
-
-                public PropagateTestFixedLengthList(IEnumerable<StubModel> itemsImpl, int capacity) : base(
-                    itemsImpl,
-                    capacity
-                )
                 {
                 }
 

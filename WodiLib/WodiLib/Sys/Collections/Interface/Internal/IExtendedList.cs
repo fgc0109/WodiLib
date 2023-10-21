@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 
 namespace WodiLib.Sys.Collections
@@ -23,7 +24,8 @@ namespace WodiLib.Sys.Collections
     /// <typeparam name="T">リスト内包クラス</typeparam>
     internal interface IExtendedList<T> :
         IEnumerable<T>,
-        IModelBase<IExtendedList<T>>,
+        IEqualityComparable<IEnumerable<T>>,
+        INotifyPropertyChanged,
         INotifyCollectionChanged
     {
         #region Properties
@@ -48,9 +50,6 @@ namespace WodiLib.Sys.Collections
 
         #endregion
 
-        /// <inheritdoc cref="IEqualityComparable{T}.ItemEquals(T?)"/>
-        public bool ItemEquals(IEnumerable<T>? other);
-        
         #region CRUD core
 
         /// <summary>
@@ -96,9 +95,9 @@ namespace WodiLib.Sys.Collections
         public void AdjustLengthCore(int length);
 
         /// <summary>
-        ///     <see cref="ExtendedListInterfaceExtension.Reset{T}"/> メソッド処理中核。
+        ///     <see cref="ExtendedListInterfaceExtension.Reset{T}(IExtendedList{T},IEnumerable{T})"/> メソッド処理中核。
         /// </summary>
-        /// <inheritdoc cref="ExtendedListInterfaceExtension.Reset{T}" path="param"/>
+        /// <inheritdoc cref="ExtendedListInterfaceExtension.Reset{T}(IExtendedList{T},IEnumerable{T})" path="param"/>
         public void ResetCore(IEnumerable<T> items);
 
         /// <summary>
@@ -115,7 +114,7 @@ namespace WodiLib.Sys.Collections
         #region CRUD
 
         /// <summary>
-        /// 指定範囲の要素を簡易コピーしたリストを取得する。
+        ///     指定範囲の要素を簡易コピーしたリストを取得する。
         /// </summary>
         /// <param name="list">list</param>
         /// <param name="index">[Range(0, <see cref="IExtendedList{T}.Count"/> - 1)] インデックス</param>
@@ -381,6 +380,14 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <summary>
+        ///     要素を指定された数の新たな要素で一新する。
+        /// </summary>
+        /// <param name="list">list</param>
+        /// <param name="count">リストに詰め直す要素数</param>
+        public static void Reset<T>(this IExtendedList<T> list, int count)
+            => list.Reset(count.Iterate(list.MakeDefaultItem));
+
+        /// <summary>
         ///     要素を与えられた内容で一新する。
         /// </summary>
         /// <param name="list">list</param>
@@ -428,7 +435,9 @@ namespace WodiLib.Sys.Collections
         ///     インデクサによる更新の検証処理。
         /// </summary>
         /// <param name="list">list</param>
-        /// <param name="index"><inheritdoc cref="IExtendedList{T}.this[int]" path="param[name='index']"/></param>
+        /// <param name="index">
+        ///     <inheritdoc cref="IExtendedList{T}.this[int]" path="param[name='index']"/>
+        /// </param>
         /// <param name="item">編集要素</param>
         /// <inheritdoc cref="IExtendedList{T}.this[int]" path="exception"/>
         public static void ValidateSet<T>(this IExtendedList<T> list, int index, T item)
@@ -520,9 +529,9 @@ namespace WodiLib.Sys.Collections
             => list.Validator?.AdjustLength((nameof(length), length));
 
         /// <summary>
-        ///     <see cref="ExtendedListInterfaceExtension.Reset{T}"/> メソッドの検証処理。
+        ///     <see cref="ExtendedListInterfaceExtension.Reset{T}(IExtendedList{T},IEnumerable{T})"/> メソッドの検証処理。
         /// </summary>
-        /// <inheritdoc cref="ExtendedListInterfaceExtension.Reset{T}" path="param|exception"/>
+        /// <inheritdoc cref="ExtendedListInterfaceExtension.Reset{T}(IExtendedList{T},IEnumerable{T})" path="param|exception"/>
         public static void ValidateReset<T>(this IExtendedList<T> list, IEnumerable<T> items)
             => list.Validator?.Reset((nameof(items), items));
 
@@ -548,7 +557,9 @@ namespace WodiLib.Sys.Collections
         ///     インデクサによる更新処理中核。
         /// </summary>
         /// <param name="list">list</param>
-        /// <param name="index"><inheritdoc cref="IExtendedList{T}.this[int]" path="param[name='index']"/></param>
+        /// <param name="index">
+        ///     <inheritdoc cref="IExtendedList{T}.this[int]" path="param[name='index']"/>
+        /// </param>
         /// <param name="item">編集要素</param>
         /// <inheritdoc cref="IExtendedList{T}.this[int]" path="exception"/>
         public static void SetCore<T>(this IExtendedList<T> list, int index, T item)

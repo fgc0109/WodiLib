@@ -104,11 +104,6 @@ namespace WodiLib.Map
             throw new NotImplementedException();
         }
 
-        IFixedLengthList<TileTagNumber> IDeepCloneable<IFixedLengthList<TileTagNumber>>.DeepClone()
-        {
-            throw new NotImplementedException();
-        }
-
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Common
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/

@@ -35,15 +35,33 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             Name = nameof(Description),
             Type = "string",
             Summary = "クラス説明",
-            DefaultValue = "",
+            DefaultValue = ""
         };
 
-        public static readonly PropertyInfo InterfaceType = new()
+        public static readonly PropertyInfo InterfaceItemType = new()
         {
-            Name = nameof(InterfaceType),
+            Name = nameof(InterfaceItemType),
             Type = typeof(Type).FullName,
-            Summary = "生成元インタフェース型",
-            DefaultValue = null,
+            Summary = "リスト要素内包型",
+            DefaultValue = null
+        };
+
+        public static readonly PropertyInfo FixedLengthInterfaceItemType = new()
+        {
+            Name = nameof(FixedLengthInterfaceItemType),
+            Type = typeof(Type).FullName,
+            Summary = "容量固定リスト要素内包型",
+            Remarks = "null の場合 InterfaceItemType と同じ。",
+            DefaultValue = null
+        };
+
+        public static readonly PropertyInfo ReadOnlyInterfaceItemType = new()
+        {
+            Name = nameof(ReadOnlyInterfaceItemType),
+            Type = typeof(Type).FullName,
+            Summary = "読み取り専用リスト要素内包型",
+            Remarks = "null の場合 FixedLengthInterfaceItemType と同じ。",
+            DefaultValue = null
         };
 
         public static readonly PropertyInfo MaxCapacity = new()
@@ -53,7 +71,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             Summary = "最大容量",
             Remarks = "与えた値を ToString した結果をソースコードとして埋め込む。",
             DefaultValue = "int.MaxValue",
-            DefaultValueAsSourceCode = true,
+            DefaultValueAsSourceCode = true
         };
 
         public static readonly PropertyInfo MinCapacity = new()
@@ -62,15 +80,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             Type = $"object",
             Summary = "最小容量",
             Remarks = "与えた値を ToString した結果をソースコードとして埋め込む。",
-            DefaultValue = 0,
-        };
-
-        public static readonly PropertyInfo InterfaceItemType = new()
-        {
-            Name = nameof(InterfaceItemType),
-            Type = typeof(Type).FullName,
-            Summary = "リスト要素内包型",
-            DefaultValue = null,
+            DefaultValue = 0
         };
 
         public static readonly PropertyInfo IsAutoOverrideMakeDefaultItem = new()
@@ -79,16 +89,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             Type = "bool",
             Summary = "MakeDefaultItem メソッド自動生成フラグ",
             Remarks = "自動生成する場合、内部要素型の引数なしコンストラクタを利用する。",
-            DefaultValue = true,
-        };
-
-        public static readonly PropertyInfo IsAutoOverrideGenerateValidatorForItemsInFixedLengthList = new()
-        {
-            Name = nameof(IsAutoOverrideGenerateValidatorForItemsInFixedLengthList),
-            Type = "bool",
-            Summary = "FixedLengthList の GenerateValidatorForItems メソッド自動生成フラグ",
-            Remarks = "自動生成する場合、FixedLengthListValidator を利用する。",
-            DefaultValue = true,
+            DefaultValue = true
         };
 
         /// <inheritdoc/>
@@ -100,12 +101,12 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             => new[]
             {
                 Description,
-                InterfaceType,
+                InterfaceItemType,
+                FixedLengthInterfaceItemType,
+                ReadOnlyInterfaceItemType,
                 MaxCapacity,
                 MinCapacity,
-                InterfaceItemType,
-                IsAutoOverrideMakeDefaultItem,
-                IsAutoOverrideGenerateValidatorForItemsInFixedLengthList,
+                IsAutoOverrideMakeDefaultItem
             };
 
         private RestrictedCapacityListImplementTemplateAttribute()

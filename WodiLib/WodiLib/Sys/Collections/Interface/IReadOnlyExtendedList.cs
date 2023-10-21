@@ -27,7 +27,8 @@ namespace WodiLib.Sys.Collections
     /// <typeparam name="T">リスト要素型</typeparam>
     public interface IReadOnlyExtendedList<T> :
         IReadOnlyList<T>,
-        IReadOnlyModelBase<IReadOnlyExtendedList<T>>,
+        IEqualityComparable<IEnumerable<T>>,
+        INotifyPropertyChanged,
         INotifyCollectionChanged
     {
         /// <inheritdoc cref="ExtendedListInterfaceExtension.GetRange{T}"/>
@@ -53,7 +54,7 @@ namespace WodiLib.Sys.Collections
         /// <inheritdoc cref="IReadOnlyList{T}.this" path="param"/>
         [EditorBrowsable(EditorBrowsableState.Advanced)]
         public T GetCore(int index);
-        
+
         /// <summary>
         ///     <see cref="GetRange"/> メソッド処理中核。
         /// </summary>

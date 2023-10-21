@@ -75,7 +75,6 @@ namespace WodiLib.Sys.Collections
             ThrowHelper.ValidateArgumentNotNull(initItems is null, nameof(initItems));
 
             var validator = GenerateValidatorForItems();
-            ThrowHelper.ValidateArgumentNotNull(validator is null, $"{nameof(GenerateValidatorForItems)}");
 
             Items = new ExtendedList<T>(_ => default!, validator, initItems);
 
@@ -83,10 +82,10 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
         /// <remarks>
-        /// 別のリストからリスト実装インスタンスの参照を保ったままインスタンスを作成したい場合に利用する。
+        ///     別のリストからリスト実装インスタンスの参照を保ったままインスタンスを作成したい場合に利用する。
         /// </remarks>
         /// <param name="itemsImpl">リスト実装インスタンス</param>
         internal ReadOnlyExtendedList(IExtendedList<T> itemsImpl)
@@ -97,23 +96,15 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <summary>
-        ///     ディープコピーコンストラクタ
-        /// </summary>
-        /// <param name="src"></param>
-        protected ReadOnlyExtendedList(IReadOnlyExtendedList<T> src)
-            : this((IEnumerable<T>)src)
-        {
-        }
-
-        /// <summary>
-        /// <see cref="Items"/>.<see cref="IExtendedList{T}.Validator"/> に設定するためのバリデーション実装を返す。
+        ///     <see cref="Items"/>.<see cref="IExtendedList{T}.Validator"/> に設定するためのバリデーション実装を返す。
         /// </summary>
         /// <remarks>
         ///     このメソッドはコンストラクタから呼ばれる。
         ///     継承先のクラスで実装しない場合、CommonListValidator を返す。
         /// </remarks>
         /// <returns>バリデーション実装</returns>
-        protected virtual IWodiLibListValidator<T> GenerateValidatorForItems()
+        // ReSharper disable once ReturnTypeCanBeNotNullable
+        protected virtual IWodiLibListValidator<T>? GenerateValidatorForItems()
         {
             return new CommonListValidator<T>(this);
         }
@@ -145,14 +136,10 @@ namespace WodiLib.Sys.Collections
         public IEnumerable<T> GetRangeCore(int index, int count) => Items.GetRangeCore(index, count);
 
         /// <inheritdoc/>
-        public bool ItemEquals(IReadOnlyExtendedList<T>? other)
-            => ItemEquals((IEnumerable<T>?)other);
+        public override bool ItemEquals(TImpl? other)
+            => ItemEquals(other);
 
         /// <inheritdoc/>
-        public override bool ItemEquals(TImpl? other)
-            => ItemEquals((IEnumerable<T>?)other);
-
-        /// <inheritdoc cref="IEqualityComparable{T}.ItemEquals(T?)"/>
         public bool ItemEquals(IEnumerable<T>? other)
         {
             if (ReferenceEquals(null, other)) return false;
@@ -167,13 +154,6 @@ namespace WodiLib.Sys.Collections
         #region GetEnumerator
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        #endregion
-
-        #region GetEnumerator
-
-        IReadOnlyExtendedList<T> IDeepCloneable<IReadOnlyExtendedList<T>>.DeepClone()
-            => DeepClone();
 
         #endregion
     }

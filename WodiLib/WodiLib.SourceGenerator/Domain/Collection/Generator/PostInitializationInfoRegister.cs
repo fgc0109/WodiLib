@@ -25,9 +25,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection
                 {
                     // attributes
                     FixedLengthListImplementTemplateAttribute.Instance,
-                    FixedLengthListInterfaceTemplateAttribute.Instance,
-                    RestrictedCapacityListImplementTemplateAttribute.Instance,
-                    RestrictedCapacityListInterfaceTemplateAttribute.Instance,
+                    RestrictedCapacityListImplementTemplateAttribute.Instance
                 };
 
                 return result;

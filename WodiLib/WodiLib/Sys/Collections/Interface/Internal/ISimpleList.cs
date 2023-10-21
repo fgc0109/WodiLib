@@ -8,11 +8,14 @@
 
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel;
 
 namespace WodiLib.Sys.Collections
 {
     internal interface ISimpleList<T> :
-        IModelBase<ISimpleList<T>>,
+        IEqualityComparable<ISimpleList<T>>,
+        IDeepCloneable<ISimpleList<T>>,
+        INotifyPropertyChanged,
         INotifyCollectionChanged,
         IList<T>
     {

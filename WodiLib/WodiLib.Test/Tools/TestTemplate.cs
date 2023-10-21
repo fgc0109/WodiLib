@@ -13,6 +13,7 @@ using System.Linq;
 using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
+using WodiLib.Sys.Collections;
 
 namespace WodiLib.Test.Tools
 {
@@ -151,7 +152,7 @@ namespace WodiLib.Test.Tools
             TTarget instance,
             Func<TTarget, TItem> propertyGetter,
             bool expectedThrowActPropertyGet,
-            Func<TItem, bool> isExpectedItem,
+            Func<TItem, bool>? isExpectedItem,
             Logger logger
         )
             where TTarget : INotifyPropertyChanged
@@ -183,7 +184,10 @@ namespace WodiLib.Test.Tools
             }
 
             // 取得した要素が期待した要素と一致すること
-            Assert.IsTrue(isExpectedItem(getResult));
+            if (isExpectedItem is not null)
+            {
+                Assert.IsTrue(isExpectedItem(getResult));
+            }
         }
 
         /// <summary>
@@ -282,14 +286,12 @@ namespace WodiLib.Test.Tools
         ///         <li>メソッドを実行する</li>
         ///         <li>メソッド実行によるエラーの有無をテスト</li>
         ///         <li>メソッド実行によりプロパティ変更通知が発火していないことをテスト</li>
-        ///         <li>メソッド実行前後で状態が変化していないことをテスト</li>
         ///         <li>メソッド実行によりエラーが発生していない場合、取得した値が意図した値であることをテスト</li>
         ///     </ul>
         /// </remarks>
         /// <param name="instance">テスト対象のインスタンス</param>
         /// <param name="execFunc">メソッド実行処理</param>
         /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
-        /// <param name="isExpectedItem">取得した要素が意図した値であることを検証する処理</param>
         /// <param name="logger">ロガー</param>
         /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
         /// <typeparam name="TResult">メソッド返却型</typeparam>
@@ -298,7 +300,38 @@ namespace WodiLib.Test.Tools
             TTarget instance,
             Func<TTarget, TResult> execFunc,
             bool expectedThrowExecute,
-            Func<TResult, bool> isExpectedItem,
+            Logger logger
+        )
+            => PureMethod(instance, execFunc, expectedThrowExecute, null, logger);
+
+        /// <summary>
+        ///     純粋メソッドのテスト
+        /// </summary>
+        /// <remarks>
+        ///     以下の手順のテストを行う。
+        ///     <ul>
+        ///         <li>メソッドを実行する</li>
+        ///         <li>メソッド実行によるエラーの有無をテスト</li>
+        ///         <li>メソッド実行によりプロパティ変更通知が発火していないことをテスト</li>
+        ///         <li>メソッド実行によりエラーが発生していない場合、取得した値が意図した値であることをテスト</li>
+        ///     </ul>
+        /// </remarks>
+        /// <param name="instance">テスト対象のインスタンス</param>
+        /// <param name="execFunc">メソッド実行処理</param>
+        /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
+        /// <param name="isExpectedItem">
+        ///     取得した要素が意図した値であることを検証する処理<br/>
+        ///     <see langword="null"/> の場合検証処理を行わない
+        /// </param>
+        /// <param name="logger">ロガー</param>
+        /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
+        /// <typeparam name="TResult">メソッド返却型</typeparam>
+        /// <returns></returns>
+        public static MethodTestResult<TResult> PureMethod<TTarget, TResult>(
+            TTarget instance,
+            Func<TTarget, TResult> execFunc,
+            bool expectedThrowExecute,
+            Func<TResult, bool>? isExpectedItem,
             Logger logger
         )
         {
@@ -331,7 +364,7 @@ namespace WodiLib.Test.Tools
             }
 
             // 取得した値が意図した値であること
-            if (!errorOccured)
+            if (!errorOccured && isExpectedItem is not null)
             {
                 Assert.IsTrue(isExpectedItem(execResult));
             }
@@ -348,7 +381,6 @@ namespace WodiLib.Test.Tools
         ///         <li>メソッドを実行する</li>
         ///         <li>メソッド実行によるエラーの有無をテスト</li>
         ///         <li>メソッド実行によりプロパティ変更通知が発火していないことをテスト</li>
-        ///         <li>メソッド実行前後で状態が変化していないことをテスト</li>
         ///         <li>メソッド実行によりエラーが発生していない場合、取得した値が意図した値であることをテスト</li>
         ///     </ul>
         /// </remarks>
@@ -391,6 +423,41 @@ namespace WodiLib.Test.Tools
                 // プロパティ変更通知が発火していないこと
                 Assert.AreEqual(changedPropertyList.Count, 0);
             }
+        }
+
+        /// <summary>
+        ///     純粋メソッドのテスト
+        /// </summary>
+        /// <remarks>
+        ///     以下の手順のテストを行う。
+        ///     <ul>
+        ///         <li>メソッドを実行する</li>
+        ///         <li>メソッド実行によるエラーの有無をテスト</li>
+        ///     </ul>
+        /// </remarks>
+        /// <param name="execAction">メソッド実行処理</param>
+        /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
+        /// <param name="logger">ロガー</param>
+        /// <returns></returns>
+        public static void PureMethod(
+            Action execAction,
+            bool expectedThrowExecute,
+            Logger logger
+        )
+        {
+            var errorOccured = false;
+            try
+            {
+                execAction();
+            }
+            catch (Exception ex)
+            {
+                logger.Exception(ex);
+                errorOccured = true;
+            }
+
+            // エラーフラグが一致すること
+            Assert.AreEqual(expectedThrowExecute, errorOccured);
         }
 
         /// <summary>
@@ -483,7 +550,7 @@ namespace WodiLib.Test.Tools
         ///     </ul>
         /// </remarks>
         /// <param name="instance">テスト対象のインスタンス</param>
-        /// <param name="execFunc">メソッド実行処理</param>
+        /// <param name="execAction">メソッド実行処理</param>
         /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
         /// <param name="expectedNotifyPropertyChange">期待するプロパティ変更通知</param>
         /// <param name="isExpectedState">メソッド実行後のインスタンスがいとした状態であることを検証する処理</param>
@@ -492,10 +559,10 @@ namespace WodiLib.Test.Tools
         /// <returns>エラー有無</returns>
         public static bool MutableMethod<TTarget>(
             TTarget instance,
-            Action<TTarget> execFunc,
+            Action<TTarget> execAction,
             bool expectedThrowExecute,
             IEnumerable<string> expectedNotifyPropertyChange,
-            Func<TTarget, bool> isExpectedState,
+            Func<TTarget, bool>? isExpectedState,
             Logger logger
         )
             where TTarget : INotifyPropertyChanged, IDeepCloneable<TTarget>, IEqualityComparable<TTarget>
@@ -506,7 +573,7 @@ namespace WodiLib.Test.Tools
             var errorOccured = false;
             try
             {
-                execFunc(instance);
+                execAction(instance);
             }
             catch (Exception ex)
             {
@@ -528,10 +595,61 @@ namespace WodiLib.Test.Tools
                 );
 
                 // 実行後のインスタンスが意図した状態であること
-                Assert.IsTrue(isExpectedState(instance));
+                if (isExpectedState is not null)
+                {
+                    Assert.IsTrue(isExpectedState(instance));
+                }
             }
 
             return errorOccured;
+        }
+
+        /// <summary>
+        ///     静的メソッドのテスト
+        /// </summary>
+        /// <remarks>
+        ///     以下の手順のテストを行う。
+        ///     <ul>
+        ///         <li>メソッドを実行する</li>
+        ///         <li>メソッド実行によるエラーの有無をテスト</li>
+        ///         <li>取得した値が意図した値であることをテスト</li>
+        ///     </ul>
+        /// </remarks>
+        /// <param name="execFunc">メソッド実行処理</param>
+        /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
+        /// <param name="isExpectedItem">取得した要素が意図した値であることを検証する処理</param>
+        /// <param name="logger">ロガー</param>
+        /// <typeparam name="TResult">メソッド返却型</typeparam>
+        /// <returns></returns>
+        public static MethodTestResult<TResult> StaticMethod<TResult>(
+            Func<TResult> execFunc,
+            bool expectedThrowExecute,
+            Func<TResult, bool> isExpectedItem,
+            Logger logger
+        )
+        {
+            TResult execResult = default!;
+            var errorOccured = false;
+            try
+            {
+                execResult = execFunc();
+            }
+            catch (Exception ex)
+            {
+                logger.Exception(ex);
+                errorOccured = true;
+            }
+
+            // エラーフラグが一致すること
+            Assert.AreEqual(expectedThrowExecute, errorOccured);
+
+            // 取得した値が意図した値であること
+            if (!errorOccured)
+            {
+                Assert.IsTrue(isExpectedItem(execResult));
+            }
+
+            return new MethodTestResult<TResult>(execResult, errorOccured);
         }
 
         /// <summary>
@@ -552,13 +670,51 @@ namespace WodiLib.Test.Tools
         /// <param name="expected">期待する比較結果</param>
         /// <param name="logger">ロガー</param>
         /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
-        public static void ItemEquals<TTarget>(
+        /// <typeparam name="TComp">テスト対象比較相手型</typeparam>
+        public static void ItemEquals<TTarget, TComp>(
             TTarget left,
-            TTarget? right,
+            TComp? right,
             bool expected,
             Logger logger
         )
-            where TTarget : INotifyPropertyChanged, IDeepCloneable<TTarget>, IEqualityComparable<TTarget>
+            where TTarget : IEqualityComparable<TComp>
+        {
+            PureMethod(
+                left,
+                target => target.ItemEquals(right),
+                false,
+                actual => expected == actual,
+                logger
+            );
+        }
+
+        /// <summary>
+        ///     比較処理のテスト
+        /// </summary>
+        /// <remarks>
+        ///     以下の手順のテストを行う。
+        ///     <ul>
+        ///         <li>比較メソッドを実行する</li>
+        ///         <li>メソッド実行によりエラーが発生しないことをテスト</li>
+        ///         <li>メソッド実行によりプロパティ変更通知が発火していないことをテスト</li>
+        ///         <li>メソッド実行前後で状態が変化していないことをテスト</li>
+        ///         <li>結果が意図した値であることをテスト</li>
+        ///     </ul>
+        /// </remarks>
+        /// <param name="left">比較対象のインスタンスその1</param>
+        /// <param name="right">比較対象のインスタンスその2</param>
+        /// <param name="expected">期待する比較結果</param>
+        /// <param name="logger">ロガー</param>
+        /// <typeparam name="TList">テスト対象インスタンス型</typeparam>
+        /// <typeparam name="TItem">テスト対象列挙子型</typeparam>
+        public static void ItemEqualsEnumerable<TList, TItem>(
+            TList left,
+            IEnumerable<TItem>? right,
+            bool expected,
+            Logger logger
+        )
+            where TList : RestrictedCapacityList<TItem, TList>
+            where TItem : notnull
         {
             PureMethod(
                 left,
@@ -639,7 +795,7 @@ namespace WodiLib.Test.Tools
         public static void StaticClassFunc<TResult>(
             Func<TResult> execFunc,
             bool expectedThrowExecute,
-            Action<TResult> assertResult,
+            Action<TResult>? assertResult,
             Logger logger
         )
         {
@@ -662,6 +818,52 @@ namespace WodiLib.Test.Tools
             if (!errorOccured)
             {
                 assertResult?.Invoke(execResult);
+            }
+        }
+
+        /// <summary>
+        ///     staticクラスの関数テスト
+        /// </summary>
+        /// <remarks>
+        ///     以下の手順のテストを行う。
+        ///     <ul>
+        ///         <li>関数を実行する</li>
+        ///         <li>関数実行によるエラーの有無をテスト</li>
+        ///         <li>関数実行によりエラーが発生していない場合、取得した値が意図した値であることをテスト</li>
+        ///     </ul>
+        /// </remarks>
+        /// <param name="execAction">関数実行処理</param>
+        /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
+        /// <param name="assertResult">
+        ///     取得した要素が意図した値であることを検証する処理<br/>
+        ///     <see langword="null"/> の場合実行しない。
+        /// </param>
+        /// <param name="logger">ロガー</param>
+        public static void StaticClassFunc(
+            Action execAction,
+            bool expectedThrowExecute,
+            Action? assertResult,
+            Logger logger
+        )
+        {
+            var errorOccured = false;
+            try
+            {
+                execAction();
+            }
+            catch (Exception ex)
+            {
+                logger.Exception(ex);
+                errorOccured = true;
+            }
+
+            // エラーフラグが一致すること
+            Assert.AreEqual(expectedThrowExecute, errorOccured);
+
+            // 取得した値が意図した値であること
+            if (!errorOccured)
+            {
+                assertResult?.Invoke();
             }
         }
 

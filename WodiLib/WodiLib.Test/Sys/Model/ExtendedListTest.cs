@@ -112,13 +112,13 @@ namespace WodiLib.Test.Sys
                 new IWodiLibListValidator<string>?[]
                 {
                     null,
-                    new MockWodiLibListValidator<string>(),
+                    new MockWodiLibListValidator<string>()
                 },
                 // initItems
                 new[]
                 {
                     null,
-                    3.Iterate(i => i.ToString()),
+                    3.Iterate(i => i.ToString())
                 }
             ),
             // expectedError
@@ -136,7 +136,7 @@ namespace WodiLib.Test.Sys
         {
             TestTemplate.Constructor(
                 () => new ExtendedList<string>(makeListDefaultItem!, validator!, initItems),
-                expectedThrowCreateNewInstance: expectedError,
+                expectedError,
                 logger
             );
         }
@@ -149,7 +149,7 @@ namespace WodiLib.Test.Sys
             DifferenceOneItem,
             Longer,
             Shorter,
-            OtherInstanceInItem,
+            OtherInstanceInItem
         }
 
         [TestCase(ItemEqualsTestType.Null, false)]
@@ -433,7 +433,7 @@ namespace WodiLib.Test.Sys
                 new("\t_"),
                 new("初期文字列"),
                 new("Init String"),
-                new("string123"),
+                new("string123")
             };
 
             public static readonly DelegateMakeListDefaultItem<StubModel> MakeListDefaultItem = GenerateTestModel;
@@ -464,7 +464,7 @@ namespace WodiLib.Test.Sys
                 => InitItems.Select(item => item.DeepClone()).ToArray();
 
             /// <summary>
-            /// このリストは validator を設定していないため、テスト時には core メソッドを直接呼び出す必要がある。
+            ///     このリストは validator を設定していないため、テスト時には core メソッドを直接呼び出す必要がある。
             /// </summary>
             public class TestListForCore : ExtendedList<StubModel>
             {
@@ -474,7 +474,7 @@ namespace WodiLib.Test.Sys
             }
 
             /// <summary>
-            /// このリストは validator を設定している。
+            ///     このリストは validator を設定している。
             /// </summary>
             public class TestListForImplementations : ExtendedList<StubModel>
             {
@@ -495,12 +495,12 @@ namespace WodiLib.Test.Sys
             }
 
             /// <summary>
-            /// <see cref="ExtendedList{T}.ItemEquals(IExtendedList{T}?)"/> メソッド用、
-            /// <see cref="IExtendedList{T}"/> を実装した、 <see cref="ExtendedList{T}"/> とは関連のないクラス
+            ///     <see cref="ExtendedList{T}.ItemEquals(IExtendedList{T}?)"/> メソッド用、
+            ///     <see cref="IExtendedList{T}"/> を実装した、 <see cref="ExtendedList{T}"/> とは関連のないクラス
             /// </summary>
             /// <remarks>
-            /// 比較には <see cref="Enumerable.SequenceEqual{TSource}(IEnumerable{TSource},IEnumerable{TSource})"/> を利用しているはずなので、
-            /// <see cref="IEnumerable{T}"/> のメソッドのみ実装していれば良い
+            ///     比較には <see cref="Enumerable.SequenceEqual{TSource}(IEnumerable{TSource},IEnumerable{TSource})"/> を利用しているはずなので、
+            ///     <see cref="IEnumerable{T}"/> のメソッドのみ実装していれば良い
             /// </remarks>
             public class AnotherExtendedList : ModelBase<AnotherExtendedList>,
                 IExtendedList<StubModel>
@@ -522,10 +522,8 @@ namespace WodiLib.Test.Sys
                 // @formatter:off
                 #region NotUse
 
-                IExtendedList<StubModel> IDeepCloneable<IExtendedList<StubModel>>.DeepClone() => throw new NotImplementedException();
                 public override bool ItemEquals(AnotherExtendedList? other) => throw new NotImplementedException();
                 public override AnotherExtendedList DeepClone() => throw new NotImplementedException();
-                public bool ItemEquals(IExtendedList<StubModel>? other) => throw new NotImplementedException();
                 public event NotifyCollectionChangedEventHandler? CollectionChanged;
                 public StubModel this[int index]
                 {

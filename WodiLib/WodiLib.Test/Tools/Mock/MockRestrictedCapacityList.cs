@@ -152,6 +152,11 @@ namespace WodiLib.Test.Tools
             throw new NotImplementedException();
         }
 
+        public void Reset()
+        {
+            throw new NotImplementedException();
+        }
+
         public void Clear()
         {
             throw new NotImplementedException();
@@ -333,16 +338,6 @@ namespace WodiLib.Test.Tools
         }
 
         public void ClearCore()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool ItemEquals(IRestrictedCapacityList<T>? other)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IRestrictedCapacityList<T> DeepClone()
         {
             throw new NotImplementedException();
         }

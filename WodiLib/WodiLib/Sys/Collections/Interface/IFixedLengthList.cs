@@ -32,7 +32,8 @@ namespace WodiLib.Sys.Collections
     /// <typeparam name="T">リスト要素型</typeparam>
     public interface IFixedLengthList<T> :
         IReadOnlyList<T>,
-        IModelBase<IFixedLengthList<T>>,
+        IEqualityComparable<IEnumerable<T>>,
+        INotifyPropertyChanged,
         INotifyCollectionChanged
     {
         #region Properties
@@ -56,15 +57,15 @@ namespace WodiLib.Sys.Collections
         /// <inheritdoc cref="ExtendedListInterfaceExtension.MoveRange{T}"/>
         public void MoveRange(int oldIndex, int newIndex, int count);
 
-        /// <inheritdoc cref="ExtendedListInterfaceExtension.Reset{T}"/>
+        /// <inheritdoc cref="ExtendedListInterfaceExtension.Reset{T}(IExtendedList{T},IEnumerable{T})"/>
         /// <exception cref="ArgumentException">
-        /// <paramref name="initItems"/> の要素数が <see cref="IReadOnlyCollection{T}.Count"/> と
-        /// 異なる場合。
+        ///     <paramref name="initItems"/> の要素数が <see cref="IReadOnlyCollection{T}.Count"/> と
+        ///     異なる場合。
         /// </exception>
         public void Reset(IEnumerable<T> initItems);
 
         /// <summary>
-        /// 要素をデフォルト値で一新する。
+        ///     要素をデフォルト値で一新する。
         /// </summary>
         public void Reset();
 
@@ -89,7 +90,9 @@ namespace WodiLib.Sys.Collections
         /// <summary>
         ///     インデクサによる更新の検証処理。
         /// </summary>
-        /// <param name="index"><inheritdoc cref="this[int]" path="param[name='index']"/></param>
+        /// <param name="index">
+        ///     <inheritdoc cref="this[int]" path="param[name='index']"/>
+        /// </param>
         /// <param name="item">編集要素</param>
         /// <inheritdoc cref="this[int]" path="exception"/>
         [EditorBrowsable(EditorBrowsableState.Advanced)]
@@ -144,7 +147,9 @@ namespace WodiLib.Sys.Collections
         /// <summary>
         ///     インデクサによる更新処理中核。
         /// </summary>
-        /// <param name="index"><inheritdoc cref="this[int]" path="param"/></param>
+        /// <param name="index">
+        ///     <inheritdoc cref="this[int]" path="param"/>
+        /// </param>
         /// <param name="item">編集要素</param>
         /// <inheritdoc cref="this[int]" path="exception"/>
         [EditorBrowsable(EditorBrowsableState.Advanced)]

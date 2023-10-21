@@ -31,7 +31,7 @@ namespace WodiLib.Sys.Collections
     /// <typeparam name="T">リスト内包型</typeparam>
     public interface IRestrictedCapacityList<T> :
         IReadOnlyList<T>,
-        IModelBase<IRestrictedCapacityList<T>>,
+        INotifyPropertyChanged,
         INotifyCollectionChanged
     {
         #region Properties
@@ -137,8 +137,13 @@ namespace WodiLib.Sys.Collections
         /// </param>
         public void AdjustLengthIfLong(int length);
 
-        /// <inheritdoc cref="ExtendedListInterfaceExtension.Reset{T}"/>
+        /// <inheritdoc cref="ExtendedListInterfaceExtension.Reset{T}(IExtendedList{T},IEnumerable{T})"/>
         public void Reset(IEnumerable<T> initItems);
+
+        /// <summary>
+        ///     要素をデフォルト値で一新する。
+        /// </summary>
+        public void Reset();
 
         /// <inheritdoc cref="ExtendedListInterfaceExtension.Clear{T}"/>
         public void Clear();
@@ -164,7 +169,9 @@ namespace WodiLib.Sys.Collections
         /// <summary>
         ///     インデクサによる更新の検証処理。
         /// </summary>
-        /// <param name="index"><inheritdoc cref="this[int]" path="param[name='index']"/></param>
+        /// <param name="index">
+        ///     <inheritdoc cref="this[int]" path="param[name='index']"/>
+        /// </param>
         /// <param name="item">編集要素</param>
         /// <inheritdoc cref="this[int]" path="exception"/>
         [EditorBrowsable(EditorBrowsableState.Advanced)]
@@ -262,9 +269,9 @@ namespace WodiLib.Sys.Collections
         public void ValidateAdjustLengthIfLong(int length);
 
         /// <summary>
-        ///     <see cref="Reset"/> メソッドの検証処理。
+        ///     <see cref="Reset(IEnumerable{T})"/>, <see cref="Reset()"/> メソッドの検証処理。
         /// </summary>
-        /// <inheritdoc cref="Reset" path="param|exception"/>
+        /// <inheritdoc cref="Reset(IEnumerable{T})" path="param|exception"/>
         [EditorBrowsable(EditorBrowsableState.Advanced)]
         public void ValidateReset(IEnumerable<T> items);
 
@@ -296,7 +303,9 @@ namespace WodiLib.Sys.Collections
         /// <summary>
         ///     インデクサによる更新処理中核。
         /// </summary>
-        /// <param name="index"><inheritdoc cref="this[int]" path="param"/></param>
+        /// <param name="index">
+        ///     <inheritdoc cref="this[int]" path="param"/>
+        /// </param>
         /// <param name="item">編集要素</param>
         /// <inheritdoc cref="this[int]" path="exception"/>
         [EditorBrowsable(EditorBrowsableState.Advanced)]
@@ -394,9 +403,9 @@ namespace WodiLib.Sys.Collections
         public void AdjustLengthIfLongCore(int length);
 
         /// <summary>
-        ///     <see cref="Reset"/> メソッド処理中核。
+        ///     <see cref="Reset(IEnumerable{T})"/>, <see cref="Reset()"/> メソッド処理中核。
         /// </summary>
-        /// <inheritdoc cref="Reset" path="param"/>
+        /// <inheritdoc cref="Reset(IEnumerable{T})" path="param"/>
         [EditorBrowsable(EditorBrowsableState.Advanced)]
         public void ResetCore(IEnumerable<T> items);
 
