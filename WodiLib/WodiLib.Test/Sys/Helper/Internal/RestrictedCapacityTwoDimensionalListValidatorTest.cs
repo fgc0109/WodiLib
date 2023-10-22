@@ -78,21 +78,29 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var dummyTarget = new RestrictedTwoDimTestForConstructor();
-            var instance =
-                new RestrictedCapacityTwoDimensionalListValidator<IEnumerable<string>, string>(dummyTarget, "行", "列");
-
-            var items = TestItemGenerator.GenerateTwoDimArray(
-                initItemsType,
-                rowLength,
-                columnLength,
-                (r, c) => $"{r}_{c}"
-            );
-            var initItems = new NamedValue<IEnumerable<IEnumerable<string>>>("initItems", items);
-
             TestTemplate.PureMethod(
-                instance,
-                target => target.Constructor(initItems),
+                createInstance: () =>
+                {
+                    var dummyTarget = new RestrictedTwoDimTestForConstructor();
+
+                    return new RestrictedCapacityTwoDimensionalListValidator<IEnumerable<string>, string>(
+                        dummyTarget,
+                        "行",
+                        "列"
+                    );
+                },
+                execAction: target =>
+                {
+                    var items = TestItemGenerator.GenerateTwoDimArray(
+                        initItemsType,
+                        rowLength,
+                        columnLength,
+                        (r, c) => $"{r}_{c}"
+                    );
+                    var initItems = new NamedValue<IEnumerable<IEnumerable<string>>>("initItems", items);
+
+                    target.Constructor(initItems);
+                },
                 expectedError,
                 logger
             );
@@ -127,10 +135,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(GetRowTestCaseSource))]
         public static void GetRowTest(NamedValue<int> rowIndex, NamedValue<int> rowCount, bool expectedError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.GetRow(rowIndex, rowCount),
                 expectedError,
                 logger
@@ -167,10 +173,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(GetColumnTestCaseSource))]
         public static void GetColumnTest(NamedValue<int> columnIndex, NamedValue<int> columnCount, bool expectedError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.GetColumn(columnIndex, columnCount),
                 expectedError,
                 logger
@@ -233,10 +237,8 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.GetItem(rowIndex, rowCount, columnIndex, columnCount),
                 expectedError,
                 logger
@@ -271,10 +273,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(GetItemTest2_TestCaseSource))]
         public static void GetItemTest2(NamedValue<int> rowIndex, NamedValue<int> columnIndex, bool expectedError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.GetItem(rowIndex, columnIndex),
                 expectedError,
                 logger
@@ -362,14 +362,15 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-            var items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
-            var _rows = ConvertRows(items);
-            var rows = new NamedValue<IEnumerable<RowForTest>>("rows", _rows);
-
             TestTemplate.PureMethod(
-                instance,
-                target => target.SetRow(rowIndex, rows),
+                createInstance: GetTestInstance,
+                execAction: target =>
+                {
+                    var items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
+                    var _rows = ConvertRows(items);
+                    var rows = new NamedValue<IEnumerable<RowForTest>>("rows", _rows);
+                    target.SetRow(rowIndex, rows);
+                },
                 expectedError,
                 logger
             );
@@ -451,13 +452,15 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-            var _items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
-            var items = new NamedValue<IEnumerable<IEnumerable<string>>>("items", _items);
-
             TestTemplate.PureMethod(
-                instance,
-                target => target.SetColumn(columnIndex, items),
+                createInstance: GetTestInstance,
+                target =>
+                {
+                    var _items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
+                    var items = new NamedValue<IEnumerable<IEnumerable<string>>>("items", _items);
+
+                    target.SetColumn(columnIndex, items);
+                },
                 expectedError,
                 logger
             );
@@ -503,10 +506,8 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.SetItem(rowIndex, columnIndex, item),
                 expectedError,
                 logger
@@ -594,14 +595,16 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-            var items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
-            var _rows = ConvertRows(items);
-            var rows = new NamedValue<IEnumerable<RowForTest>>("rows", _rows);
-
             TestTemplate.PureMethod(
-                instance,
-                target => target.InsertRow(rowIndex, rows),
+                createInstance: GetTestInstance,
+                execAction: target =>
+                {
+                    var items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
+                    var _rows = ConvertRows(items);
+                    var rows = new NamedValue<IEnumerable<RowForTest>>("rows", _rows);
+
+                    target.InsertRow(rowIndex, rows);
+                },
                 expectedError,
                 logger
             );
@@ -687,13 +690,15 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-            var _items = TestItemGenerator.GenerateTwoDimArray(columnsInfo, (r, c) => $"{r}_{c}");
-            var items = new NamedValue<IEnumerable<IEnumerable<string>>>("items", _items);
-
             TestTemplate.PureMethod(
-                instance,
-                target => target.InsertColumn(columnIndex, items),
+                createInstance: GetTestInstance,
+                execAction: target =>
+                {
+                    var _items = TestItemGenerator.GenerateTwoDimArray(columnsInfo, (r, c) => $"{r}_{c}");
+                    var items = new NamedValue<IEnumerable<IEnumerable<string>>>("items", _items);
+
+                    target.InsertColumn(columnIndex, items);
+                },
                 expectedError,
                 logger
             );
@@ -780,14 +785,16 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-            var items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
-            var _rows = ConvertRows(items);
-            var rows = new NamedValue<IEnumerable<RowForTest>>("rows", _rows);
-
             TestTemplate.PureMethod(
-                instance,
-                target => target.OverwriteRow(rowIndex, rows),
+                createInstance: GetTestInstance,
+                execAction: target =>
+                {
+                    var items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
+                    var _rows = ConvertRows(items);
+                    var rows = new NamedValue<IEnumerable<RowForTest>>("rows", _rows);
+
+                    target.OverwriteRow(rowIndex, rows);
+                },
                 expectedError,
                 logger
             );
@@ -869,13 +876,15 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-            var _items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
-            var items = new NamedValue<IEnumerable<IEnumerable<string>>>("items", _items);
-
             TestTemplate.PureMethod(
-                instance,
-                target => target.OverwriteColumn(columnIndex, items),
+                createInstance: GetTestInstance,
+                execAction: target =>
+                {
+                    var _items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
+                    var items = new NamedValue<IEnumerable<IEnumerable<string>>>("items", _items);
+
+                    target.OverwriteColumn(columnIndex, items);
+                },
                 expectedError,
                 logger
             );
@@ -930,10 +939,8 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.MoveRow(oldRowIndex, newRowIndex, count),
                 expectedError,
                 logger
@@ -987,10 +994,8 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.MoveColumn(oldColumnIndex, newColumnIndex, count),
                 expectedError,
                 logger
@@ -1034,10 +1039,8 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.RemoveRow(rowIndex, count),
                 expectedError,
                 logger
@@ -1085,10 +1088,8 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.RemoveColumn(columnIndex, count),
                 expectedError,
                 logger
@@ -1132,10 +1133,8 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.AdjustLength(rowLength, columnLength),
                 expectedError,
                 logger
@@ -1217,14 +1216,16 @@ namespace WodiLib.Test.Sys
             bool expectedError
         )
         {
-            var instance = GetTestInstance();
-            var items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
-            var _initItems = ConvertRows(items);
-            var initItems = new NamedValue<IEnumerable<RowForTest>>("initItems", _initItems);
-
             TestTemplate.PureMethod(
-                instance,
-                target => target.Reset(initItems),
+                createInstance: GetTestInstance,
+                execAction: target =>
+                {
+                    var items = TestItemGenerator.GenerateTwoDimArray(rowsInfo, (r, c) => $"{r}_{c}");
+                    var _initItems = ConvertRows(items);
+                    var initItems = new NamedValue<IEnumerable<RowForTest>>("initItems", _initItems);
+
+                    target.Reset(initItems);
+                },
                 expectedError,
                 logger
             );

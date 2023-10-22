@@ -50,6 +50,7 @@ namespace WodiLib.Test.Sys
             TestTemplate.Constructor(
                 () => new FixedLengthListValidator<string>(target, capacity),
                 isError,
+                verification: null,
                 logger
             );
         }
@@ -79,6 +80,7 @@ namespace WodiLib.Test.Sys
             TestTemplate.Constructor(
                 () => new FixedLengthListValidator<string>(target, capacityGetter),
                 isError,
+                verification: null,
                 logger
             );
         }
@@ -104,10 +106,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(ConstructorTestCaseSource))]
         public static void ConstructorTest(NamedValue<IEnumerable<string>> initItems, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Constructor(initItems),
                 isError,
                 logger
@@ -143,10 +143,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(GetTestCaseSource))]
         public static void GetTest(NamedValue<int> index, NamedValue<int> count, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Get(index, count),
                 isError,
                 logger
@@ -189,10 +187,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(SetTestCaseSource))]
         public static void SetTest(NamedValue<int> index, NamedValue<IEnumerable<string>> items, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Set(index, items),
                 isError,
                 logger
@@ -243,10 +239,8 @@ namespace WodiLib.Test.Sys
             bool isError
         )
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Move(oldIndex, newIndex, count),
                 isError,
                 logger
@@ -274,10 +268,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(ResetTestCaseSource))]
         public static void ResetTest(NamedValue<IEnumerable<string>> items, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Reset(items),
                 isError,
                 logger
@@ -306,12 +298,10 @@ namespace WodiLib.Test.Sys
                 FixedLengthListValidator = new FixedLengthListValidator<string>(this, TestInstanceConfig.Capacity);
                 return FixedLengthListValidator;
             }
-        }
 
-        internal class ReadOnlyListForConstructorTest : ReadOnlyExtendedList<string, ReadOnlyListForConstructorTest>
-        {
-            public ReadOnlyListForConstructorTest() : base(TestInstanceConfig.Capacity.Iterate(i => i.ToString()))
+            public override FixedLengthListForTest DeepClone()
             {
+                throw new InvalidOperationException();
             }
         }
 

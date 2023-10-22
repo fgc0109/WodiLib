@@ -37,6 +37,7 @@ namespace WodiLib.Test.Sys
             TestTemplate.Constructor(
                 () => new SimpleList<StubModel>(InitInstance.MakeListDefaultItem),
                 expectedThrowCreateNewInstance: false,
+                verification: null,
                 logger
             );
         }
@@ -49,13 +50,13 @@ namespace WodiLib.Test.Sys
                 {
                     new StubModel(),
                     new StubModel("item"),
-                    new StubModel("テスト"),
-                },
+                    new StubModel("テスト")
+                }
             },
             new object[]
             {
                 null!
-            },
+            }
         };
 
         [TestCaseSource(nameof(ConstructorTestBTestCaseSource))]
@@ -65,32 +66,34 @@ namespace WodiLib.Test.Sys
         {
             var initValuesArray = initValues?.ToArray();
 
-            var createResult = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 () => new SimpleList<StubModel>(InitInstance.MakeListDefaultItem, initValuesArray),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    if (initValuesArray != null)
+                    {
+                        // SimpleListの要素がコンストラクタで指定した要素と同一であること
+
+                        Assert.IsTrue(instance.Count == initValuesArray.Length);
+
+                        LinqExtension.ForEach(
+                            WodiLib.Sys.LinqExtension.Zip(instance, initValuesArray),
+                            zip =>
+                            {
+                                var (createdItem, originalItem) = zip;
+                                Assert.IsTrue(ReferenceEquals(createdItem, originalItem));
+                            }
+                        );
+                    }
+                    else
+                    {
+                        // 空要素であること
+                        Assert.IsTrue(instance.Count == 0);
+                    }
+                },
                 logger
             );
-
-            if (initValuesArray != null)
-            {
-                // SimpleListの要素がコンストラクタで指定した要素と同一であること
-
-                Assert.IsTrue(createResult.Count == initValuesArray.Length);
-
-                LinqExtension.ForEach(
-                    WodiLib.Sys.LinqExtension.Zip(createResult, initValuesArray),
-                    zip =>
-                    {
-                        var (createdItem, originalItem) = zip;
-                        Assert.IsTrue(ReferenceEquals(createdItem, originalItem));
-                    }
-                );
-            }
-            else
-            {
-                // 空要素であること
-                Assert.IsTrue(createResult.Count == 0);
-            }
         }
 
         [Test]
@@ -101,23 +104,20 @@ namespace WodiLib.Test.Sys
             const int index = 1;
             const int count = 3;
 
-            var isExpectedResult = new Func<IEnumerable<StubModel>, bool>(
-                result =>
-                {
-                    var resultArray = result.ToArray();
-                    // 意図した範囲の要素が取得できていること
-                    return resultArray.Length == count
-                           && resultArray[0].ItemEquals(InitInstance.InitItems[index + 0])
-                           && resultArray[1].ItemEquals(InitInstance.InitItems[index + 1])
-                           && resultArray[2].ItemEquals(InitInstance.InitItems[index + 2]);
-                }
-            );
-
             TestTemplate.PureMethod(
                 instance,
                 target => target.Get(index, count),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: actual =>
+                {
+                    var actualArray = actual.ToArray();
+
+                    // 意図した範囲の要素が取得できていること
+                    Assert.AreEqual(actualArray.Length, count);
+                    Assert.IsTrue(actualArray[0].ItemEquals(InitInstance.InitItems[index + 0]));
+                    Assert.IsTrue(actualArray[1].ItemEquals(InitInstance.InitItems[index + 1]));
+                    Assert.IsTrue(actualArray[2].ItemEquals(InitInstance.InitItems[index + 2]));
+                },
                 logger
             );
 
@@ -130,25 +130,22 @@ namespace WodiLib.Test.Sys
         {
             var (instance, collectionList) = InitInstance.Generate();
             const int index = 1;
-            // 何も通知されないこと
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-            );
 
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Set(index, Array.Empty<StubModel>()),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -163,28 +160,25 @@ namespace WodiLib.Test.Sys
             const int index = 1;
             var setItem = new StubModel("update item 1");
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 意図した範囲の値が更新されていること
-                          && target[1].ItemEquals(setItem)
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Set(index, setItem),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 意図した範囲の値が更新されていること
+                    Assert.IsTrue(target[1].ItemEquals(setItem));
+                },
                 logger
             );
 
@@ -201,31 +195,28 @@ namespace WodiLib.Test.Sys
             var setItems = new StubModel[]
             {
                 new("update item 1"),
-                new("update item 2"),
+                new("update item 2")
             };
-
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 意図した範囲の値が更新されていること
-                          && target[1].ItemEquals(setItems[0])
-                          && target[2].ItemEquals(setItems[1])
-            );
 
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Set(index, setItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 意図した範囲の値が更新されていること
+                    Assert.IsTrue(target[1].ItemEquals(setItems[0]));
+                    Assert.IsTrue(target[2].ItemEquals(setItems[1]));
+                },
                 logger
             );
 
@@ -239,25 +230,22 @@ namespace WodiLib.Test.Sys
         {
             var (instance, collectionList) = InitInstance.Generate();
 
-            // 何も通知されないこと
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 既存の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Add(Array.Empty<StubModel>()),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                // 何も通知されないこと
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 既存の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -271,30 +259,27 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             var addItem = new StubModel("add item");
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength + 1
-                          // 既存の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 要素が正しく追加されていること
-                          && target[5].ItemEquals(addItem)
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Add(addItem),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength + 1);
+                    // 既存の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 要素が正しく追加されていること
+                    Assert.IsTrue(target[5].ItemEquals(addItem));
+                },
                 logger
             );
 
@@ -309,30 +294,27 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             var addItem = new StubModel("add item");
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength + 1
-                          // 既存の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 要素が正しく追加されていること
-                          && target[5].ItemEquals(addItem)
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Add(addItem),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength + 1);
+                    // 既存の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 要素が正しく追加されていること
+                    Assert.IsTrue(target[5].ItemEquals(addItem));
+                },
                 logger
             );
 
@@ -348,34 +330,31 @@ namespace WodiLib.Test.Sys
             var addItems = new StubModel[]
             {
                 new("add item 1"),
-                new("add item 2"),
+                new("add item 2")
             };
-
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength + 2
-                          // 既存の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 要素が正しく追加されていること
-                          && target[5].ItemEquals(addItems[0])
-                          && target[6].ItemEquals(addItems[1])
-            );
 
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Add(addItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength + 2);
+                    // 既存の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 要素が正しく追加されていること
+                    Assert.IsTrue(target[5].ItemEquals(addItems[0]));
+                    Assert.IsTrue(target[6].ItemEquals(addItems[1]));
+                },
                 logger
             );
 
@@ -389,25 +368,21 @@ namespace WodiLib.Test.Sys
         {
             var (instance, collectionList) = InitInstance.Generate();
 
-            // 何も通知されないこと
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 既存の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Insert(0, Array.Empty<StubModel>()),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 既存の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -421,31 +396,28 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             var insertItem = new StubModel("add item");
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength + 1
-                          // 既存の値が更新されていないこと（挿入箇所より前）
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          // 要素が正しく挿入加されていること
-                          && target[2].ItemEquals(insertItem)
-                          // 既存の値が更新されていないこと（挿入箇所より後）
-                          && target[3].ItemEquals(InitInstance.InitItems[2])
-                          && target[4].ItemEquals(InitInstance.InitItems[3])
-                          && target[5].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Insert(2, insertItem),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength + 1);
+                    // 既存の値が更新されていないこと（挿入箇所より前）
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    // 要素が正しく挿入加されていること
+                    Assert.IsTrue(target[2].ItemEquals(insertItem));
+                    // 既存の値が更新されていないこと（挿入箇所より後）
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[5].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -461,35 +433,32 @@ namespace WodiLib.Test.Sys
             var insertItems = new StubModel[]
             {
                 new("add item 1"),
-                new("add item 2"),
+                new("add item 2")
             };
-
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength + 2
-                          // 既存の値が更新されていないこと（挿入箇所より前）
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          // 要素が正しく挿入加されていること
-                          && target[2].ItemEquals(insertItems[0])
-                          && target[3].ItemEquals(insertItems[1])
-                          // 既存の値が更新されていないこと（挿入箇所より後）
-                          && target[4].ItemEquals(InitInstance.InitItems[2])
-                          && target[5].ItemEquals(InitInstance.InitItems[3])
-                          && target[6].ItemEquals(InitInstance.InitItems[4])
-            );
 
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Insert(2, insertItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength + 2);
+                    // 既存の値が更新されていないこと（挿入箇所より前）
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    // 要素が正しく挿入加されていること
+                    Assert.IsTrue(target[2].ItemEquals(insertItems[0]));
+                    Assert.IsTrue(target[3].ItemEquals(insertItems[1]));
+                    // 既存の値が更新されていないこと（挿入箇所より後）
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[5].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[6].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -503,25 +472,22 @@ namespace WodiLib.Test.Sys
         {
             var (instance, collectionList) = InitInstance.Generate();
             const int index = 1;
-            // 何も通知されないこと
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-            );
 
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Overwrite(index, Array.Empty<StubModel>()),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -536,28 +502,25 @@ namespace WodiLib.Test.Sys
             const int index = 1;
             var overwriteItem = new StubModel("overwrite item 1");
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 意図した範囲の値が更新されていること
-                          && target[1].ItemEquals(overwriteItem)
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Overwrite(index, overwriteItem),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 意図した範囲の値が更新されていること
+                    Assert.IsTrue(target[1].ItemEquals(overwriteItem));
+                },
                 logger
             );
 
@@ -573,30 +536,27 @@ namespace WodiLib.Test.Sys
             const int index = 5;
             var overwriteItem = new StubModel("overwrite item 1");
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength + 1
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 意図した範囲の値が更新されていること
-                          && target[5].ItemEquals(overwriteItem)
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Overwrite(index, overwriteItem),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength + 1);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 意図した範囲の値が更新されていること
+                    Assert.IsTrue(target[5].ItemEquals(overwriteItem));
+                },
                 logger
             );
 
@@ -613,31 +573,28 @@ namespace WodiLib.Test.Sys
             var overwriteItems = new StubModel[]
             {
                 new("overwrite item 1"),
-                new("overwrite item 2"),
+                new("overwrite item 2")
             };
-
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 意図した範囲の値が更新されていること
-                          && target[1].ItemEquals(overwriteItems[0])
-                          && target[2].ItemEquals(overwriteItems[1])
-            );
 
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Overwrite(index, overwriteItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 意図した範囲の値が更新されていること
+                    Assert.IsTrue(target[1].ItemEquals(overwriteItems[0]));
+                    Assert.IsTrue(target[2].ItemEquals(overwriteItems[1]));
+                },
                 logger
             );
 
@@ -654,34 +611,31 @@ namespace WodiLib.Test.Sys
             var overwriteItems = new StubModel[]
             {
                 new("overwrite item 1"),
-                new("overwrite item 2"),
+                new("overwrite item 2")
             };
-
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength + 2
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 意図した範囲の値が更新されていること
-                          && target[5].ItemEquals(overwriteItems[0])
-                          && target[6].ItemEquals(overwriteItems[1])
-            );
 
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Overwrite(index, overwriteItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength + 2);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 意図した範囲の値が更新されていること
+                    Assert.IsTrue(target[5].ItemEquals(overwriteItems[0]));
+                    Assert.IsTrue(target[6].ItemEquals(overwriteItems[1]));
+                },
                 logger
             );
 
@@ -698,33 +652,30 @@ namespace WodiLib.Test.Sys
             var overwriteItems = new StubModel[]
             {
                 new("overwrite item 1"),
-                new("overwrite item 2"),
+                new("overwrite item 2")
             };
-
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength + 1
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          // 意図した範囲の値が更新されていること
-                          && target[4].ItemEquals(overwriteItems[0])
-                          && target[5].ItemEquals(overwriteItems[1])
-            );
 
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Overwrite(index, overwriteItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength + 1);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    // 意図した範囲の値が更新されていること
+                    Assert.IsTrue(target[4].ItemEquals(overwriteItems[0]));
+                    Assert.IsTrue(target[5].ItemEquals(overwriteItems[1]));
+                },
                 logger
             );
 
@@ -741,24 +692,21 @@ namespace WodiLib.Test.Sys
             const int newIndex = 4;
             const int count = 0;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Move(oldIndex, newIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -774,27 +722,24 @@ namespace WodiLib.Test.Sys
             const int newIndex = 4;
             const int count = 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 要素が正しく移動されていること
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[3])
-                          && target[3].ItemEquals(InitInstance.InitItems[4])
-                          && target[4].ItemEquals(InitInstance.InitItems[2])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Move(oldIndex, newIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 要素が正しく移動されていること
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[4]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[2]));
+                },
                 logger
             );
 
@@ -811,27 +756,24 @@ namespace WodiLib.Test.Sys
             const int newIndex = 0;
             const int count = 2;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 要素が正しく移動されていること
-                          && target[0].ItemEquals(InitInstance.InitItems[3])
-                          && target[1].ItemEquals(InitInstance.InitItems[4])
-                          && target[2].ItemEquals(InitInstance.InitItems[0])
-                          && target[3].ItemEquals(InitInstance.InitItems[1])
-                          && target[4].ItemEquals(InitInstance.InitItems[2])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Move(oldIndex, newIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 要素が正しく移動されていること
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[4]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[2]));
+                },
                 logger
             );
 
@@ -847,24 +789,21 @@ namespace WodiLib.Test.Sys
             const int index = 2;
             const int count = 0;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Remove(index, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -879,27 +818,24 @@ namespace WodiLib.Test.Sys
             const int index = 2;
             const int count = 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count)
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength - 1
-                          // 要素が正しく削除されていること
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[3])
-                          && target[3].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Remove(index, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength - 1);
+                    // 要素が正しく削除されていること
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -915,26 +851,23 @@ namespace WodiLib.Test.Sys
             const int index = 2;
             const int count = 2;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count)
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength - 2
-                          // 要素が正しく削除されていること
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Remove(index, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength - 2);
+                    // 要素が正しく削除されていること
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -949,30 +882,27 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 6;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == length
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 意図した要素が追加されていること
-                          && target[5].ItemEquals(InitInstance.GenerateTestModel(5))
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Adjust(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, length);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 意図した要素が追加されていること
+                    Assert.IsTrue(target[5].ItemEquals(InitInstance.GenerateTestModel(5)));
+                },
                 logger
             );
 
@@ -987,31 +917,28 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 7;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == length
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 意図した要素が追加されていること
-                          && target[5].ItemEquals(InitInstance.GenerateTestModel(5))
-                          && target[6].ItemEquals(InitInstance.GenerateTestModel(6))
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Adjust(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, length);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 意図した要素が追加されていること
+                    Assert.IsTrue(target[5].ItemEquals(InitInstance.GenerateTestModel(5)));
+                    Assert.IsTrue(target[6].ItemEquals(InitInstance.GenerateTestModel(6)));
+                },
                 logger
             );
 
@@ -1026,24 +953,22 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 5;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == length
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Adjust(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, length);
+
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -1057,27 +982,24 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 4;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == length
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Adjust(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, length);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                },
                 logger
             );
 
@@ -1092,26 +1014,23 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 3;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == length
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Adjust(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, length);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                },
                 logger
             );
 
@@ -1126,24 +1045,21 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 6;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustIfLong(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -1157,24 +1073,21 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 5;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == length
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustIfLong(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, length);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -1188,27 +1101,24 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 4;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == length
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustIfLong(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, length);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                },
                 logger
             );
 
@@ -1223,26 +1133,23 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 3;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == length
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustIfLong(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, length);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                },
                 logger
             );
 
@@ -1257,30 +1164,27 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 6;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == length
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 意図した要素が追加されていること
-                          && target[5].ItemEquals(InitInstance.GenerateTestModel(5))
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustIfShort(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, length);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 意図した要素が追加されていること
+                    Assert.IsTrue(target[5].ItemEquals(InitInstance.GenerateTestModel(5)));
+                },
                 logger
             );
 
@@ -1295,31 +1199,29 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 7;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == length
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-                          // 意図した要素が追加されていること
-                          && target[5].ItemEquals(InitInstance.GenerateTestModel(5))
-                          && target[6].ItemEquals(InitInstance.GenerateTestModel(6))
-            );
 
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustIfShort(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, length);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                    // 意図した要素が追加されていること
+                    Assert.IsTrue(target[5].ItemEquals(InitInstance.GenerateTestModel(5)));
+                    Assert.IsTrue(target[6].ItemEquals(InitInstance.GenerateTestModel(6)));
+                },
                 logger
             );
 
@@ -1334,24 +1236,21 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 5;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == length
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustIfShort(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, length);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -1365,24 +1264,21 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             const int length = 4;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == InitInstance.InitLength
-                          // 意図しない範囲の値が更新されていないこと
-                          && target[0].ItemEquals(InitInstance.InitItems[0])
-                          && target[1].ItemEquals(InitInstance.InitItems[1])
-                          && target[2].ItemEquals(InitInstance.InitItems[2])
-                          && target[3].ItemEquals(InitInstance.InitItems[3])
-                          && target[4].ItemEquals(InitInstance.InitItems[4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustIfShort(length),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.AreEqual(target.Count, InitInstance.InitLength);
+                    // 意図しない範囲の値が更新されていないこと
+                    Assert.IsTrue(target[0].ItemEquals(InitInstance.InitItems[0]));
+                    Assert.IsTrue(target[1].ItemEquals(InitInstance.InitItems[1]));
+                    Assert.IsTrue(target[2].ItemEquals(InitInstance.InitItems[2]));
+                    Assert.IsTrue(target[3].ItemEquals(InitInstance.InitItems[3]));
+                    Assert.IsTrue(target[4].ItemEquals(InitInstance.InitItems[4]));
+                },
                 logger
             );
 
@@ -1396,22 +1292,16 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             var resetItems = Array.Empty<StubModel>();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.Count),
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == 0
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Reset(resetItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.Count)
+                },
+                instanceVerification: target => { Assert.AreEqual(target.Count, 0); },
                 logger
             );
 
@@ -1426,21 +1316,15 @@ namespace WodiLib.Test.Sys
             var (instance, collectionList) = InitInstance.Generate();
             var resetItems = InitInstance.InitLength.Iterate(i => InitInstance.GenerateTestModel(i + 100)).ToArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<ISimpleList<StubModel>, bool>(
-                target => target.Count == resetItems.Length
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.Reset(resetItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target => { Assert.AreEqual(target.Count, resetItems.Length); },
                 logger
             );
 
@@ -1453,7 +1337,7 @@ namespace WodiLib.Test.Sys
         {
             new object?[]
             {
-                null, false,
+                null, false
             },
             new object[]
             {
@@ -1474,7 +1358,7 @@ namespace WodiLib.Test.Sys
             new object[]
             {
                 InitInstance.InitItems.Added(new StubModel("append")).ToArray(), false
-            },
+            }
         };
 
         [TestCaseSource(nameof(ItemEqualsTest1CaseSource))]
@@ -1485,15 +1369,11 @@ namespace WodiLib.Test.Sys
                 ? null
                 : new SimpleList<StubModel>(InitInstance.MakeListDefaultItem, otherItems);
 
-            var isExpectedResult = new Func<bool, bool>(
-                actual => actual == expected
-            );
-
             TestTemplate.PureMethod(
                 instance,
                 target => target.ItemEquals(other),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: actual => { Assert.AreEqual(expected, actual); },
                 logger
             );
 
@@ -1505,7 +1385,7 @@ namespace WodiLib.Test.Sys
         {
             new object?[]
             {
-                null, false,
+                null, false
             },
             new object[]
             {
@@ -1534,7 +1414,7 @@ namespace WodiLib.Test.Sys
             new object[]
             {
                 new SimpleList<StubModel>(InitInstance.MakeListDefaultItem, InitInstance.InitItems.Take(4)), false
-            },
+            }
         };
 
         [TestCaseSource(nameof(ItemEqualsTest2CaseSource))]
@@ -1542,15 +1422,11 @@ namespace WodiLib.Test.Sys
         {
             var (instance, collectionList) = InitInstance.Generate();
 
-            var isExpectedResult = new Func<bool, bool>(
-                actual => actual == expected
-            );
-
             TestTemplate.PureMethod(
                 instance,
                 target => target.ItemEquals(other),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: actual => { Assert.AreEqual(expected, actual); },
                 logger
             );
 
@@ -1580,7 +1456,7 @@ namespace WodiLib.Test.Sys
                 new("\t_"),
                 new("初期文字列"),
                 new("Init String"),
-                new("string123"),
+                new("string123")
             };
 
             public static readonly DelegateMakeListDefaultItem<StubModel> MakeListDefaultItem = GenerateTestModel;

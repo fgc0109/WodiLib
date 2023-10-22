@@ -48,6 +48,7 @@ namespace WodiLib.Test.Sys
             TestTemplate.Constructor(
                 () => new CommonListValidator<string>(target),
                 isError,
+                verification: null,
                 logger
             );
         }
@@ -76,6 +77,7 @@ namespace WodiLib.Test.Sys
             TestTemplate.Constructor(
                 () => new CommonListValidator<string>(target, capacity),
                 isError,
+                verification: null,
                 logger
             );
         }
@@ -105,6 +107,7 @@ namespace WodiLib.Test.Sys
             TestTemplate.Constructor(
                 () => new CommonListValidator<string>(target, capacityGetter),
                 isError,
+                verification: null,
                 logger
             );
         }
@@ -128,6 +131,7 @@ namespace WodiLib.Test.Sys
             TestTemplate.Constructor(
                 () => new CommonListValidator<string>(target),
                 isError,
+                verification: null,
                 logger
             );
         }
@@ -164,6 +168,7 @@ namespace WodiLib.Test.Sys
             TestTemplate.Constructor(
                 () => new CommonListValidator<string>(target, minCapacity, maxCapacity),
                 isError,
+                verification: null,
                 logger
             );
         }
@@ -185,10 +190,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(ConstructorTestCaseSource))]
         public static void ConstructorTest(NamedValue<IEnumerable<string>> initItems, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Constructor(initItems),
                 isError,
                 logger
@@ -224,10 +227,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(GetTestCaseSource))]
         public static void GetTest(NamedValue<int> index, NamedValue<int> count, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Get(index, count),
                 isError,
                 logger
@@ -270,10 +271,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(SetTestCaseSource))]
         public static void SetTest(NamedValue<int> index, NamedValue<IEnumerable<string>> items, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Set(index, items),
                 isError,
                 logger
@@ -311,10 +310,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(InsertTestCaseSource))]
         public static void InsertTest(NamedValue<int> index, NamedValue<IEnumerable<string>> items, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Insert(index, items),
                 isError,
                 logger
@@ -352,10 +349,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(OverwriteTestCaseSource))]
         public static void OverwriteTest(NamedValue<int> index, NamedValue<IEnumerable<string>> items, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Overwrite(index, items),
                 isError,
                 logger
@@ -406,10 +401,8 @@ namespace WodiLib.Test.Sys
             bool isError
         )
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Move(oldIndex, newIndex, count),
                 isError,
                 logger
@@ -444,10 +437,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(RemoveTestCaseSource))]
         public static void RemoveTest(NamedValue<int> index, NamedValue<int> count, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Remove(index, count),
                 isError,
                 logger
@@ -473,10 +464,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(AdjustLengthTestCaseSource))]
         public static void AdjustLengthTest(NamedValue<int> length, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.AdjustLength(length),
                 isError,
                 logger
@@ -501,10 +490,8 @@ namespace WodiLib.Test.Sys
         [TestCaseSource(nameof(ResetTestCaseSource))]
         public static void ResetTest(NamedValue<IEnumerable<string>> items, bool isError)
         {
-            var instance = GetTestInstance();
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: GetTestInstance,
                 target => target.Reset(items),
                 isError,
                 logger
@@ -541,6 +528,11 @@ namespace WodiLib.Test.Sys
                 CommonListValidator = validator;
                 return validator;
             }
+
+            public override RestrictedCapacityListForCommonListValidatorTest DeepClone()
+            {
+                throw new InvalidOperationException();
+            }
         }
 
         internal class FixedLengthListForConstructorTest : FixedLengthList<string, FixedLengthListForConstructorTest>
@@ -555,12 +547,22 @@ namespace WodiLib.Test.Sys
             {
                 return new CommonListValidator<string>(this, TestInstanceConfig.MinCapacity);
             }
+
+            public override FixedLengthListForConstructorTest DeepClone()
+            {
+                throw new InvalidOperationException();
+            }
         }
 
         internal class ReadOnlyListForConstructorTest : ReadOnlyExtendedList<string, ReadOnlyListForConstructorTest>
         {
             public ReadOnlyListForConstructorTest() : base(TestInstanceConfig.MinCapacity.Iterate(i => i.ToString()))
             {
+            }
+
+            public override ReadOnlyListForConstructorTest DeepClone()
+            {
+                throw new InvalidOperationException();
             }
         }
 

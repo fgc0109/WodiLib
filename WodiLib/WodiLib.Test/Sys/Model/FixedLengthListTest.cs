@@ -91,33 +91,43 @@ namespace WodiLib.Test.Sys
         {
             var list = new MockExtendedList<StubModel>();
 
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 () => new InitInstance.PropagateTestFixedLengthList(list),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // Items プロパティの実態がコンストラクタで与えた list であること
+                    Assert.IsTrue(instance.IsReferenceEqualsWithItems(list));
+                },
                 logger
             );
-
-            // Items プロパティの実態がコンストラクタで与えた list であること
-            Assert.IsTrue(instance.IsReferenceEqualsWithItems(list));
         }
 
         [Test]
         public static void ConstructorTest_SpecifyCount()
         {
             var count = 13;
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 () => new InitInstance.PropagateTestFixedLengthList(count),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // 要素数が引数で与えた count と一致すること
+                    Assert.IsTrue(instance.Count == count, "instance.Count == count");
+                    // 各要素が初期要素生成メソッドが返却した値で初期化されていること
+                    count.Range()
+                        .ForEach(
+                            i =>
+                            {
+                                Assert.IsTrue(
+                                    instance[i].ItemEquals(instance.DefaultItemFactory(i)),
+                                    $"i={i}, instance[i].ItemEquals(instance.DefaultItemFactory(i))"
+                                );
+                            }
+                        );
+                },
                 logger
             );
-
-            // 要素数が引数で与えた count と一致すること
-            Assert.IsTrue(instance.Count == count);
-            // 各要素が初期要素生成メソッドが返却した値で初期化されていること
-            count.Range()
-                .ForEach(
-                    i => { Assert.IsTrue(instance[i].ItemEquals(instance.DefaultItemFactory(i))); }
-                );
         }
 
         #endregion

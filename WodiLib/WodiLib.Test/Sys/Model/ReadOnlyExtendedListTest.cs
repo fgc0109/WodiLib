@@ -75,16 +75,21 @@ namespace WodiLib.Test.Sys
         public static void ConstructorTest_SpecifyInitItems()
         {
             var initItems = 7.Iterate(i => new StubModel(i.ToString())).ToList();
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 () => new InitInstance.PropagateTestReadOnlyExtendedList(initItems),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // 初期要素が initItems と一致すること
+                    Assert.AreEqual(7, instance.Count);
+                    instance.ForEach(
+                        (item, i) =>
+                        {
+                            Assert.IsTrue(item.ItemEquals(initItems[i]), $"i={i}, item.ItemEquals(initItems[i])");
+                        }
+                    );
+                },
                 logger
-            );
-
-            // 初期要素が initItems と一致すること
-            Assert.AreEqual(7, instance.Count);
-            instance.ForEach(
-                (item, i) => { Assert.IsTrue(item.ItemEquals(initItems[i])); }
             );
         }
 
@@ -93,14 +98,16 @@ namespace WodiLib.Test.Sys
         {
             var list = new MockExtendedList<StubModel>();
 
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 () => new InitInstance.PropagateTestReadOnlyExtendedList(list),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // Items プロパティの実態がコンストラクタで与えた list であること
+                    Assert.IsTrue(instance.IsReferenceEqualsWithItems(list));
+                },
                 logger
             );
-
-            // Items プロパティの実態がコンストラクタで与えた list であること
-            Assert.IsTrue(instance.IsReferenceEqualsWithItems(list));
         }
 
         #endregion
@@ -209,7 +216,7 @@ namespace WodiLib.Test.Sys
             }
 
             /// <summary>
-            /// 内部で使用する <see cref="IExtendedList{T}"/> をモックに差し替えただけ。
+            ///     内部で使用する <see cref="IExtendedList{T}"/> をモックに差し替えただけ。
             /// </summary>
             public class TransportMembersTestReadOnlyExtendedList :
                 ReadOnlyExtendedList<StubModel, TransportMembersTestReadOnlyExtendedList>
@@ -226,7 +233,7 @@ namespace WodiLib.Test.Sys
                             i => new StubModel(i.ToString()),
                             null,
                             5.Iterate(i => new StubModel(i.ToString()))
-                        ),
+                        )
                     };
                 }
 
@@ -247,9 +254,9 @@ namespace WodiLib.Test.Sys
                 => new(count.Iterate(i => new StubModel(i.ToString())));
 
             /// <summary>
-            /// 内部で使用する <see cref="IExtendedList{T}"/> を差し替えないバージョン。
-            /// <see cref="IExtendedList{T}"/> の通知が <see cref="ReadOnlyExtendedList{T,TImpl}"/> に伝播することを確認するためのクラス。
-            /// またコンストラクタのテストにも使用する。
+            ///     内部で使用する <see cref="IExtendedList{T}"/> を差し替えないバージョン。
+            ///     <see cref="IExtendedList{T}"/> の通知が <see cref="ReadOnlyExtendedList{T,TImpl}"/> に伝播することを確認するためのクラス。
+            ///     またコンストラクタのテストにも使用する。
             /// </summary>
             public class PropagateTestReadOnlyExtendedList :
                 ReadOnlyExtendedList<StubModel, PropagateTestReadOnlyExtendedList>

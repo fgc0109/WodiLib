@@ -13,7 +13,6 @@ using System.Linq;
 using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
-using WodiLib.Sys.Collections;
 
 namespace WodiLib.Test.Tools
 {
@@ -37,12 +36,17 @@ namespace WodiLib.Test.Tools
         /// </remarks>
         /// <param name="factory">コンストラクタ実行処理</param>
         /// <param name="expectedThrowCreateNewInstance">コンストラクタエラー有無</param>
+        /// <param name="verification">
+        ///     コンストラクタで生成されたインスタンスの検証処理<br/>
+        ///     エラー時には <see cref="Assert"/> などを利用して例外を発生させる。
+        /// </param>
         /// <param name="logger"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T Constructor<T>(
+        public static void Constructor<T>(
             Func<T> factory,
             bool expectedThrowCreateNewInstance,
+            Action<T>? verification,
             Logger logger
         )
         {
@@ -50,13 +54,12 @@ namespace WodiLib.Test.Tools
             try
             {
                 var instance = factory();
-                return instance;
+                verification?.Invoke(instance);
             }
             catch (Exception ex)
             {
                 logger.Exception(ex);
                 errorOccured = true;
-                return default!;
             }
             finally
             {
@@ -87,7 +90,7 @@ namespace WodiLib.Test.Tools
         ///         <li>編集したプロパティ値と取得したプロパティ値が同値であることをテスト</li>
         ///     </ul>
         /// </remarks>
-        /// <param name="instance">テスト対象のインスタンス</param>
+        /// <param name="createInstance">テスト対象のインスタンス生成処理</param>
         /// <param name="propertyName">テスト対象のプロパティ名</param>
         /// <param name="setItem">プロパティに編集する値</param>
         /// <param name="isEqualSetItemBeforePropertyValue">編集する値と編集前の値が同値であるか</param>
@@ -100,7 +103,7 @@ namespace WodiLib.Test.Tools
         /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
         /// <typeparam name="TItem">プロパティに編集する値型</typeparam>
         public static void PropertyGetAndSet<TTarget, TItem>(
-            TTarget instance,
+            Func<TTarget> createInstance,
             string propertyName,
             TItem setItem,
             bool isEqualSetItemBeforePropertyValue,
@@ -111,10 +114,9 @@ namespace WodiLib.Test.Tools
             Func<TItem, TItem, bool> itemEqualityComparer,
             Logger logger
         )
-            where TTarget : INotifyPropertyChanged
         {
             PropertySet(
-                instance,
+                createInstance,
                 propertyName,
                 setItem,
                 isEqualSetItemBeforePropertyValue,
@@ -123,8 +125,8 @@ namespace WodiLib.Test.Tools
                 logger
             );
 
-            var isExpectedItem = new Func<TItem, bool>(getItem => itemEqualityComparer(setItem, getItem));
-            PropertyGet(instance, propertyGetter, expectedThrowActPropertyGet, isExpectedItem, logger);
+            var getValueVerification = new Action<TItem>(getItem => itemEqualityComparer(setItem, getItem));
+            PropertyGet(createInstance, propertyGetter, expectedThrowActPropertyGet, getValueVerification, logger);
         }
 
         /// <summary>
@@ -141,24 +143,34 @@ namespace WodiLib.Test.Tools
         ///         <li>取得したプロパティ値が同値であることをテスト</li>
         ///     </ul>
         /// </remarks>
-        /// <param name="instance">テスト対象のインスタンス</param>
+        /// <param name="createInstance">テスト対象のインスタンス生成処理</param>
         /// <param name="propertyGetter">プロパティ取得処理</param>
         /// <param name="expectedThrowActPropertyGet">プロパティ取得処理</param>
-        /// <param name="isExpectedItem">取得した要素が意図した値であることを検証する処理</param>
+        /// <param name="getValueVerification">
+        ///     プロパティから取得した値の検証処理<br/>
+        ///     エラー時には <see cref="Assert"/> などを利用して例外を発生させる。
+        /// </param>
         /// <param name="logger">ロガー</param>
         /// <typeparam name="TTarget"></typeparam>
         /// <typeparam name="TItem"></typeparam>
         public static void PropertyGet<TTarget, TItem>(
-            TTarget instance,
+            Func<TTarget> createInstance,
             Func<TTarget, TItem> propertyGetter,
             bool expectedThrowActPropertyGet,
-            Func<TItem, bool>? isExpectedItem,
+            Action<TItem>? getValueVerification,
             Logger logger
         )
-            where TTarget : INotifyPropertyChanged
         {
+            var instance = createInstance.Invoke();
             var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (_, args) => { changedPropertyList.Add(args.PropertyName); };
+            var propertyChangedNotifiable = instance as INotifyPropertyChanged;
+            if (propertyChangedNotifiable is not null)
+            {
+                propertyChangedNotifiable.PropertyChanged += (_, args) =>
+                {
+                    changedPropertyList.Add(args.PropertyName);
+                };
+            }
 
             TItem getResult = default!;
             var errorOccured = false;
@@ -176,18 +188,18 @@ namespace WodiLib.Test.Tools
             Assert.AreEqual(expectedThrowActPropertyGet, errorOccured);
 
             // プロパティ変更通知が発火していないこと
-            Assert.AreEqual(changedPropertyList.Count, 0);
+            if (propertyChangedNotifiable is not null)
+            {
+                Assert.AreEqual(changedPropertyList.Count, 0);
+            }
 
             if (errorOccured)
             {
                 return;
             }
 
-            // 取得した要素が期待した要素と一致すること
-            if (isExpectedItem is not null)
-            {
-                Assert.IsTrue(isExpectedItem(getResult));
-            }
+            // 取得した要素の検証処理
+            getValueVerification?.Invoke(getResult);
         }
 
         /// <summary>
@@ -204,7 +216,7 @@ namespace WodiLib.Test.Tools
         ///         <li>プロパティ変更通知が行われていないことをテスト</li>
         ///     </ul>
         /// </remarks>
-        /// <param name="instance">テスト対象のインスタンス</param>
+        /// <param name="createInstance">テスト対象のインスタンス生成処理</param>
         /// <param name="propertyName">テスト対象のプロパティ名</param>
         /// <param name="setItem">プロパティに編集する値</param>
         /// <param name="isEqualSetItemBeforePropertyValue">編集する値と編集前の値が同値であるか</param>
@@ -214,7 +226,7 @@ namespace WodiLib.Test.Tools
         /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
         /// <typeparam name="TItem">プロパティに編集する値型</typeparam>
         public static void PropertySet<TTarget, TItem>(
-            TTarget instance,
+            Func<TTarget> createInstance,
             string propertyName,
             TItem setItem,
             bool isEqualSetItemBeforePropertyValue,
@@ -222,10 +234,17 @@ namespace WodiLib.Test.Tools
             bool expectedThrowActPropertySet,
             Logger logger
         )
-            where TTarget : INotifyPropertyChanged
         {
+            var instance = createInstance.Invoke();
             var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (_, args) => { changedPropertyList.Add(args.PropertyName); };
+            var propertyChangedNotifiable = instance as INotifyPropertyChanged;
+            if (propertyChangedNotifiable is not null)
+            {
+                propertyChangedNotifiable.PropertyChanged += (_, args) =>
+                {
+                    changedPropertyList.Add(args.PropertyName);
+                };
+            }
 
             var errorOccured = false;
             try
@@ -241,35 +260,27 @@ namespace WodiLib.Test.Tools
             // エラーフラグが一致すること
             Assert.AreEqual(expectedThrowActPropertySet, errorOccured);
 
-            if (errorOccured)
+            if (propertyChangedNotifiable is not null)
             {
-                // プロパティ変更通知が発火していないこと
-                Assert.AreEqual(changedPropertyList.Count, 0);
-            }
-            else
-            {
-                if (isEqualSetItemBeforePropertyValue)
+                if (errorOccured)
                 {
                     // プロパティ変更通知が発火していないこと
                     Assert.AreEqual(changedPropertyList.Count, 0);
                 }
                 else
                 {
-                    // プロパティ変更通知が発火していること
-                    Assert.AreEqual(changedPropertyList.Count, 1);
-                    Assert.AreEqual(changedPropertyList[0], propertyName);
+                    if (isEqualSetItemBeforePropertyValue)
+                    {
+                        // プロパティ変更通知が発火していないこと
+                        Assert.AreEqual(changedPropertyList.Count, 0);
+                    }
+                    else
+                    {
+                        // プロパティ変更通知が発火していること
+                        Assert.AreEqual(changedPropertyList.Count, 1);
+                        Assert.AreEqual(changedPropertyList[0], propertyName);
+                    }
                 }
-            }
-
-            {
-                // 同じ値をセットしてプロパティ変更通知が発火していないことを確認
-
-                changedPropertyList.Clear();
-
-                propertySetter(instance, setItem);
-
-                // プロパティ変更通知が発火していないこと
-                Assert.AreEqual(changedPropertyList.Count, 0);
             }
         }
 
@@ -286,7 +297,6 @@ namespace WodiLib.Test.Tools
         ///         <li>メソッドを実行する</li>
         ///         <li>メソッド実行によるエラーの有無をテスト</li>
         ///         <li>メソッド実行によりプロパティ変更通知が発火していないことをテスト</li>
-        ///         <li>メソッド実行によりエラーが発生していない場合、取得した値が意図した値であることをテスト</li>
         ///     </ul>
         /// </remarks>
         /// <param name="instance">テスト対象のインスタンス</param>
@@ -296,13 +306,43 @@ namespace WodiLib.Test.Tools
         /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
         /// <typeparam name="TResult">メソッド返却型</typeparam>
         /// <returns></returns>
-        public static MethodTestResult<TResult> PureMethod<TTarget, TResult>(
+        public static void PureMethod<TTarget, TResult>(
             TTarget instance,
             Func<TTarget, TResult> execFunc,
             bool expectedThrowExecute,
             Logger logger
+        ) => PureMethod(
+            createInstance: () => instance,
+            execFunc,
+            expectedThrowExecute,
+            logger
+        );
+
+        /// <summary>
+        ///     純粋メソッドのテスト
+        /// </summary>
+        /// <remarks>
+        ///     以下の手順のテストを行う。
+        ///     <ul>
+        ///         <li>メソッドを実行する</li>
+        ///         <li>メソッド実行によるエラーの有無をテスト</li>
+        ///         <li>メソッド実行によりプロパティ変更通知が発火していないことをテスト</li>
+        ///     </ul>
+        /// </remarks>
+        /// <param name="createInstance">テスト対象のインスタンス生成処理</param>
+        /// <param name="execFunc">メソッド実行処理</param>
+        /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
+        /// <param name="logger">ロガー</param>
+        /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
+        /// <typeparam name="TResult">メソッド返却型</typeparam>
+        /// <returns></returns>
+        public static void PureMethod<TTarget, TResult>(
+            Func<TTarget> createInstance,
+            Func<TTarget, TResult> execFunc,
+            bool expectedThrowExecute,
+            Logger logger
         )
-            => PureMethod(instance, execFunc, expectedThrowExecute, null, logger);
+            => PureMethod(createInstance, execFunc, expectedThrowExecute, resultValueVerification: null, logger);
 
         /// <summary>
         ///     純粋メソッドのテスト
@@ -319,22 +359,60 @@ namespace WodiLib.Test.Tools
         /// <param name="instance">テスト対象のインスタンス</param>
         /// <param name="execFunc">メソッド実行処理</param>
         /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
-        /// <param name="isExpectedItem">
-        ///     取得した要素が意図した値であることを検証する処理<br/>
-        ///     <see langword="null"/> の場合検証処理を行わない
+        /// <param name="resultValueVerification">
+        ///     メソッド戻り値の検証処理<br/>
+        ///     エラー時には <see cref="Assert"/> などを利用して例外を発生させる。
         /// </param>
         /// <param name="logger">ロガー</param>
         /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
         /// <typeparam name="TResult">メソッド返却型</typeparam>
         /// <returns></returns>
-        public static MethodTestResult<TResult> PureMethod<TTarget, TResult>(
+        public static void PureMethod<TTarget, TResult>(
             TTarget instance,
             Func<TTarget, TResult> execFunc,
             bool expectedThrowExecute,
-            Func<TResult, bool>? isExpectedItem,
+            Action<TResult>? resultValueVerification,
+            Logger logger
+        ) => PureMethod(
+            createInstance: () => instance,
+            execFunc,
+            expectedThrowExecute,
+            resultValueVerification,
+            logger
+        );
+
+        /// <summary>
+        ///     純粋メソッドのテスト
+        /// </summary>
+        /// <remarks>
+        ///     以下の手順のテストを行う。
+        ///     <ul>
+        ///         <li>メソッドを実行する</li>
+        ///         <li>メソッド実行によるエラーの有無をテスト</li>
+        ///         <li>メソッド実行によりプロパティ変更通知が発火していないことをテスト</li>
+        ///         <li>メソッド実行によりエラーが発生していない場合、取得した値が意図した値であることをテスト</li>
+        ///     </ul>
+        /// </remarks>
+        /// <param name="createInstance">テスト対象のインスタンス生成処理</param>
+        /// <param name="execFunc">メソッド実行処理</param>
+        /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
+        /// <param name="resultValueVerification">
+        ///     メソッド戻り値の検証処理<br/>
+        ///     エラー時には <see cref="Assert"/> などを利用して例外を発生させる。
+        /// </param>
+        /// <param name="logger">ロガー</param>
+        /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
+        /// <typeparam name="TResult">メソッド返却型</typeparam>
+        /// <returns></returns>
+        public static void PureMethod<TTarget, TResult>(
+            Func<TTarget> createInstance,
+            Func<TTarget, TResult> execFunc,
+            bool expectedThrowExecute,
+            Action<TResult>? resultValueVerification,
             Logger logger
         )
         {
+            var instance = createInstance.Invoke();
             var notifyChangeable = instance as INotifyPropertyChanged;
             var changedPropertyList = new List<string>();
             if (notifyChangeable is not null)
@@ -363,13 +441,13 @@ namespace WodiLib.Test.Tools
                 Assert.AreEqual(changedPropertyList.Count, 0);
             }
 
-            // 取得した値が意図した値であること
-            if (!errorOccured && isExpectedItem is not null)
+            if (errorOccured)
             {
-                Assert.IsTrue(isExpectedItem(execResult));
+                return;
             }
 
-            return new MethodTestResult<TResult>(execResult, errorOccured);
+            // 取得した値が意図した値であること
+            resultValueVerification?.Invoke(execResult);
         }
 
         /// <summary>
@@ -384,19 +462,20 @@ namespace WodiLib.Test.Tools
         ///         <li>メソッド実行によりエラーが発生していない場合、取得した値が意図した値であることをテスト</li>
         ///     </ul>
         /// </remarks>
-        /// <param name="instance">テスト対象のインスタンス</param>
+        /// <param name="createInstance">テスト対象のインスタンス生成処理</param>
         /// <param name="execAction">メソッド実行処理</param>
         /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
         /// <param name="logger">ロガー</param>
         /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
         /// <returns></returns>
         public static void PureMethod<TTarget>(
-            TTarget instance,
+            Func<TTarget> createInstance,
             Action<TTarget> execAction,
             bool expectedThrowExecute,
             Logger logger
         )
         {
+            var instance = createInstance.Invoke();
             var notifyChangeable = instance as INotifyPropertyChanged;
             var changedPropertyList = new List<string>();
             if (notifyChangeable is not null)
@@ -475,29 +554,42 @@ namespace WodiLib.Test.Tools
         ///         <li>メソッド実行によりエラーが発生した場合、メソッド実行前後で状態が変化していないことをテスト</li>
         ///     </ul>
         /// </remarks>
-        /// <param name="instance">テスト対象のインスタンス</param>
+        /// <param name="createInstance">テスト対象のインスタンス生成処理</param>
         /// <param name="execFunc">メソッド実行処理</param>
         /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
-        /// <param name="isExpectedItem">取得した要素が意図した値であることを検証する処理</param>
+        /// <param name="resultValueVerification">
+        ///     戻り値の検証処理<br/>
+        ///     エラー時には <see cref="Assert"/> などを利用して例外を発生させる。
+        /// </param>
         /// <param name="expectedNotifyPropertyChange">期待するプロパティ変更通知</param>
-        /// <param name="isExpectedState">メソッド実行後のインスタンスがいとした状態であることを検証する処理</param>
+        /// <param name="instanceVerification">
+        ///     処理対象インスタンスの状態検証処理<br/>
+        ///     エラー時には <see cref="Assert"/> などを利用して例外を発生させる。
+        /// </param>
         /// <param name="logger">ロガー</param>
         /// <typeparam name="TTarget"></typeparam>
         /// <typeparam name="TResult"></typeparam>
         /// <returns></returns>
-        public static MethodTestResult<TResult> MutableMethod<TTarget, TResult>(
-            TTarget instance,
+        public static void MutableMethod<TTarget, TResult>(
+            Func<TTarget> createInstance,
             Func<TTarget, TResult> execFunc,
             bool expectedThrowExecute,
-            Func<TResult, bool> isExpectedItem,
+            Action<TResult>? resultValueVerification,
             IEnumerable<string> expectedNotifyPropertyChange,
-            Func<TTarget, bool> isExpectedState,
+            Action<TTarget>? instanceVerification,
             Logger logger
         )
-            where TTarget : INotifyPropertyChanged, IDeepCloneable<TTarget>, IEqualityComparable<TTarget>
         {
+            var instance = createInstance.Invoke();
             var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (_, args) => { changedPropertyList.Add(args.PropertyName); };
+            var propertyChangedNotifiable = instance as INotifyPropertyChanged;
+            if (propertyChangedNotifiable is not null)
+            {
+                propertyChangedNotifiable.PropertyChanged += (_, args) =>
+                {
+                    changedPropertyList.Add(args.PropertyName);
+                };
+            }
 
             TResult execResult = default!;
             var errorOccured = false;
@@ -514,7 +606,15 @@ namespace WodiLib.Test.Tools
             // エラーフラグが一致すること
             Assert.AreEqual(expectedThrowExecute, errorOccured);
 
-            if (!errorOccured)
+            if (errorOccured)
+            {
+                return;
+            }
+
+            // 取得した値が意図した値であること
+            resultValueVerification?.Invoke(execResult);
+
+            if (propertyChangedNotifiable is not null)
             {
                 // プロパティ変更通知が発火していること
                 var expectedNotifyPropertyChangeList = expectedNotifyPropertyChange.ToList();
@@ -523,15 +623,10 @@ namespace WodiLib.Test.Tools
                     changedPropertyList,
                     expectedNotifyPropertyChangeList
                 );
-
-                // 取得した値が意図した値であること
-                Assert.IsTrue(isExpectedItem(execResult));
-
-                // 実行後のインスタンスが意図した状態であること
-                Assert.IsTrue(isExpectedState(instance));
             }
 
-            return new MethodTestResult<TResult>(execResult, errorOccured);
+            // 実行後のインスタンスが意図した状態であること
+            instanceVerification?.Invoke(instance);
         }
 
         /// <summary>
@@ -553,22 +648,74 @@ namespace WodiLib.Test.Tools
         /// <param name="execAction">メソッド実行処理</param>
         /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
         /// <param name="expectedNotifyPropertyChange">期待するプロパティ変更通知</param>
-        /// <param name="isExpectedState">メソッド実行後のインスタンスがいとした状態であることを検証する処理</param>
+        /// <param name="instanceVerification">
+        ///     処理対象インスタンスの状態検証処理<br/>
+        ///     エラー時には <see cref="Assert"/> などを利用して例外を発生させる。
+        /// </param>
         /// <param name="logger">ロガー</param>
         /// <typeparam name="TTarget"></typeparam>
         /// <returns>エラー有無</returns>
-        public static bool MutableMethod<TTarget>(
+        public static void MutableMethod<TTarget>(
             TTarget instance,
             Action<TTarget> execAction,
             bool expectedThrowExecute,
             IEnumerable<string> expectedNotifyPropertyChange,
-            Func<TTarget, bool>? isExpectedState,
+            Action<TTarget>? instanceVerification,
+            Logger logger
+        ) => MutableMethod(
+            createInstance: () => instance,
+            execAction,
+            expectedThrowExecute,
+            expectedNotifyPropertyChange,
+            instanceVerification,
+            logger
+        );
+
+        /// <summary>
+        ///     非純粋メソッドのテスト(戻り値なし)
+        /// </summary>
+        /// <remarks>
+        ///     以下の手順のテストを行う。
+        ///     <ul>
+        ///         <li>メソッドを実行する</li>
+        ///         <li>メソッド実行によるエラーの有無をテスト</li>
+        ///         <li>ソッド実行によりエラーが発生していない場合、メソッド実行によりプロパティ変更通知が意図したとおり発火していることをテスト</li>
+        ///         <li>メソッド実行によりエラーが発生していない場合、実行結果が意図した値であることをテスト</li>
+        ///         <li>メソッド実行によりエラーが発生していない場合、実行の状態が意図した状態であることをテスト</li>
+        ///         <li>ソッド実行によりエラーが発生した場合、メソッド実行によりプロパティ変更通知が発火していないことをテスト</li>
+        ///         <li>メソッド実行によりエラーが発生した場合、メソッド実行前後で状態が変化していないことをテスト</li>
+        ///     </ul>
+        /// </remarks>
+        /// <param name="createInstance">テスト対象のインスタンス生成処理</param>
+        /// <param name="execAction">メソッド実行処理</param>
+        /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
+        /// <param name="expectedNotifyPropertyChange">期待するプロパティ変更通知</param>
+        /// <param name="instanceVerification">
+        ///     処理対象インスタンスの状態検証処理<br/>
+        ///     エラー時には <see cref="Assert"/> などを利用して例外を発生させる。
+        /// </param>
+        /// <param name="logger">ロガー</param>
+        /// <typeparam name="TTarget"></typeparam>
+        /// <returns>エラー有無</returns>
+        public static void MutableMethod<TTarget>(
+            Func<TTarget> createInstance,
+            Action<TTarget> execAction,
+            bool expectedThrowExecute,
+            IEnumerable<string> expectedNotifyPropertyChange,
+            Action<TTarget>? instanceVerification,
             Logger logger
         )
-            where TTarget : INotifyPropertyChanged, IDeepCloneable<TTarget>, IEqualityComparable<TTarget>
         {
+            var instance = createInstance.Invoke();
             var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (_, args) => { changedPropertyList.Add(args.PropertyName); };
+            var propertyChangedNotifiable = instance as INotifyPropertyChanged;
+            if (propertyChangedNotifiable is not null)
+            {
+                propertyChangedNotifiable.PropertyChanged += (_, args) =>
+                {
+                    changedPropertyList.Add(args.PropertyName);
+                };
+            }
 
             var errorOccured = false;
             try
@@ -584,7 +731,12 @@ namespace WodiLib.Test.Tools
             // エラーフラグが一致すること
             Assert.AreEqual(expectedThrowExecute, errorOccured);
 
-            if (!errorOccured)
+            if (errorOccured)
+            {
+                return;
+            }
+
+            if (propertyChangedNotifiable is not null)
             {
                 // プロパティ変更通知が発火していること
                 var expectedNotifyPropertyChangeList = expectedNotifyPropertyChange.ToList();
@@ -593,15 +745,10 @@ namespace WodiLib.Test.Tools
                     expectedNotifyPropertyChangeList,
                     changedPropertyList
                 );
-
-                // 実行後のインスタンスが意図した状態であること
-                if (isExpectedState is not null)
-                {
-                    Assert.IsTrue(isExpectedState(instance));
-                }
             }
 
-            return errorOccured;
+            // 実行後のインスタンスが意図した状態であること
+            instanceVerification?.Invoke(instance);
         }
 
         /// <summary>
@@ -617,14 +764,17 @@ namespace WodiLib.Test.Tools
         /// </remarks>
         /// <param name="execFunc">メソッド実行処理</param>
         /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
-        /// <param name="isExpectedItem">取得した要素が意図した値であることを検証する処理</param>
+        /// <param name="resultValueVerification">
+        ///     メソッド戻り値の検証処理<br/>
+        ///     エラー時には <see cref="Assert"/> などを利用して例外を発生させる。
+        /// </param>
         /// <param name="logger">ロガー</param>
         /// <typeparam name="TResult">メソッド返却型</typeparam>
         /// <returns></returns>
-        public static MethodTestResult<TResult> StaticMethod<TResult>(
+        public static void StaticMethod<TResult>(
             Func<TResult> execFunc,
             bool expectedThrowExecute,
-            Func<TResult, bool> isExpectedItem,
+            Action<TResult>? resultValueVerification,
             Logger logger
         )
         {
@@ -643,13 +793,13 @@ namespace WodiLib.Test.Tools
             // エラーフラグが一致すること
             Assert.AreEqual(expectedThrowExecute, errorOccured);
 
-            // 取得した値が意図した値であること
-            if (!errorOccured)
+            if (errorOccured)
             {
-                Assert.IsTrue(isExpectedItem(execResult));
+                return;
             }
 
-            return new MethodTestResult<TResult>(execResult, errorOccured);
+            // 取得した値が意図した値であること
+            resultValueVerification?.Invoke(execResult);
         }
 
         /// <summary>
@@ -665,8 +815,8 @@ namespace WodiLib.Test.Tools
         ///         <li>結果が意図した値であることをテスト</li>
         ///     </ul>
         /// </remarks>
-        /// <param name="left">比較対象のインスタンスその1</param>
-        /// <param name="right">比較対象のインスタンスその2</param>
+        /// <param name="left">比較対象の左辺インスタンス</param>
+        /// <param name="right">比較対象の右辺インスタンス</param>
         /// <param name="expected">期待する比較結果</param>
         /// <param name="logger">ロガー</param>
         /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
@@ -678,15 +828,12 @@ namespace WodiLib.Test.Tools
             Logger logger
         )
             where TTarget : IEqualityComparable<TComp>
-        {
-            PureMethod(
-                left,
-                target => target.ItemEquals(right),
-                false,
-                actual => expected == actual,
+            => ItemEquals(
+                createLeftItem: () => left,
+                createRightItem: () => right,
+                expected,
                 logger
             );
-        }
 
         /// <summary>
         ///     比較処理のテスト
@@ -701,26 +848,27 @@ namespace WodiLib.Test.Tools
         ///         <li>結果が意図した値であることをテスト</li>
         ///     </ul>
         /// </remarks>
-        /// <param name="left">比較対象のインスタンスその1</param>
-        /// <param name="right">比較対象のインスタンスその2</param>
+        /// <param name="createLeftItem">比較対象の左辺インスタンス生成処理</param>
+        /// <param name="createRightItem">比較対象の右辺インスタンス生成処理</param>
         /// <param name="expected">期待する比較結果</param>
         /// <param name="logger">ロガー</param>
-        /// <typeparam name="TList">テスト対象インスタンス型</typeparam>
-        /// <typeparam name="TItem">テスト対象列挙子型</typeparam>
-        public static void ItemEqualsEnumerable<TList, TItem>(
-            TList left,
-            IEnumerable<TItem>? right,
+        /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
+        /// <typeparam name="TComp">テスト対象比較相手型</typeparam>
+        public static void ItemEquals<TTarget, TComp>(
+            Func<TTarget> createLeftItem,
+            Func<TComp?> createRightItem,
             bool expected,
             Logger logger
         )
-            where TList : RestrictedCapacityList<TItem, TList>
-            where TItem : notnull
+            where TTarget : IEqualityComparable<TComp>
         {
+            var right = createRightItem.Invoke();
+
             PureMethod(
-                left,
+                createLeftItem,
                 target => target.ItemEquals(right),
-                false,
-                actual => expected == actual,
+                expectedThrowExecute: false,
+                resultValueVerification: actual => { Assert.AreEqual(expected, actual); },
                 logger
             );
         }
@@ -746,21 +894,54 @@ namespace WodiLib.Test.Tools
             TTarget instance,
             Logger logger
         )
-            where TTarget : INotifyPropertyChanged, IDeepCloneable<TTarget>, IEqualityComparable<TTarget>
+            where TTarget : IDeepCloneable<TTarget>, IEqualityComparable<TTarget>
+            => DeepClone(
+                createInstance: () => instance,
+                logger
+            );
+
+        /// <summary>
+        ///     DeepCloneメソッドのテスト
+        /// </summary>
+        /// <remarks>
+        ///     以下の手順のテストを行う。
+        ///     <ul>
+        ///         <li>メソッドを実行する</li>
+        ///         <li>メソッド実行によりエラーが発生しないことをテスト</li>
+        ///         <li>メソッド実行によりプロパティ変更通知が発火していないことをテスト</li>
+        ///         <li>メソッド実行前後で状態が変化していないことをテスト</li>
+        ///         <li>取得した値が元のインスタンスとは別インスタンスであり、同値であることをテスト</li>
+        ///     </ul>
+        /// </remarks>
+        /// <param name="createInstance">テスト対象のインスタンス生成処理</param>
+        /// <param name="logger">ロガー</param>
+        /// <typeparam name="TTarget">テスト対象インスタンス型</typeparam>
+        /// <returns></returns>
+        public static void DeepClone<TTarget>(
+            Func<TTarget> createInstance,
+            Logger logger
+        )
+            where TTarget : IDeepCloneable<TTarget>, IEqualityComparable<TTarget>
         {
+            var instance = createInstance.Invoke();
+
             PureMethod(
-                instance,
+                createInstance: () => instance,
                 target => target.DeepClone(),
-                false,
-                result => !ReferenceEquals(instance, result) && result.ItemEquals(instance),
+                expectedThrowExecute: false,
+                resultValueVerification: result =>
+                {
+                    Assert.IsFalse(ReferenceEquals(instance, result), "ReferenceEquals(instance, result)");
+                    Assert.IsTrue(result.ItemEquals(instance), "result.ItemEquals(instance)");
+                },
                 logger
             );
         }
 
 
         private static void AssertEqualsNotifiedPropertyNames(
-            IReadOnlyList<string> expected,
-            IReadOnlyList<string> actual
+            IReadOnlyCollection<string> expected,
+            IReadOnlyCollection<string> actual
         )
         {
             Assert.AreEqual(expected.Count, actual.Count);
@@ -786,7 +967,7 @@ namespace WodiLib.Test.Tools
         /// </remarks>
         /// <param name="execFunc">関数実行処理</param>
         /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
-        /// <param name="assertResult">
+        /// <param name="resultValueVerification">
         ///     取得した要素が意図した値であることを検証する処理<br/>
         ///     <see langword="null"/> の場合実行しない。
         /// </param>
@@ -795,7 +976,7 @@ namespace WodiLib.Test.Tools
         public static void StaticClassFunc<TResult>(
             Func<TResult> execFunc,
             bool expectedThrowExecute,
-            Action<TResult>? assertResult,
+            Action<TResult>? resultValueVerification,
             Logger logger
         )
         {
@@ -817,7 +998,7 @@ namespace WodiLib.Test.Tools
             // 取得した値が意図した値であること
             if (!errorOccured)
             {
-                assertResult?.Invoke(execResult);
+                resultValueVerification?.Invoke(execResult);
             }
         }
 
@@ -834,15 +1015,15 @@ namespace WodiLib.Test.Tools
         /// </remarks>
         /// <param name="execAction">関数実行処理</param>
         /// <param name="expectedThrowExecute">メソッド実行時例外有無期待値</param>
-        /// <param name="assertResult">
-        ///     取得した要素が意図した値であることを検証する処理<br/>
+        /// <param name="verification">
+        ///     実行した結果意図した状態となったことを検証する処理<br/>
         ///     <see langword="null"/> の場合実行しない。
         /// </param>
         /// <param name="logger">ロガー</param>
         public static void StaticClassFunc(
             Action execAction,
             bool expectedThrowExecute,
-            Action? assertResult,
+            Action? verification,
             Logger logger
         )
         {
@@ -863,24 +1044,9 @@ namespace WodiLib.Test.Tools
             // 取得した値が意図した値であること
             if (!errorOccured)
             {
-                assertResult?.Invoke();
+                verification?.Invoke();
             }
         }
-
-        #endregion
-
-        #region class
-
-        /// <summary>
-        ///     メソッドテスト結果
-        /// </summary>
-        /// <param name="Result">メソッド返戻値</param>
-        /// <param name="ErrorOccured">エラー有無</param>
-        /// <typeparam name="T">メソッド返戻型</typeparam>
-        public record MethodTestResult<T>(
-            T Result,
-            bool ErrorOccured
-        );
 
         #endregion
     }

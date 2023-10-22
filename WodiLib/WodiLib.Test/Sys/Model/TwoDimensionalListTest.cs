@@ -160,16 +160,14 @@ namespace WodiLib.Test.Sys
         [TestCase(1, 1, false)]
         public static void IsEmptyGetterTest(int rowLength, int columnLength, bool expected)
         {
-            var instance = InitInstance.GenerateTwoDimensionalListForImplementationsTest(
-                rowLength,
-                columnLength
-            );
-
             TestTemplate.PropertyGet(
-                instance,
+                () => InitInstance.GenerateTwoDimensionalListForImplementationsTest(
+                    rowLength,
+                    columnLength
+                ),
                 propertyGetter: target => target.IsEmpty,
                 expectedThrowActPropertyGet: false,
-                isExpectedItem: actual => actual == expected,
+                getValueVerification: actual => { Assert.AreEqual(expected, actual); },
                 logger
             );
         }
@@ -179,16 +177,14 @@ namespace WodiLib.Test.Sys
         [TestCase(1, 3)]
         public static void ColumnCountGetterTest(int rowLength, int columnLength)
         {
-            var instance = InitInstance.GenerateTwoDimensionalListForImplementationsTest(
-                rowLength,
-                columnLength
-            );
-
             TestTemplate.PropertyGet(
-                instance,
+                () => InitInstance.GenerateTwoDimensionalListForImplementationsTest(
+                    rowLength,
+                    columnLength
+                ),
                 propertyGetter: target => target.ColumnCount,
                 expectedThrowActPropertyGet: false,
-                isExpectedItem: actual => actual == columnLength,
+                getValueVerification: actual => { Assert.AreEqual(columnLength, actual); },
                 logger
             );
         }
@@ -196,15 +192,18 @@ namespace WodiLib.Test.Sys
         [Test]
         public static void ValidatorGetterTest()
         {
-            var instance = InitInstance.GenerateTwoDimensionalListForImplementationsTest();
-
             TestTemplate.PropertyGet(
-                instance,
+                () => InitInstance.GenerateTwoDimensionalListForImplementationsTest(),
                 propertyGetter: target => target.Validator,
                 expectedThrowActPropertyGet: false,
                 /* TwoDimensionalListForImplementationsTest 内部で validator に MockTwoDimensionalListValidator<InitInstance.ExtendedListForRow, StubModel> を指定している */
-                isExpectedItem: actual
-                    => actual is MockTwoDimensionalListValidator<InitInstance.ExtendedListForRow, StubModel>,
+                getValueVerification: actual
+                    =>
+                {
+                    Assert.IsTrue(
+                        actual is MockTwoDimensionalListValidator<InitInstance.ExtendedListForRow, StubModel>
+                    );
+                },
                 logger
             );
         }
@@ -212,18 +211,17 @@ namespace WodiLib.Test.Sys
         [Test]
         public static void GetMaxRowCapacityTest()
         {
-            var instance = InitInstance.GenerateTwoDimensionalListForImplementationsTest();
-            var config = InitInstance.TwoDimensionalListForImplementationsTest.GenerateTestTwoDimensionalListConfig();
-
-            var isExpectedResult = new Func<int, bool>(
-                result => result == config.MaxRowCapacity
-            );
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: () => InitInstance.GenerateTwoDimensionalListForImplementationsTest(),
                 target => target.GetMaxRowCapacity(),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: actual =>
+                {
+                    var config = InitInstance.TwoDimensionalListForImplementationsTest
+                        .GenerateTestTwoDimensionalListConfig();
+
+                    Assert.AreEqual(config.MaxRowCapacity, actual);
+                },
                 logger
             );
         }
@@ -231,18 +229,17 @@ namespace WodiLib.Test.Sys
         [Test]
         public static void GetMinRowCapacityTest()
         {
-            var instance = InitInstance.GenerateTwoDimensionalListForImplementationsTest();
-            var config = InitInstance.TwoDimensionalListForImplementationsTest.GenerateTestTwoDimensionalListConfig();
-
-            var isExpectedResult = new Func<int, bool>(
-                result => result == config.MinRowCapacity
-            );
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: () => InitInstance.GenerateTwoDimensionalListForImplementationsTest(),
                 target => target.GetMinRowCapacity(),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: actual =>
+                {
+                    var config = InitInstance.TwoDimensionalListForImplementationsTest
+                        .GenerateTestTwoDimensionalListConfig();
+
+                    Assert.AreEqual(config.MinRowCapacity, actual);
+                },
                 logger
             );
         }
@@ -250,18 +247,17 @@ namespace WodiLib.Test.Sys
         [Test]
         public static void GetMaxColumnCapacityTest()
         {
-            var instance = InitInstance.GenerateTwoDimensionalListForImplementationsTest();
-            var config = InitInstance.TwoDimensionalListForImplementationsTest.GenerateTestTwoDimensionalListConfig();
-
-            var isExpectedResult = new Func<int, bool>(
-                result => result == config.MaxColumnCapacity
-            );
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: () => InitInstance.GenerateTwoDimensionalListForImplementationsTest(),
                 target => target.GetMaxColumnCapacity(),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: actual =>
+                {
+                    var config = InitInstance.TwoDimensionalListForImplementationsTest
+                        .GenerateTestTwoDimensionalListConfig();
+
+                    Assert.AreEqual(config.MaxColumnCapacity, actual);
+                },
                 logger
             );
         }
@@ -269,18 +265,17 @@ namespace WodiLib.Test.Sys
         [Test]
         public static void GetMinColumnCapacityTest()
         {
-            var instance = InitInstance.GenerateTwoDimensionalListForImplementationsTest();
-            var config = InitInstance.TwoDimensionalListForImplementationsTest.GenerateTestTwoDimensionalListConfig();
-
-            var isExpectedResult = new Func<int, bool>(
-                result => result == config.MinColumnCapacity
-            );
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: () => InitInstance.GenerateTwoDimensionalListForImplementationsTest(),
                 target => target.GetMinColumnCapacity(),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: actual =>
+                {
+                    var config = InitInstance.TwoDimensionalListForImplementationsTest
+                        .GenerateTestTwoDimensionalListConfig();
+
+                    Assert.AreEqual(config.MinColumnCapacity, actual);
+                },
                 logger
             );
         }
@@ -291,20 +286,22 @@ namespace WodiLib.Test.Sys
             var initItems = InitInstance.GenerateRows(InitInstance.InitRowLength, InitInstance.InitColumnLength)
                 .ToArray();
 
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 factory: () => new InitInstance.TwoDimensionalListForImplementationsTest(initItems),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // 初期化された各種要素が正しいこと
+                    Assert.IsTrue(instance.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(instance.ColumnCount == InitInstance.InitColumnLength);
+                    for (var r = 0; r < InitInstance.InitRowLength; r++)
+                    for (var c = 0; c < InitInstance.InitColumnLength; c++)
+                    {
+                        Assert.IsTrue(instance[r, c].ItemEquals(initItems[r][c]));
+                    }
+                },
                 logger
             );
-
-            // 初期化された各種要素が正しいこと
-            Assert.IsTrue(instance.RowCount == InitInstance.InitRowLength);
-            Assert.IsTrue(instance.ColumnCount == InitInstance.InitColumnLength);
-            for (var r = 0; r < InitInstance.InitRowLength; r++)
-            for (var c = 0; c < InitInstance.InitColumnLength; c++)
-            {
-                Assert.IsTrue(instance[r, c].ItemEquals(initItems[r][c]));
-            }
         }
 
         [Test]
@@ -313,52 +310,60 @@ namespace WodiLib.Test.Sys
             var initItems = InitInstance.GenerateRows(InitInstance.InitRowLength, InitInstance.InitColumnLength)
                 .ToTwoDimensionalArray();
 
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 factory: () => new InitInstance.TwoDimensionalListForImplementationsTest(initItems),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // 初期化された各種要素が正しいこと
+                    Assert.IsTrue(instance.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(instance.ColumnCount == InitInstance.InitColumnLength);
+                    for (var r = 0; r < InitInstance.InitRowLength; r++)
+                    for (var c = 0; c < InitInstance.InitColumnLength; c++)
+                    {
+                        Assert.IsTrue(instance[r, c].ItemEquals(initItems[r][c]));
+                    }
+                },
                 logger
             );
-
-            // 初期化された各種要素が正しいこと
-            Assert.IsTrue(instance.RowCount == InitInstance.InitRowLength);
-            Assert.IsTrue(instance.ColumnCount == InitInstance.InitColumnLength);
-            for (var r = 0; r < InitInstance.InitRowLength; r++)
-            for (var c = 0; c < InitInstance.InitColumnLength; c++)
-            {
-                Assert.IsTrue(instance[r, c].ItemEquals(initItems[r][c]));
-            }
         }
 
         [Test]
         public static void ConstructorTest_Length()
         {
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 factory: () => new InitInstance.TwoDimensionalListForImplementationsTest(
                     InitInstance.InitRowLength,
                     InitInstance.InitColumnLength
                 ),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // 初期化された行数/列数が正しいこと
+                    Assert.IsTrue(instance.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(instance.ColumnCount == InitInstance.InitColumnLength);
+                },
                 logger
             );
-
-            // 初期化された行数/列数が正しいこと
-            Assert.IsTrue(instance.RowCount == InitInstance.InitRowLength);
-            Assert.IsTrue(instance.ColumnCount == InitInstance.InitColumnLength);
         }
 
         [Test]
         public static void ConstructorTest_OnlyConfig()
         {
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 factory: () => new InitInstance.TwoDimensionalListForImplementationsTest(),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    var config = InitInstance.TwoDimensionalListForImplementationsTest
+                        .GenerateTestTwoDimensionalListConfig();
+
+                    // 初期化された行数/列数が最小の行数/列数と同じであること
+                    Assert.IsTrue(instance.RowCount == config.MinRowCapacity);
+                    Assert.IsTrue(instance.ColumnCount == config.MinColumnCapacity);
+                },
                 logger
             );
-            var config = InitInstance.TwoDimensionalListForImplementationsTest.GenerateTestTwoDimensionalListConfig();
-
-            // 初期化された行数/列数が最小の行数/列数と同じであること
-            Assert.IsTrue(instance.RowCount == config.MinRowCapacity);
-            Assert.IsTrue(instance.ColumnCount == config.MinColumnCapacity);
         }
 
         [Test]
@@ -369,27 +374,23 @@ namespace WodiLib.Test.Sys
             var startRow = 1;
             var count = 2;
 
-            var isExpectedResult = new Func<IEnumerable<InitInstance.ExtendedListForRow>, bool>(
-                result =>
-                {
-                    var resultArray = result.ToTwoDimensionalArray();
-                    return resultArray.Length == 2
-                           && resultArray[0].Length == InitInstance.InitColumnLength
-                           && resultArray[0][0].ItemEquals(instance[1][0])
-                           && resultArray[0][1].ItemEquals(instance[1][1])
-                           && resultArray[0][2].ItemEquals(instance[1][2])
-                           && resultArray[1].Length == InitInstance.InitColumnLength
-                           && resultArray[1][0].ItemEquals(instance[2][0])
-                           && resultArray[1][1].ItemEquals(instance[2][1])
-                           && resultArray[1][2].ItemEquals(instance[2][2]);
-                }
-            );
-
             TestTemplate.PureMethod(
                 instance,
                 target => target.GetRowRangeCore(startRow, count),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: result =>
+                {
+                    var resultArray = result.ToTwoDimensionalArray();
+                    Assert.IsTrue(resultArray.Length == 2);
+                    Assert.IsTrue(resultArray[0].Length == InitInstance.InitColumnLength);
+                    Assert.IsTrue(resultArray[0][0].ItemEquals(instance[1][0]));
+                    Assert.IsTrue(resultArray[0][1].ItemEquals(instance[1][1]));
+                    Assert.IsTrue(resultArray[0][2].ItemEquals(instance[1][2]));
+                    Assert.IsTrue(resultArray[1].Length == InitInstance.InitColumnLength);
+                    Assert.IsTrue(resultArray[1][0].ItemEquals(instance[2][0]));
+                    Assert.IsTrue(resultArray[1][1].ItemEquals(instance[2][1]));
+                    Assert.IsTrue(resultArray[1][2].ItemEquals(instance[2][2]));
+                },
                 logger
             );
         }
@@ -402,29 +403,25 @@ namespace WodiLib.Test.Sys
             var startColumn = 1;
             var count = 2;
 
-            var isExpectedResult = new Func<IEnumerable<IEnumerable<StubModel>>, bool>(
-                result =>
-                {
-                    var resultArray = result.ToTwoDimensionalArray();
-                    return resultArray.Length == 2
-                           && resultArray[0].Length == InitInstance.InitRowLength
-                           && resultArray[0][0].ItemEquals(instance[0][1])
-                           && resultArray[0][1].ItemEquals(instance[1][1])
-                           && resultArray[0][2].ItemEquals(instance[2][1])
-                           && resultArray[0][3].ItemEquals(instance[3][1])
-                           && resultArray[1].Length == InitInstance.InitRowLength
-                           && resultArray[1][0].ItemEquals(instance[0][2])
-                           && resultArray[1][1].ItemEquals(instance[1][2])
-                           && resultArray[1][2].ItemEquals(instance[2][2])
-                           && resultArray[1][3].ItemEquals(instance[3][2]);
-                }
-            );
-
             TestTemplate.PureMethod(
                 instance,
                 target => target.GetColumnRangeCore(startColumn, count),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: result =>
+                {
+                    var resultArray = result.ToTwoDimensionalArray();
+                    Assert.IsTrue(resultArray.Length == 2);
+                    Assert.IsTrue(resultArray[0].Length == InitInstance.InitRowLength);
+                    Assert.IsTrue(resultArray[0][0].ItemEquals(instance[0][1]));
+                    Assert.IsTrue(resultArray[0][1].ItemEquals(instance[1][1]));
+                    Assert.IsTrue(resultArray[0][2].ItemEquals(instance[2][1]));
+                    Assert.IsTrue(resultArray[0][3].ItemEquals(instance[3][1]));
+                    Assert.IsTrue(resultArray[1].Length == InitInstance.InitRowLength);
+                    Assert.IsTrue(resultArray[1][0].ItemEquals(instance[0][2]));
+                    Assert.IsTrue(resultArray[1][1].ItemEquals(instance[1][2]));
+                    Assert.IsTrue(resultArray[1][2].ItemEquals(instance[2][2]));
+                    Assert.IsTrue(resultArray[1][3].ItemEquals(instance[3][2]));
+                },
                 logger
             );
         }
@@ -439,28 +436,24 @@ namespace WodiLib.Test.Sys
             var columnIndex = 2;
             var columnCount = 2;
 
-            var isExpectedResult = new Func<IEnumerable<IEnumerable<StubModel>>, bool>(
-                result =>
-                {
-                    var resultArray = result.ToTwoDimensionalArray();
-                    return resultArray.Length == rowCount
-                           && resultArray[0].Length == columnCount
-                           && resultArray[0][0].ItemEquals(instance[rowIndex][columnIndex])
-                           && resultArray[0][1].ItemEquals(instance[rowIndex][columnIndex + 1])
-                           && resultArray[1].Length == columnCount
-                           && resultArray[1][0].ItemEquals(instance[rowIndex + 1][columnIndex])
-                           && resultArray[1][1].ItemEquals(instance[rowIndex + 1][columnIndex + 1])
-                           && resultArray[2].Length == columnCount
-                           && resultArray[2][0].ItemEquals(instance[rowIndex + 2][columnIndex])
-                           && resultArray[2][1].ItemEquals(instance[rowIndex + 2][columnIndex + 1]);
-                }
-            );
-
             TestTemplate.PureMethod(
                 instance,
                 target => target.GetItemCore(rowIndex, rowCount, columnIndex, columnCount),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: result =>
+                {
+                    var resultArray = result.ToTwoDimensionalArray();
+                    Assert.IsTrue(resultArray.Length == rowCount);
+                    Assert.IsTrue(resultArray[0].Length == columnCount);
+                    Assert.IsTrue(resultArray[0][0].ItemEquals(instance[rowIndex][columnIndex]));
+                    Assert.IsTrue(resultArray[0][1].ItemEquals(instance[rowIndex][columnIndex + 1]));
+                    Assert.IsTrue(resultArray[1].Length == columnCount);
+                    Assert.IsTrue(resultArray[1][0].ItemEquals(instance[rowIndex + 1][columnIndex]));
+                    Assert.IsTrue(resultArray[1][1].ItemEquals(instance[rowIndex + 1][columnIndex + 1]));
+                    Assert.IsTrue(resultArray[2].Length == columnCount);
+                    Assert.IsTrue(resultArray[2][0].ItemEquals(instance[rowIndex + 2][columnIndex]));
+                    Assert.IsTrue(resultArray[2][1].ItemEquals(instance[rowIndex + 2][columnIndex + 1]));
+                },
                 logger
             );
         }
@@ -477,36 +470,33 @@ namespace WodiLib.Test.Sys
 
             var removeRow = instance[index];
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0, 2, 3 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          // row 1 : 変更されている
-                          && instance[1][0].ItemEquals(setRows[0][0])
-                          && instance[1][1].ItemEquals(setRows[0][1])
-                          && instance[1][2].ItemEquals(setRows[0][2])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.SetRowRangeCore(index, setRows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0, 2, 3 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    // row 1 : 変更されている
+                    Assert.IsTrue(instance[1][0].ItemEquals(setRows[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(setRows[0][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(setRows[0][2]));
+                },
                 logger
             );
 
@@ -556,36 +546,33 @@ namespace WodiLib.Test.Sys
             var setRows = InitInstance.GenerateRows(2, InitInstance.InitColumnLength)
                 .ToArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0, 3 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          // row 1, 2 : 変更されている
-                          && instance[1][0].ItemEquals(setRows[0][0])
-                          && instance[1][1].ItemEquals(setRows[0][1])
-                          && instance[1][2].ItemEquals(setRows[0][2])
-                          && instance[2][0].ItemEquals(setRows[1][0])
-                          && instance[2][1].ItemEquals(setRows[1][1])
-                          && instance[2][2].ItemEquals(setRows[1][2])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.SetRowRangeCore(index, setRows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0, 3 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    // row 1, 2 : 変更されている
+                    Assert.IsTrue(instance[1][0].ItemEquals(setRows[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(setRows[0][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(setRows[0][2]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(setRows[1][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(setRows[1][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(setRows[1][2]));
+                },
                 logger
             );
 
@@ -608,36 +595,33 @@ namespace WodiLib.Test.Sys
             var setItems = InitInstance.GenerateTwoDimStubModels(1, InitInstance.InitColumnLength)
                 .ToTwoDimensionalArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // column 0 , 2: 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          // column 1 : 変更されている
-                          && instance[0][1].ItemEquals(setItems[0][0])
-                          && instance[1][1].ItemEquals(setItems[0][1])
-                          && instance[2][1].ItemEquals(setItems[0][2])
-                          && instance[3][1].ItemEquals(setItems[0][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.SetColumnRangeCore(index, setItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // column 0 , 2: 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    // column 1 : 変更されている
+                    Assert.IsTrue(instance[0][1].ItemEquals(setItems[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(setItems[0][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(setItems[0][2]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(setItems[0][3]));
+                },
                 logger
             );
 
@@ -669,36 +653,33 @@ namespace WodiLib.Test.Sys
             var setItems = InitInstance.GenerateTwoDimStubModels(2, InitInstance.InitColumnLength)
                 .ToTwoDimensionalArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // column 0 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          // column 1, 2 : 変更されている
-                          && instance[0][1].ItemEquals(setItems[0][0])
-                          && instance[1][1].ItemEquals(setItems[0][1])
-                          && instance[2][1].ItemEquals(setItems[0][2])
-                          && instance[3][1].ItemEquals(setItems[0][3])
-                          && instance[0][2].ItemEquals(setItems[1][0])
-                          && instance[1][2].ItemEquals(setItems[1][1])
-                          && instance[2][2].ItemEquals(setItems[1][2])
-                          && instance[3][2].ItemEquals(setItems[1][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.SetColumnRangeCore(index, setItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // column 0 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    // column 1, 2 : 変更されている
+                    Assert.IsTrue(instance[0][1].ItemEquals(setItems[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(setItems[0][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(setItems[0][2]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(setItems[0][3]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(setItems[1][0]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(setItems[1][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(setItems[1][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(setItems[1][3]));
+                },
                 logger
             );
 
@@ -729,36 +710,34 @@ namespace WodiLib.Test.Sys
             var row = 1;
             var column = 2;
             var setItem = new StubModel($"{10000 + column}");
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // (1, 2) : 変更されている
-                          && instance[1][2].ItemEquals(setItem)
-                          // それ以外 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-            );
 
             TestTemplate.MutableMethod(
                 instance,
                 target => target.SetItemCore(row, column, setItem),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // (1, 2) : 変更されている
+                    Assert.IsTrue(instance[1][2].ItemEquals(setItem));
+                    // それ以外 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                },
                 logger
             );
 
@@ -785,41 +764,38 @@ namespace WodiLib.Test.Sys
             var addRows = InitInstance.GenerateRows(1, InitInstance.InitColumnLength)
                 .ToArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength + 1
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0 ～ 3 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          // row 4 : 追加されている
-                          && instance[4][0].ItemEquals(addRows[0][0])
-                          && instance[4][1].ItemEquals(addRows[0][1])
-                          && instance[4][2].ItemEquals(addRows[0][2])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AddRowRangeCore(addRows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength + 1);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0 ～ 3 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    // row 4 : 追加されている
+                    Assert.IsTrue(instance[4][0].ItemEquals(addRows[0][0]));
+                    Assert.IsTrue(instance[4][1].ItemEquals(addRows[0][1]));
+                    Assert.IsTrue(instance[4][2].ItemEquals(addRows[0][2]));
+                },
                 logger
             );
 
@@ -859,44 +835,41 @@ namespace WodiLib.Test.Sys
             var addRows = InitInstance.GenerateRows(2, InitInstance.InitColumnLength)
                 .ToArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength + 2
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0 ～ 3 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          // row 4 ～ 5 : 追加されている
-                          && instance[4][0].ItemEquals(addRows[0][0])
-                          && instance[4][1].ItemEquals(addRows[0][1])
-                          && instance[4][2].ItemEquals(addRows[0][2])
-                          && instance[5][0].ItemEquals(addRows[1][0])
-                          && instance[5][1].ItemEquals(addRows[1][1])
-                          && instance[5][2].ItemEquals(addRows[1][2])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AddRowRangeCore(addRows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength + 2);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0 ～ 3 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    // row 4 ～ 5 : 追加されている
+                    Assert.IsTrue(instance[4][0].ItemEquals(addRows[0][0]));
+                    Assert.IsTrue(instance[4][1].ItemEquals(addRows[0][1]));
+                    Assert.IsTrue(instance[4][2].ItemEquals(addRows[0][2]));
+                    Assert.IsTrue(instance[5][0].ItemEquals(addRows[1][0]));
+                    Assert.IsTrue(instance[5][1].ItemEquals(addRows[1][1]));
+                    Assert.IsTrue(instance[5][2].ItemEquals(addRows[1][2]));
+                },
                 logger
             );
 
@@ -918,50 +891,47 @@ namespace WodiLib.Test.Sys
             var addColumns = InitInstance.GenerateTwoDimStubModels(1, InitInstance.InitRowLength)
                 .ToTwoDimensionalArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength + 1
-                          // column 0 ～ 4 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // column 5 : 追加されている
-                          && instance[0][5].ItemEquals(addColumns[0][0])
-                          && instance[1][5].ItemEquals(addColumns[0][1])
-                          && instance[2][5].ItemEquals(addColumns[0][2])
-                          && instance[3][5].ItemEquals(addColumns[0][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AddColumnRangeCore(addColumns),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength + 1);
+                    // column 0 ～ 4 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // column 5 : 追加されている
+                    Assert.IsTrue(instance[0][5].ItemEquals(addColumns[0][0]));
+                    Assert.IsTrue(instance[1][5].ItemEquals(addColumns[0][1]));
+                    Assert.IsTrue(instance[2][5].ItemEquals(addColumns[0][2]));
+                    Assert.IsTrue(instance[3][5].ItemEquals(addColumns[0][3]));
+                },
                 logger
             );
 
@@ -998,54 +968,51 @@ namespace WodiLib.Test.Sys
             var addColumns = InitInstance.GenerateTwoDimStubModels(2, InitInstance.InitRowLength)
                 .ToTwoDimensionalArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength + 2
-                          // column 0 ～ 4 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // column 5 ～ 6 : 追加されている
-                          && instance[0][5].ItemEquals(addColumns[0][0])
-                          && instance[1][5].ItemEquals(addColumns[0][1])
-                          && instance[2][5].ItemEquals(addColumns[0][2])
-                          && instance[3][5].ItemEquals(addColumns[0][3])
-                          && instance[0][6].ItemEquals(addColumns[1][0])
-                          && instance[1][6].ItemEquals(addColumns[1][1])
-                          && instance[2][6].ItemEquals(addColumns[1][2])
-                          && instance[3][6].ItemEquals(addColumns[1][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AddColumnRangeCore(addColumns),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength + 2);
+                    // column 0 ～ 4 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // column 5 ～ 6 : 追加されている
+                    Assert.IsTrue(instance[0][5].ItemEquals(addColumns[0][0]));
+                    Assert.IsTrue(instance[1][5].ItemEquals(addColumns[0][1]));
+                    Assert.IsTrue(instance[2][5].ItemEquals(addColumns[0][2]));
+                    Assert.IsTrue(instance[3][5].ItemEquals(addColumns[0][3]));
+                    Assert.IsTrue(instance[0][6].ItemEquals(addColumns[1][0]));
+                    Assert.IsTrue(instance[1][6].ItemEquals(addColumns[1][1]));
+                    Assert.IsTrue(instance[2][6].ItemEquals(addColumns[1][2]));
+                    Assert.IsTrue(instance[3][6].ItemEquals(addColumns[1][3]));
+                },
                 logger
             );
 
@@ -1083,52 +1050,49 @@ namespace WodiLib.Test.Sys
                 .ToArray();
             var insertIndex = 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength + 1
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          // row 1 : 挿入されている
-                          && instance[1][0].ItemEquals(insertRows[0][0])
-                          && instance[1][1].ItemEquals(insertRows[0][1])
-                          && instance[1][2].ItemEquals(insertRows[0][2])
-                          && instance[1][3].ItemEquals(insertRows[0][3])
-                          && instance[1][4].ItemEquals(insertRows[0][4])
-                          // row 2 ～ 4 : 行挿入により後ろ方向にずれている
-                          && instance[2][0].ItemEquals(originalItems[1][0])
-                          && instance[2][1].ItemEquals(originalItems[1][1])
-                          && instance[2][2].ItemEquals(originalItems[1][2])
-                          && instance[2][3].ItemEquals(originalItems[1][3])
-                          && instance[2][4].ItemEquals(originalItems[1][4])
-                          && instance[3][0].ItemEquals(originalItems[2][0])
-                          && instance[3][1].ItemEquals(originalItems[2][1])
-                          && instance[3][2].ItemEquals(originalItems[2][2])
-                          && instance[3][3].ItemEquals(originalItems[2][3])
-                          && instance[3][4].ItemEquals(originalItems[2][4])
-                          && instance[4][0].ItemEquals(originalItems[3][0])
-                          && instance[4][1].ItemEquals(originalItems[3][1])
-                          && instance[4][2].ItemEquals(originalItems[3][2])
-                          && instance[4][3].ItemEquals(originalItems[3][3])
-                          && instance[4][4].ItemEquals(originalItems[3][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.InsertRowRangeCore(insertIndex, insertRows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength + 1);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    // row 1 : 挿入されている
+                    Assert.IsTrue(instance[1][0].ItemEquals(insertRows[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(insertRows[0][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(insertRows[0][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(insertRows[0][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(insertRows[0][4]));
+                    // row 2 ～ 4 : 行挿入により後ろ方向にずれている
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[4][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[4][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[4][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[4][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[4][4].ItemEquals(originalItems[3][4]));
+                },
                 logger
             );
 
@@ -1169,57 +1133,54 @@ namespace WodiLib.Test.Sys
                 .ToArray();
             var insertIndex = 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength + 2
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          // row 1 ～ 2 : 挿入されている
-                          && instance[1][0].ItemEquals(insertRows[0][0])
-                          && instance[1][1].ItemEquals(insertRows[0][1])
-                          && instance[1][2].ItemEquals(insertRows[0][2])
-                          && instance[1][3].ItemEquals(insertRows[0][3])
-                          && instance[1][4].ItemEquals(insertRows[0][4])
-                          && instance[2][0].ItemEquals(insertRows[1][0])
-                          && instance[2][1].ItemEquals(insertRows[1][1])
-                          && instance[2][2].ItemEquals(insertRows[1][2])
-                          && instance[2][3].ItemEquals(insertRows[1][3])
-                          && instance[2][4].ItemEquals(insertRows[1][4])
-                          // row 3 ～ 5 : 行挿入により後ろ方向にずれている
-                          && instance[3][0].ItemEquals(originalItems[1][0])
-                          && instance[3][1].ItemEquals(originalItems[1][1])
-                          && instance[3][2].ItemEquals(originalItems[1][2])
-                          && instance[3][3].ItemEquals(originalItems[1][3])
-                          && instance[3][4].ItemEquals(originalItems[1][4])
-                          && instance[4][0].ItemEquals(originalItems[2][0])
-                          && instance[4][1].ItemEquals(originalItems[2][1])
-                          && instance[4][2].ItemEquals(originalItems[2][2])
-                          && instance[4][3].ItemEquals(originalItems[2][3])
-                          && instance[4][4].ItemEquals(originalItems[2][4])
-                          && instance[5][0].ItemEquals(originalItems[3][0])
-                          && instance[5][1].ItemEquals(originalItems[3][1])
-                          && instance[5][2].ItemEquals(originalItems[3][2])
-                          && instance[5][3].ItemEquals(originalItems[3][3])
-                          && instance[5][4].ItemEquals(originalItems[3][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.InsertRowRangeCore(insertIndex, insertRows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength + 2);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    // row 1 ～ 2 : 挿入されている
+                    Assert.IsTrue(instance[1][0].ItemEquals(insertRows[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(insertRows[0][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(insertRows[0][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(insertRows[0][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(insertRows[0][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(insertRows[1][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(insertRows[1][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(insertRows[1][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(insertRows[1][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(insertRows[1][4]));
+                    // row 3 ～ 5 : 行挿入により後ろ方向にずれている
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[4][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[4][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[4][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[4][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[4][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[5][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[5][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[5][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[5][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[5][4].ItemEquals(originalItems[3][4]));
+                },
                 logger
             );
 
@@ -1242,51 +1203,48 @@ namespace WodiLib.Test.Sys
                 .ToTwoDimensionalArray();
             var insertIndex = 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength + 1
-                          // column 0 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          // column 1 : 挿入されている
-                          && instance[0][1].ItemEquals(insertColumns[0][0])
-                          && instance[1][1].ItemEquals(insertColumns[0][1])
-                          && instance[2][1].ItemEquals(insertColumns[0][2])
-                          && instance[3][1].ItemEquals(insertColumns[0][3])
-                          // column 2 ～ 5 : 列挿入により後ろ方向にずれている
-                          && instance[0][2].ItemEquals(originalItems[0][1])
-                          && instance[1][2].ItemEquals(originalItems[1][1])
-                          && instance[2][2].ItemEquals(originalItems[2][1])
-                          && instance[3][2].ItemEquals(originalItems[3][1])
-                          && instance[0][3].ItemEquals(originalItems[0][2])
-                          && instance[1][3].ItemEquals(originalItems[1][2])
-                          && instance[2][3].ItemEquals(originalItems[2][2])
-                          && instance[3][3].ItemEquals(originalItems[3][2])
-                          && instance[0][4].ItemEquals(originalItems[0][3])
-                          && instance[1][4].ItemEquals(originalItems[1][3])
-                          && instance[2][4].ItemEquals(originalItems[2][3])
-                          && instance[3][4].ItemEquals(originalItems[3][3])
-                          && instance[0][5].ItemEquals(originalItems[0][4])
-                          && instance[1][5].ItemEquals(originalItems[1][4])
-                          && instance[2][5].ItemEquals(originalItems[2][4])
-                          && instance[3][5].ItemEquals(originalItems[3][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.InsertColumnRangeCore(insertIndex, insertColumns),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength + 1);
+                    // column 0 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    // column 1 : 挿入されている
+                    Assert.IsTrue(instance[0][1].ItemEquals(insertColumns[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(insertColumns[0][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(insertColumns[0][2]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(insertColumns[0][3]));
+                    // column 2 ～ 5 : 列挿入により後ろ方向にずれている
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][5].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][5].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][5].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][5].ItemEquals(originalItems[3][4]));
+                },
                 logger
             );
 
@@ -1324,55 +1282,52 @@ namespace WodiLib.Test.Sys
                 .ToTwoDimensionalArray();
             var insertIndex = 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength + 2
-                          // column 0 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          // column 1 ～ 2 : 挿入されている
-                          && instance[0][1].ItemEquals(insertColumns[0][0])
-                          && instance[1][1].ItemEquals(insertColumns[0][1])
-                          && instance[2][1].ItemEquals(insertColumns[0][2])
-                          && instance[3][1].ItemEquals(insertColumns[0][3])
-                          && instance[0][2].ItemEquals(insertColumns[1][0])
-                          && instance[1][2].ItemEquals(insertColumns[1][1])
-                          && instance[2][2].ItemEquals(insertColumns[1][2])
-                          && instance[3][2].ItemEquals(insertColumns[1][3])
-                          // column 3 ～ 6 : 列挿入により後ろ方向にずれている
-                          && instance[0][3].ItemEquals(originalItems[0][1])
-                          && instance[1][3].ItemEquals(originalItems[1][1])
-                          && instance[2][3].ItemEquals(originalItems[2][1])
-                          && instance[3][3].ItemEquals(originalItems[3][1])
-                          && instance[0][4].ItemEquals(originalItems[0][2])
-                          && instance[1][4].ItemEquals(originalItems[1][2])
-                          && instance[2][4].ItemEquals(originalItems[2][2])
-                          && instance[3][4].ItemEquals(originalItems[3][2])
-                          && instance[0][5].ItemEquals(originalItems[0][3])
-                          && instance[1][5].ItemEquals(originalItems[1][3])
-                          && instance[2][5].ItemEquals(originalItems[2][3])
-                          && instance[3][5].ItemEquals(originalItems[3][3])
-                          && instance[0][6].ItemEquals(originalItems[0][4])
-                          && instance[1][6].ItemEquals(originalItems[1][4])
-                          && instance[2][6].ItemEquals(originalItems[2][4])
-                          && instance[3][6].ItemEquals(originalItems[3][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.InsertColumnRangeCore(insertIndex, insertColumns),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength + 2);
+                    // column 0 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    // column 1 ～ 2 : 挿入されている
+                    Assert.IsTrue(instance[0][1].ItemEquals(insertColumns[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(insertColumns[0][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(insertColumns[0][2]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(insertColumns[0][3]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(insertColumns[1][0]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(insertColumns[1][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(insertColumns[1][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(insertColumns[1][3]));
+                    // column 3 ～ 6 : 列挿入により後ろ方向にずれている
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][5].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][5].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][5].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][5].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][6].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][6].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][6].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][6].ItemEquals(originalItems[3][4]));
+                },
                 logger
             );
 
@@ -1408,28 +1363,28 @@ namespace WodiLib.Test.Sys
 
             var index = 1;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == originalItems.Length
-                          && LinqExtension.Zip(target, originalItems)
-                              .All(
-                                  zip =>
-                                  {
-                                      var (row, ordinalRow) = zip;
-                                      return row.Count == ordinalRow.Length
-                                             && LinqExtension.Zip(row, ordinalRow)
-                                                 .All(zip2 => zip2.Item1.Equals(zip2.Item2));
-                                  }
-                              )
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteRowCore(index, Array.Empty<InitInstance.ExtendedListForRow>()),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == originalItems.Length);
+
+                    LinqExtension.Zip(target, originalItems)
+                        .ForEach(
+                            zip =>
+                            {
+                                var (row, ordinalRow) = zip;
+                                Assert.IsTrue(row.Count == ordinalRow.Length);
+                                LinqExtension.Zip(row, ordinalRow)
+                                    .ForEach(
+                                        zip2 => { Assert.IsTrue(zip2.Item1.Equals(zip2.Item2)); }
+                                    );
+                            }
+                        );
+                },
                 logger
             );
 
@@ -1453,44 +1408,41 @@ namespace WodiLib.Test.Sys
 
             var removeRow = instance[index];
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0, 2, 3 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // row 1 : 変更されている
-                          && instance[1][0].ItemEquals(overwriteRows[0][0])
-                          && instance[1][1].ItemEquals(overwriteRows[0][1])
-                          && instance[1][2].ItemEquals(overwriteRows[0][2])
-                          && instance[1][3].ItemEquals(originalItems[0][3])
-                          && instance[1][4].ItemEquals(originalItems[0][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteRowCore(index, overwriteRows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0, 2, 3 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // row 1 : 変更されている
+                    Assert.IsTrue(instance[1][0].ItemEquals(overwriteRows[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(overwriteRows[0][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(overwriteRows[0][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[0][4]));
+                },
                 logger
             );
 
@@ -1540,51 +1492,48 @@ namespace WodiLib.Test.Sys
                 .ToArray();
             var index = InitInstance.InitRowLength;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength + 1
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0 ～ 3 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // row 4 : 追加されている
-                          && instance[4][0].ItemEquals(overwriteRows[0][0])
-                          && instance[4][1].ItemEquals(overwriteRows[0][1])
-                          && instance[4][2].ItemEquals(overwriteRows[0][2])
-                          && instance[4][3].ItemEquals(originalItems[0][3])
-                          && instance[4][4].ItemEquals(originalItems[0][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteRowCore(index, overwriteRows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength + 1);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0 ～ 3 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // row 4 : 追加されている
+                    Assert.IsTrue(instance[4][0].ItemEquals(overwriteRows[0][0]));
+                    Assert.IsTrue(instance[4][1].ItemEquals(overwriteRows[0][1]));
+                    Assert.IsTrue(instance[4][2].ItemEquals(overwriteRows[0][2]));
+                    Assert.IsTrue(instance[4][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[4][4].ItemEquals(originalItems[0][4]));
+                },
                 logger
             );
 
@@ -1625,44 +1574,41 @@ namespace WodiLib.Test.Sys
             var overwriteRows = InitInstance.GenerateRows(2, InitInstance.InitColumnLength)
                 .ToArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0, 3 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // row 1, 2 : 変更されている
-                          && instance[1][0].ItemEquals(overwriteRows[0][0])
-                          && instance[1][1].ItemEquals(overwriteRows[0][1])
-                          && instance[1][2].ItemEquals(overwriteRows[0][2])
-                          && instance[1][3].ItemEquals(overwriteRows[0][3])
-                          && instance[1][4].ItemEquals(overwriteRows[0][4])
-                          && instance[2][0].ItemEquals(overwriteRows[1][0])
-                          && instance[2][1].ItemEquals(overwriteRows[1][1])
-                          && instance[2][2].ItemEquals(overwriteRows[1][2])
-                          && instance[2][3].ItemEquals(overwriteRows[1][3])
-                          && instance[2][4].ItemEquals(overwriteRows[1][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteRowCore(index, overwriteRows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0, 3 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // row 1, 2 : 変更されている
+                    Assert.IsTrue(instance[1][0].ItemEquals(overwriteRows[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(overwriteRows[0][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(overwriteRows[0][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(overwriteRows[0][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(overwriteRows[0][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(overwriteRows[1][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(overwriteRows[1][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(overwriteRows[1][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(overwriteRows[1][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(overwriteRows[1][4]));
+                },
                 logger
             );
 
@@ -1685,56 +1631,53 @@ namespace WodiLib.Test.Sys
                 .ToArray();
             var index = InitInstance.InitRowLength;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength + 2
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0 ～ 3 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // row 4 ～ 5 : 追加されている
-                          && instance[4][0].ItemEquals(overwriteRows[0][0])
-                          && instance[4][1].ItemEquals(overwriteRows[0][1])
-                          && instance[4][2].ItemEquals(overwriteRows[0][2])
-                          && instance[4][3].ItemEquals(overwriteRows[0][3])
-                          && instance[4][4].ItemEquals(overwriteRows[0][4])
-                          && instance[5][0].ItemEquals(overwriteRows[1][0])
-                          && instance[5][1].ItemEquals(overwriteRows[1][1])
-                          && instance[5][2].ItemEquals(overwriteRows[1][2])
-                          && instance[5][3].ItemEquals(overwriteRows[1][3])
-                          && instance[5][4].ItemEquals(overwriteRows[1][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteRowCore(index, overwriteRows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength + 2);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0 ～ 3 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // row 4 ～ 5 : 追加されている
+                    Assert.IsTrue(instance[4][0].ItemEquals(overwriteRows[0][0]));
+                    Assert.IsTrue(instance[4][1].ItemEquals(overwriteRows[0][1]));
+                    Assert.IsTrue(instance[4][2].ItemEquals(overwriteRows[0][2]));
+                    Assert.IsTrue(instance[4][3].ItemEquals(overwriteRows[0][3]));
+                    Assert.IsTrue(instance[4][4].ItemEquals(overwriteRows[0][4]));
+                    Assert.IsTrue(instance[5][0].ItemEquals(overwriteRows[1][0]));
+                    Assert.IsTrue(instance[5][1].ItemEquals(overwriteRows[1][1]));
+                    Assert.IsTrue(instance[5][2].ItemEquals(overwriteRows[1][2]));
+                    Assert.IsTrue(instance[5][3].ItemEquals(overwriteRows[1][3]));
+                    Assert.IsTrue(instance[5][4].ItemEquals(overwriteRows[1][4]));
+                },
                 logger
             );
 
@@ -1757,52 +1700,49 @@ namespace WodiLib.Test.Sys
                 .ToArray();
             var index = InitInstance.InitRowLength - 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength + 1
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0 ～ 2 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          // row 3 : 変更されている
-                          && instance[3][0].ItemEquals(overwriteRows[0][0])
-                          && instance[3][1].ItemEquals(overwriteRows[0][1])
-                          && instance[3][2].ItemEquals(overwriteRows[0][2])
-                          && instance[3][3].ItemEquals(overwriteRows[0][3])
-                          && instance[3][4].ItemEquals(overwriteRows[0][4])
-                          // row 4 : 追加されている
-                          && instance[4][0].ItemEquals(overwriteRows[1][0])
-                          && instance[4][1].ItemEquals(overwriteRows[1][1])
-                          && instance[4][2].ItemEquals(overwriteRows[1][2])
-                          && instance[4][3].ItemEquals(overwriteRows[1][3])
-                          && instance[4][4].ItemEquals(overwriteRows[1][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteRowCore(index, overwriteRows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength + 1);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0 ～ 2 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    // row 3 : 変更されている
+                    Assert.IsTrue(instance[3][0].ItemEquals(overwriteRows[0][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(overwriteRows[0][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(overwriteRows[0][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(overwriteRows[0][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(overwriteRows[0][4]));
+                    // row 4 : 追加されている
+                    Assert.IsTrue(instance[4][0].ItemEquals(overwriteRows[1][0]));
+                    Assert.IsTrue(instance[4][1].ItemEquals(overwriteRows[1][1]));
+                    Assert.IsTrue(instance[4][2].ItemEquals(overwriteRows[1][2]));
+                    Assert.IsTrue(instance[4][3].ItemEquals(overwriteRows[1][3]));
+                    Assert.IsTrue(instance[4][4].ItemEquals(overwriteRows[1][4]));
+                },
                 logger
             );
 
@@ -1823,21 +1763,21 @@ namespace WodiLib.Test.Sys
 
             var index = 1;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => LinqExtension.Zip(target, originalItems)
-                    .All(
-                        zip => LinqExtension.Zip(zip.Item1, zip.Item2).All(zip2 => zip2.Item1.ItemEquals(zip2.Item2))
-                    )
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteColumnCore(index, Array.Empty<IEnumerable<StubModel>>()),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    LinqExtension.Zip(target, originalItems)
+                        .ForEach(
+                            zip => LinqExtension.Zip(zip.Item1, zip.Item2)
+                                .ForEach(
+                                    zip2 => { Assert.IsTrue(zip2.Item1.ItemEquals(zip2.Item2)); }
+                                )
+                        );
+                },
                 logger
             );
 
@@ -1859,44 +1799,41 @@ namespace WodiLib.Test.Sys
             var overwriteItems = InitInstance.GenerateTwoDimStubModels(1, InitInstance.InitColumnLength)
                 .ToTwoDimensionalArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // column 0 , 2 ～ 4 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // column 1 : 変更されている
-                          && instance[0][1].ItemEquals(overwriteItems[0][0])
-                          && instance[1][1].ItemEquals(overwriteItems[0][1])
-                          && instance[2][1].ItemEquals(overwriteItems[0][2])
-                          && instance[3][1].ItemEquals(overwriteItems[0][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteColumnCore(index, overwriteItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // column 0 , 2 ～ 4 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // column 1 : 変更されている
+                    Assert.IsTrue(instance[0][1].ItemEquals(overwriteItems[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(overwriteItems[0][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(overwriteItems[0][2]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(overwriteItems[0][3]));
+                },
                 logger
             );
 
@@ -1928,50 +1865,47 @@ namespace WodiLib.Test.Sys
             var overwriteItems = InitInstance.GenerateTwoDimStubModels(1, InitInstance.InitRowLength)
                 .ToTwoDimensionalArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength + 1
-                          // column 0 ～ 4 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // column 5 : 追加されている
-                          && instance[0][5].ItemEquals(overwriteItems[0][0])
-                          && instance[1][5].ItemEquals(overwriteItems[0][1])
-                          && instance[2][5].ItemEquals(overwriteItems[0][2])
-                          && instance[3][5].ItemEquals(overwriteItems[0][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteColumnCore(index, overwriteItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength + 1);
+                    // column 0 ～ 4 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // column 5 : 追加されている
+                    Assert.IsTrue(instance[0][5].ItemEquals(overwriteItems[0][0]));
+                    Assert.IsTrue(instance[1][5].ItemEquals(overwriteItems[0][1]));
+                    Assert.IsTrue(instance[2][5].ItemEquals(overwriteItems[0][2]));
+                    Assert.IsTrue(instance[3][5].ItemEquals(overwriteItems[0][3]));
+                },
                 logger
             );
 
@@ -2009,44 +1943,41 @@ namespace WodiLib.Test.Sys
             var overwriteItems = InitInstance.GenerateTwoDimStubModels(2, InitInstance.InitRowLength)
                 .ToTwoDimensionalArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // column 0, 3 ～ 4 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // column 1, 2 : 変更されている
-                          && instance[0][1].ItemEquals(overwriteItems[0][0])
-                          && instance[1][1].ItemEquals(overwriteItems[0][1])
-                          && instance[2][1].ItemEquals(overwriteItems[0][2])
-                          && instance[3][1].ItemEquals(overwriteItems[0][3])
-                          && instance[0][2].ItemEquals(overwriteItems[1][0])
-                          && instance[1][2].ItemEquals(overwriteItems[1][1])
-                          && instance[2][2].ItemEquals(overwriteItems[1][2])
-                          && instance[3][2].ItemEquals(overwriteItems[1][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteColumnCore(index, overwriteItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // column 0, 3 ～ 4 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // column 1, 2 : 変更されている
+                    Assert.IsTrue(instance[0][1].ItemEquals(overwriteItems[0][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(overwriteItems[0][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(overwriteItems[0][2]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(overwriteItems[0][3]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(overwriteItems[1][0]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(overwriteItems[1][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(overwriteItems[1][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(overwriteItems[1][3]));
+                },
                 logger
             );
 
@@ -2078,54 +2009,51 @@ namespace WodiLib.Test.Sys
             var overwriteItems = InitInstance.GenerateTwoDimStubModels(2, InitInstance.InitRowLength)
                 .ToTwoDimensionalArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength + 2
-                          // column 0 ～ 4 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // column 5 ～ 6 : 追加されている
-                          && instance[0][5].ItemEquals(overwriteItems[0][0])
-                          && instance[1][5].ItemEquals(overwriteItems[0][1])
-                          && instance[2][5].ItemEquals(overwriteItems[0][2])
-                          && instance[3][5].ItemEquals(overwriteItems[0][3])
-                          && instance[0][6].ItemEquals(overwriteItems[1][0])
-                          && instance[1][6].ItemEquals(overwriteItems[1][1])
-                          && instance[2][6].ItemEquals(overwriteItems[1][2])
-                          && instance[3][6].ItemEquals(overwriteItems[1][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteColumnCore(index, overwriteItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength + 2);
+                    // column 0 ～ 4 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // column 5 ～ 6 : 追加されている
+                    Assert.IsTrue(instance[0][5].ItemEquals(overwriteItems[0][0]));
+                    Assert.IsTrue(instance[1][5].ItemEquals(overwriteItems[0][1]));
+                    Assert.IsTrue(instance[2][5].ItemEquals(overwriteItems[0][2]));
+                    Assert.IsTrue(instance[3][5].ItemEquals(overwriteItems[0][3]));
+                    Assert.IsTrue(instance[0][6].ItemEquals(overwriteItems[1][0]));
+                    Assert.IsTrue(instance[1][6].ItemEquals(overwriteItems[1][1]));
+                    Assert.IsTrue(instance[2][6].ItemEquals(overwriteItems[1][2]));
+                    Assert.IsTrue(instance[3][6].ItemEquals(overwriteItems[1][3]));
+                },
                 logger
             );
 
@@ -2163,51 +2091,48 @@ namespace WodiLib.Test.Sys
             var overwriteItems = InitInstance.GenerateTwoDimStubModels(2, InitInstance.InitRowLength)
                 .ToTwoDimensionalArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength + 1
-                          // column 0 ～ 3 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          // column 4 : 変更されている
-                          && instance[0][4].ItemEquals(overwriteItems[0][0])
-                          && instance[1][4].ItemEquals(overwriteItems[0][1])
-                          && instance[2][4].ItemEquals(overwriteItems[0][2])
-                          && instance[3][4].ItemEquals(overwriteItems[0][3])
-                          // column 5 : 追加されている
-                          && instance[0][5].ItemEquals(overwriteItems[1][0])
-                          && instance[1][5].ItemEquals(overwriteItems[1][1])
-                          && instance[2][5].ItemEquals(overwriteItems[1][2])
-                          && instance[3][5].ItemEquals(overwriteItems[1][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.OverwriteColumnCore(index, overwriteItems),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength + 1);
+                    // column 0 ～ 3 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    // column 4 : 変更されている
+                    Assert.IsTrue(instance[0][4].ItemEquals(overwriteItems[0][0]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(overwriteItems[0][1]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(overwriteItems[0][2]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(overwriteItems[0][3]));
+                    // column 5 : 追加されている
+                    Assert.IsTrue(instance[0][5].ItemEquals(overwriteItems[1][0]));
+                    Assert.IsTrue(instance[1][5].ItemEquals(overwriteItems[1][1]));
+                    Assert.IsTrue(instance[2][5].ItemEquals(overwriteItems[1][2]));
+                    Assert.IsTrue(instance[3][5].ItemEquals(overwriteItems[1][3]));
+                },
                 logger
             );
 
@@ -2245,28 +2170,28 @@ namespace WodiLib.Test.Sys
             var newRowIndex = 2;
             var count = 0;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == originalItems.Length
-                          && LinqExtension.Zip(target, originalItems)
-                              .All(
-                                  zip =>
-                                  {
-                                      var (row, ordinalRow) = zip;
-                                      return row.Count == ordinalRow.Length
-                                             && LinqExtension.Zip(row, ordinalRow)
-                                                 .All(zip2 => zip2.Item1.Equals(zip2.Item2));
-                                  }
-                              )
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.MoveRowRangeCore(oldRowIndex, newRowIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == originalItems.Length);
+
+                    LinqExtension.Zip(target, originalItems)
+                        .ForEach(
+                            zip =>
+                            {
+                                var (row, ordinalRow) = zip;
+                                Assert.IsTrue(row.Count == ordinalRow.Length);
+                                LinqExtension.Zip(row, ordinalRow)
+                                    .ForEach(
+                                        zip2 => { Assert.IsTrue(zip2.Item1.Equals(zip2.Item2)); }
+                                    );
+                            }
+                        );
+                },
                 logger
             );
 
@@ -2288,42 +2213,39 @@ namespace WodiLib.Test.Sys
             var newRowIndex = 2;
             var count = 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][0].ItemEquals(originalItems[2][0])
-                          && instance[1][1].ItemEquals(originalItems[2][1])
-                          && instance[1][2].ItemEquals(originalItems[2][2])
-                          && instance[1][3].ItemEquals(originalItems[2][3])
-                          && instance[1][4].ItemEquals(originalItems[2][4])
-                          && instance[2][0].ItemEquals(originalItems[1][0])
-                          && instance[2][1].ItemEquals(originalItems[1][1])
-                          && instance[2][2].ItemEquals(originalItems[1][2])
-                          && instance[2][3].ItemEquals(originalItems[1][3])
-                          && instance[2][4].ItemEquals(originalItems[1][4])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.MoveRowRangeCore(oldRowIndex, newRowIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                },
                 logger
             );
 
@@ -2346,42 +2268,39 @@ namespace WodiLib.Test.Sys
             var newRowIndex = 2;
             var count = 2;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][0].ItemEquals(originalItems[3][0])
-                          && instance[1][1].ItemEquals(originalItems[3][1])
-                          && instance[1][2].ItemEquals(originalItems[3][2])
-                          && instance[1][3].ItemEquals(originalItems[3][3])
-                          && instance[1][4].ItemEquals(originalItems[3][4])
-                          && instance[2][0].ItemEquals(originalItems[1][0])
-                          && instance[2][1].ItemEquals(originalItems[1][1])
-                          && instance[2][2].ItemEquals(originalItems[1][2])
-                          && instance[2][3].ItemEquals(originalItems[1][3])
-                          && instance[2][4].ItemEquals(originalItems[1][4])
-                          && instance[3][0].ItemEquals(originalItems[2][0])
-                          && instance[3][1].ItemEquals(originalItems[2][1])
-                          && instance[3][2].ItemEquals(originalItems[2][2])
-                          && instance[3][3].ItemEquals(originalItems[2][3])
-                          && instance[3][4].ItemEquals(originalItems[2][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.MoveRowRangeCore(oldRowIndex, newRowIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[3][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[2][4]));
+                },
                 logger
             );
 
@@ -2404,28 +2323,28 @@ namespace WodiLib.Test.Sys
             var newColumnIndex = 2;
             var count = 0;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == originalItems.Length
-                          && LinqExtension.Zip(target, originalItems)
-                              .All(
-                                  zip =>
-                                  {
-                                      var (row, ordinalRow) = zip;
-                                      return row.Count == ordinalRow.Length
-                                             && LinqExtension.Zip(row, ordinalRow)
-                                                 .All(zip2 => zip2.Item1.Equals(zip2.Item2));
-                                  }
-                              )
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.MoveColumnRangeCore(oldColumnIndex, newColumnIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == originalItems.Length);
+
+                    LinqExtension.Zip(target, originalItems)
+                        .ForEach(
+                            zip =>
+                            {
+                                var (row, ordinalRow) = zip;
+                                Assert.IsTrue(row.Count == ordinalRow.Length);
+                                LinqExtension.Zip(row, ordinalRow)
+                                    .ForEach(
+                                        zip2 => { Assert.IsTrue(zip2.Item1.Equals(zip2.Item2)); }
+                                    );
+                            }
+                        );
+                },
                 logger
             );
 
@@ -2447,43 +2366,40 @@ namespace WodiLib.Test.Sys
             var newColumnIndex = 2;
             var count = 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          && instance[0][0].ItemEquals(originalItems[0][1])
-                          && instance[1][0].ItemEquals(originalItems[1][1])
-                          && instance[2][0].ItemEquals(originalItems[2][1])
-                          && instance[3][0].ItemEquals(originalItems[3][1])
-                          && instance[0][1].ItemEquals(originalItems[0][2])
-                          && instance[1][1].ItemEquals(originalItems[1][2])
-                          && instance[2][1].ItemEquals(originalItems[2][2])
-                          && instance[3][1].ItemEquals(originalItems[3][2])
-                          && instance[3][1].ItemEquals(originalItems[3][2])
-                          && instance[0][2].ItemEquals(originalItems[0][0])
-                          && instance[1][2].ItemEquals(originalItems[1][0])
-                          && instance[2][2].ItemEquals(originalItems[2][0])
-                          && instance[3][2].ItemEquals(originalItems[3][0])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.MoveColumnRangeCore(oldColumnIndex, newColumnIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                },
                 logger
             );
 
@@ -2515,42 +2431,39 @@ namespace WodiLib.Test.Sys
             var newColumnIndex = 2;
             var count = 2;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          && instance[0][0].ItemEquals(originalItems[0][2])
-                          && instance[1][0].ItemEquals(originalItems[1][2])
-                          && instance[2][0].ItemEquals(originalItems[2][2])
-                          && instance[3][0].ItemEquals(originalItems[3][2])
-                          && instance[0][1].ItemEquals(originalItems[0][3])
-                          && instance[1][1].ItemEquals(originalItems[1][3])
-                          && instance[2][1].ItemEquals(originalItems[2][3])
-                          && instance[3][1].ItemEquals(originalItems[3][3])
-                          && instance[0][2].ItemEquals(originalItems[0][0])
-                          && instance[1][2].ItemEquals(originalItems[1][0])
-                          && instance[2][2].ItemEquals(originalItems[2][0])
-                          && instance[3][2].ItemEquals(originalItems[3][0])
-                          && instance[0][3].ItemEquals(originalItems[0][1])
-                          && instance[1][3].ItemEquals(originalItems[1][1])
-                          && instance[2][3].ItemEquals(originalItems[2][1])
-                          && instance[3][3].ItemEquals(originalItems[3][1])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.MoveColumnRangeCore(oldColumnIndex, newColumnIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                },
                 logger
             );
 
@@ -2581,28 +2494,27 @@ namespace WodiLib.Test.Sys
             var rowIndex = 1;
             var count = 0;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == originalItems.Length
-                          && LinqExtension.Zip(target, originalItems)
-                              .All(
-                                  zip =>
-                                  {
-                                      var (row, ordinalRow) = zip;
-                                      return row.Count == ordinalRow.Length
-                                             && LinqExtension.Zip(row, ordinalRow)
-                                                 .All(zip2 => zip2.Item1.Equals(zip2.Item2));
-                                  }
-                              )
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.RemoveRowRangeCore(rowIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == originalItems.Length);
+                    LinqExtension.Zip(target, originalItems)
+                        .ForEach(
+                            zip =>
+                            {
+                                var (row, ordinalRow) = zip;
+                                Assert.IsTrue(row.Count == ordinalRow.Length);
+                                LinqExtension.Zip(row, ordinalRow)
+                                    .ForEach(
+                                        zip2 => { Assert.IsTrue(zip2.Item1.Equals(zip2.Item2)); }
+                                    );
+                            }
+                        );
+                },
                 logger
             );
 
@@ -2623,39 +2535,36 @@ namespace WodiLib.Test.Sys
             var rowIndex = 1;
             var count = 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength - 1
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][0].ItemEquals(originalItems[2][0])
-                          && instance[1][1].ItemEquals(originalItems[2][1])
-                          && instance[1][2].ItemEquals(originalItems[2][2])
-                          && instance[1][3].ItemEquals(originalItems[2][3])
-                          && instance[1][4].ItemEquals(originalItems[2][4])
-                          && instance[2][0].ItemEquals(originalItems[3][0])
-                          && instance[2][1].ItemEquals(originalItems[3][1])
-                          && instance[2][2].ItemEquals(originalItems[3][2])
-                          && instance[2][3].ItemEquals(originalItems[3][3])
-                          && instance[2][4].ItemEquals(originalItems[3][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.RemoveRowRangeCore(rowIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength - 1);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[3][4]));
+                },
                 logger
             );
 
@@ -2697,34 +2606,31 @@ namespace WodiLib.Test.Sys
             var rowIndex = 1;
             var count = 2;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength - 2
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][0].ItemEquals(originalItems[3][0])
-                          && instance[1][1].ItemEquals(originalItems[3][1])
-                          && instance[1][2].ItemEquals(originalItems[3][2])
-                          && instance[1][3].ItemEquals(originalItems[3][3])
-                          && instance[1][4].ItemEquals(originalItems[3][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.RemoveRowRangeCore(rowIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength - 2);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[3][4]));
+                },
                 logger
             );
 
@@ -2746,28 +2652,27 @@ namespace WodiLib.Test.Sys
             var columnIndex = 1;
             var count = 0;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == originalItems.Length
-                          && LinqExtension.Zip(target, originalItems)
-                              .All(
-                                  zip =>
-                                  {
-                                      var (row, ordinalRow) = zip;
-                                      return row.Count == ordinalRow.Length
-                                             && LinqExtension.Zip(row, ordinalRow)
-                                                 .All(zip2 => zip2.Item1.Equals(zip2.Item2));
-                                  }
-                              )
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.RemoveColumnRangeCore(columnIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == originalItems.Length);
+                    LinqExtension.Zip(target, originalItems)
+                        .ForEach(
+                            zip =>
+                            {
+                                var (row, ordinalRow) = zip;
+                                Assert.IsTrue(row.Count == ordinalRow.Length);
+                                LinqExtension.Zip(row, ordinalRow)
+                                    .ForEach(
+                                        zip2 => { Assert.IsTrue(zip2.Item1.Equals(zip2.Item2)); }
+                                    );
+                            }
+                        );
+                },
                 logger
             );
 
@@ -2788,40 +2693,37 @@ namespace WodiLib.Test.Sys
             var columnIndex = 1;
             var count = 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength - 1
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][1].ItemEquals(originalItems[0][2])
-                          && instance[1][1].ItemEquals(originalItems[1][2])
-                          && instance[2][1].ItemEquals(originalItems[2][2])
-                          && instance[3][1].ItemEquals(originalItems[3][2])
-                          && instance[0][2].ItemEquals(originalItems[0][3])
-                          && instance[1][2].ItemEquals(originalItems[1][3])
-                          && instance[2][2].ItemEquals(originalItems[2][3])
-                          && instance[3][2].ItemEquals(originalItems[3][3])
-                          && instance[0][3].ItemEquals(originalItems[0][4])
-                          && instance[1][3].ItemEquals(originalItems[1][4])
-                          && instance[2][3].ItemEquals(originalItems[2][4])
-                          && instance[3][3].ItemEquals(originalItems[3][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.RemoveColumnRangeCore(columnIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength - 1);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][4]));
+                },
                 logger
             );
 
@@ -2858,36 +2760,33 @@ namespace WodiLib.Test.Sys
             var columnIndex = 1;
             var count = 2;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength - 2
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][1].ItemEquals(originalItems[0][3])
-                          && instance[1][1].ItemEquals(originalItems[1][3])
-                          && instance[2][1].ItemEquals(originalItems[2][3])
-                          && instance[3][1].ItemEquals(originalItems[3][3])
-                          && instance[0][2].ItemEquals(originalItems[0][4])
-                          && instance[1][2].ItemEquals(originalItems[1][4])
-                          && instance[2][2].ItemEquals(originalItems[2][4])
-                          && instance[3][2].ItemEquals(originalItems[3][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.RemoveColumnRangeCore(columnIndex, count),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength - 2);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][4]));
+                },
                 logger
             );
 
@@ -2924,28 +2823,27 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength;
             var columnLength = InitInstance.InitColumnLength;
 
-            var expectedNotifyPropertyChange = Array.Empty<string>();
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == originalItems.Length
-                          && LinqExtension.Zip(target, originalItems)
-                              .All(
-                                  zip =>
-                                  {
-                                      var (row, ordinalRow) = zip;
-                                      return row.Count == ordinalRow.Length
-                                             && LinqExtension.Zip(row, ordinalRow)
-                                                 .All(zip2 => zip2.Item1.Equals(zip2.Item2));
-                                  }
-                              )
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: Array.Empty<string>(),
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == originalItems.Length);
+                    LinqExtension.Zip(target, originalItems)
+                        .ForEach(
+                            zip =>
+                            {
+                                var (row, ordinalRow) = zip;
+                                Assert.IsTrue(row.Count == ordinalRow.Length);
+                                LinqExtension.Zip(row, ordinalRow)
+                                    .ForEach(
+                                        zip2 => { Assert.IsTrue(zip2.Item1.Equals(zip2.Item2)); }
+                                    );
+                            }
+                        );
+                },
                 logger
             );
 
@@ -2968,51 +2866,48 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength + 1;
             var columnLength = InitInstance.InitColumnLength;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == rowLenght
-                          && target.ColumnCount == columnLength
-                          // row 0 ～ 3 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // row 4 : 追加されている
-                          && instance[4][0].ItemEquals(config.ItemFactory(4, 0))
-                          && instance[4][1].ItemEquals(config.ItemFactory(4, 1))
-                          && instance[4][2].ItemEquals(config.ItemFactory(4, 2))
-                          && instance[4][3].ItemEquals(config.ItemFactory(4, 3))
-                          && instance[4][4].ItemEquals(config.ItemFactory(4, 4))
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == rowLenght);
+                    Assert.IsTrue(target.ColumnCount == columnLength);
+                    // row 0 ～ 3 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // row 4 : 追加されている
+                    Assert.IsTrue(instance[4][0].ItemEquals(config.ItemFactory(4, 0)));
+                    Assert.IsTrue(instance[4][1].ItemEquals(config.ItemFactory(4, 1)));
+                    Assert.IsTrue(instance[4][2].ItemEquals(config.ItemFactory(4, 2)));
+                    Assert.IsTrue(instance[4][3].ItemEquals(config.ItemFactory(4, 3)));
+                    Assert.IsTrue(instance[4][4].ItemEquals(config.ItemFactory(4, 4)));
+                },
                 logger
             );
 
@@ -3054,56 +2949,53 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength + 2;
             var columnLength = InitInstance.InitColumnLength;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength + 2
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          // row 0 ～ 3 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // row 4 ～ 5 : 追加されている
-                          && instance[4][0].ItemEquals(config.ItemFactory(4, 0))
-                          && instance[4][1].ItemEquals(config.ItemFactory(4, 1))
-                          && instance[4][2].ItemEquals(config.ItemFactory(4, 2))
-                          && instance[4][3].ItemEquals(config.ItemFactory(4, 3))
-                          && instance[4][4].ItemEquals(config.ItemFactory(4, 4))
-                          && instance[5][0].ItemEquals(config.ItemFactory(5, 0))
-                          && instance[5][1].ItemEquals(config.ItemFactory(5, 1))
-                          && instance[5][2].ItemEquals(config.ItemFactory(5, 2))
-                          && instance[5][3].ItemEquals(config.ItemFactory(5, 3))
-                          && instance[5][4].ItemEquals(config.ItemFactory(5, 4))
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength + 2);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    // row 0 ～ 3 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // row 4 ～ 5 : 追加されている
+                    Assert.IsTrue(instance[4][0].ItemEquals(config.ItemFactory(4, 0)));
+                    Assert.IsTrue(instance[4][1].ItemEquals(config.ItemFactory(4, 1)));
+                    Assert.IsTrue(instance[4][2].ItemEquals(config.ItemFactory(4, 2)));
+                    Assert.IsTrue(instance[4][3].ItemEquals(config.ItemFactory(4, 3)));
+                    Assert.IsTrue(instance[4][4].ItemEquals(config.ItemFactory(4, 4)));
+                    Assert.IsTrue(instance[5][0].ItemEquals(config.ItemFactory(5, 0)));
+                    Assert.IsTrue(instance[5][1].ItemEquals(config.ItemFactory(5, 1)));
+                    Assert.IsTrue(instance[5][2].ItemEquals(config.ItemFactory(5, 2)));
+                    Assert.IsTrue(instance[5][3].ItemEquals(config.ItemFactory(5, 3)));
+                    Assert.IsTrue(instance[5][4].ItemEquals(config.ItemFactory(5, 4)));
+                },
                 logger
             );
 
@@ -3125,39 +3017,36 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength - 1;
             var columnLength = InitInstance.InitColumnLength;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength - 1
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength - 1);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                },
                 logger
             );
 
@@ -3199,34 +3088,31 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength - 2;
             var columnLength = InitInstance.InitColumnLength;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength - 2
-                          && target.ColumnCount == InitInstance.InitColumnLength
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength - 2);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                },
                 logger
             );
 
@@ -3250,50 +3136,47 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength;
             var columnLength = InitInstance.InitColumnLength + 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength + 1
-                          // column 0 ～ 4 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // column 5 : 追加されている
-                          && instance[0][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[1][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[2][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[3][5].ItemEquals(config.ItemFactory(0, 5))
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength + 1);
+                    // column 0 ～ 4 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // column 5 : 追加されている
+                    Assert.IsTrue(instance[0][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[1][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[2][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[3][5].ItemEquals(config.ItemFactory(0, 5)));
+                },
                 logger
             );
 
@@ -3332,54 +3215,51 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength;
             var columnLength = InitInstance.InitColumnLength + 2;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength + 2
-                          // column 0 ～ 4 : 変更されていない
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          // column 5 ～ 6 : 追加されている
-                          && instance[0][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[1][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[2][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[3][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[0][6].ItemEquals(config.ItemFactory(0, 6))
-                          && instance[1][6].ItemEquals(config.ItemFactory(0, 6))
-                          && instance[2][6].ItemEquals(config.ItemFactory(0, 6))
-                          && instance[3][6].ItemEquals(config.ItemFactory(0, 6))
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength + 2);
+                    // column 0 ～ 4 : 変更されていない
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    // column 5 ～ 6 : 追加されている
+                    Assert.IsTrue(instance[0][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[1][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[2][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[3][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[0][6].ItemEquals(config.ItemFactory(0, 6)));
+                    Assert.IsTrue(instance[1][6].ItemEquals(config.ItemFactory(0, 6)));
+                    Assert.IsTrue(instance[2][6].ItemEquals(config.ItemFactory(0, 6)));
+                    Assert.IsTrue(instance[3][6].ItemEquals(config.ItemFactory(0, 6)));
+                },
                 logger
             );
 
@@ -3416,40 +3296,37 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength;
             var columnLength = InitInstance.InitColumnLength - 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength - 1
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength - 1);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                },
                 logger
             );
 
@@ -3486,36 +3363,33 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength;
             var columnLength = InitInstance.InitColumnLength - 2;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == InitInstance.InitRowLength
-                          && target.ColumnCount == InitInstance.InitColumnLength - 2
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == InitInstance.InitRowLength);
+                    Assert.IsTrue(target.ColumnCount == InitInstance.InitColumnLength - 2);
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                },
                 logger
             );
 
@@ -3554,57 +3428,55 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength + 1;
             var columnLength = InitInstance.InitColumnLength + 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == rowLenght
-                          && target.ColumnCount == columnLength
-                          // row 0 ～ 3 : column 5 が追加されている
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[0][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[1][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[2][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          && instance[3][4].ItemEquals(originalItems[3][4])
-                          && instance[3][5].ItemEquals(config.ItemFactory(0, 5))
-                          // row 4 : 追加されている
-                          && instance[4][0].ItemEquals(config.ItemFactory(4, 0))
-                          && instance[4][1].ItemEquals(config.ItemFactory(4, 1))
-                          && instance[4][2].ItemEquals(config.ItemFactory(4, 2))
-                          && instance[4][3].ItemEquals(config.ItemFactory(4, 3))
-                          && instance[4][4].ItemEquals(config.ItemFactory(4, 4))
-                          && instance[4][5].ItemEquals(config.ItemFactory(4, 5))
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == rowLenght);
+                    Assert.IsTrue(target.ColumnCount == columnLength);
+
+                    // row 0 ～ 3 : column 5 が追加されている
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[0][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[1][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[2][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    Assert.IsTrue(instance[3][4].ItemEquals(originalItems[3][4]));
+                    Assert.IsTrue(instance[3][5].ItemEquals(config.ItemFactory(0, 5)));
+                    // row 4 : 追加されている
+                    Assert.IsTrue(instance[4][0].ItemEquals(config.ItemFactory(4, 0)));
+                    Assert.IsTrue(instance[4][1].ItemEquals(config.ItemFactory(4, 1)));
+                    Assert.IsTrue(instance[4][2].ItemEquals(config.ItemFactory(4, 2)));
+                    Assert.IsTrue(instance[4][3].ItemEquals(config.ItemFactory(4, 3)));
+                    Assert.IsTrue(instance[4][4].ItemEquals(config.ItemFactory(4, 4)));
+                    Assert.IsTrue(instance[4][5].ItemEquals(config.ItemFactory(4, 5)));
+                },
                 logger
             );
 
@@ -3644,47 +3516,44 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength + 1;
             var columnLength = InitInstance.InitColumnLength - 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == rowLenght
-                          && target.ColumnCount == columnLength
-                          // row 0 ～ 3 : column 4 が除去されている
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[3][0].ItemEquals(originalItems[3][0])
-                          && instance[3][1].ItemEquals(originalItems[3][1])
-                          && instance[3][2].ItemEquals(originalItems[3][2])
-                          && instance[3][3].ItemEquals(originalItems[3][3])
-                          // row 4 : 追加されている
-                          && instance[4][0].ItemEquals(config.ItemFactory(4, 0))
-                          && instance[4][1].ItemEquals(config.ItemFactory(4, 1))
-                          && instance[4][2].ItemEquals(config.ItemFactory(4, 2))
-                          && instance[4][3].ItemEquals(config.ItemFactory(4, 3))
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == rowLenght);
+                    Assert.IsTrue(target.ColumnCount == columnLength);
+                    // row 0 ～ 3 : column 4 が除去されている
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(originalItems[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(originalItems[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(originalItems[3][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(originalItems[3][3]));
+                    // row 4 : 追加されている
+                    Assert.IsTrue(instance[4][0].ItemEquals(config.ItemFactory(4, 0)));
+                    Assert.IsTrue(instance[4][1].ItemEquals(config.ItemFactory(4, 1)));
+                    Assert.IsTrue(instance[4][2].ItemEquals(config.ItemFactory(4, 2)));
+                    Assert.IsTrue(instance[4][3].ItemEquals(config.ItemFactory(4, 3)));
+                },
                 logger
             );
 
@@ -3724,44 +3593,41 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength - 1;
             var columnLength = InitInstance.InitColumnLength + 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == rowLenght
-                          && target.ColumnCount == columnLength
-                          // row 0 ～ 2 : column 5 が追加されている
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[0][4].ItemEquals(originalItems[0][4])
-                          && instance[0][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[1][4].ItemEquals(originalItems[1][4])
-                          && instance[1][5].ItemEquals(config.ItemFactory(0, 5))
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-                          && instance[2][4].ItemEquals(originalItems[2][4])
-                          && instance[2][5].ItemEquals(config.ItemFactory(0, 5))
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == rowLenght);
+                    Assert.IsTrue(target.ColumnCount == columnLength);
+                    // row 0 ～ 2 : column 5 が追加されている
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[0][4].ItemEquals(originalItems[0][4]));
+                    Assert.IsTrue(instance[0][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[1][4].ItemEquals(originalItems[1][4]));
+                    Assert.IsTrue(instance[1][5].ItemEquals(config.ItemFactory(0, 5)));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                    Assert.IsTrue(instance[2][4].ItemEquals(originalItems[2][4]));
+                    Assert.IsTrue(instance[2][5].ItemEquals(config.ItemFactory(0, 5)));
+                },
                 logger
             );
 
@@ -3801,38 +3667,35 @@ namespace WodiLib.Test.Sys
             var rowLenght = InitInstance.InitRowLength - 1;
             var columnLength = InitInstance.InitColumnLength - 1;
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == rowLenght
-                          && target.ColumnCount == columnLength
-                          // row 0 ～ 2 : column 4 が除去されている
-                          && instance[0][0].ItemEquals(originalItems[0][0])
-                          && instance[0][1].ItemEquals(originalItems[0][1])
-                          && instance[0][2].ItemEquals(originalItems[0][2])
-                          && instance[0][3].ItemEquals(originalItems[0][3])
-                          && instance[1][0].ItemEquals(originalItems[1][0])
-                          && instance[1][1].ItemEquals(originalItems[1][1])
-                          && instance[1][2].ItemEquals(originalItems[1][2])
-                          && instance[1][3].ItemEquals(originalItems[1][3])
-                          && instance[2][0].ItemEquals(originalItems[2][0])
-                          && instance[2][1].ItemEquals(originalItems[2][1])
-                          && instance[2][2].ItemEquals(originalItems[2][2])
-                          && instance[2][3].ItemEquals(originalItems[2][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.AdjustLengthCore(rowLenght, columnLength),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == rowLenght);
+                    Assert.IsTrue(target.ColumnCount == columnLength);
+                    // row 0 ～ 2 : column 4 が除去されている
+                    Assert.IsTrue(instance[0][0].ItemEquals(originalItems[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(originalItems[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(originalItems[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(originalItems[0][3]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(originalItems[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(originalItems[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(originalItems[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(originalItems[1][3]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(originalItems[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(originalItems[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(originalItems[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(originalItems[2][3]));
+                },
                 logger
             );
 
@@ -3872,49 +3735,46 @@ namespace WodiLib.Test.Sys
             var resetColumnLength = InitInstance.InitColumnLength - 1;
             var rows = InitInstance.GenerateRows(resetRowLength, resetColumnLength).ToArray();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == resetRowLength
-                          && target.ColumnCount == resetColumnLength
-                          && instance[0][0].ItemEquals(rows[0][0])
-                          && instance[0][1].ItemEquals(rows[0][1])
-                          && instance[0][2].ItemEquals(rows[0][2])
-                          && instance[0][3].ItemEquals(rows[0][3])
-                          && instance[1][0].ItemEquals(rows[1][0])
-                          && instance[1][1].ItemEquals(rows[1][1])
-                          && instance[1][2].ItemEquals(rows[1][2])
-                          && instance[1][3].ItemEquals(rows[1][3])
-                          && instance[2][0].ItemEquals(rows[2][0])
-                          && instance[2][1].ItemEquals(rows[2][1])
-                          && instance[2][2].ItemEquals(rows[2][2])
-                          && instance[2][3].ItemEquals(rows[2][3])
-                          && instance[3][0].ItemEquals(rows[3][0])
-                          && instance[3][1].ItemEquals(rows[3][1])
-                          && instance[3][2].ItemEquals(rows[3][2])
-                          && instance[3][3].ItemEquals(rows[3][3])
-                          && instance[4][0].ItemEquals(rows[4][0])
-                          && instance[4][1].ItemEquals(rows[4][1])
-                          && instance[4][2].ItemEquals(rows[4][2])
-                          && instance[4][3].ItemEquals(rows[4][3])
-                          && instance[5][0].ItemEquals(rows[5][0])
-                          && instance[5][1].ItemEquals(rows[5][1])
-                          && instance[5][2].ItemEquals(rows[5][2])
-                          && instance[5][3].ItemEquals(rows[5][3])
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.ResetCore(rows),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == resetRowLength);
+                    Assert.IsTrue(target.ColumnCount == resetColumnLength);
+                    Assert.IsTrue(instance[0][0].ItemEquals(rows[0][0]));
+                    Assert.IsTrue(instance[0][1].ItemEquals(rows[0][1]));
+                    Assert.IsTrue(instance[0][2].ItemEquals(rows[0][2]));
+                    Assert.IsTrue(instance[0][3].ItemEquals(rows[0][3]));
+                    Assert.IsTrue(instance[1][0].ItemEquals(rows[1][0]));
+                    Assert.IsTrue(instance[1][1].ItemEquals(rows[1][1]));
+                    Assert.IsTrue(instance[1][2].ItemEquals(rows[1][2]));
+                    Assert.IsTrue(instance[1][3].ItemEquals(rows[1][3]));
+                    Assert.IsTrue(instance[2][0].ItemEquals(rows[2][0]));
+                    Assert.IsTrue(instance[2][1].ItemEquals(rows[2][1]));
+                    Assert.IsTrue(instance[2][2].ItemEquals(rows[2][2]));
+                    Assert.IsTrue(instance[2][3].ItemEquals(rows[2][3]));
+                    Assert.IsTrue(instance[3][0].ItemEquals(rows[3][0]));
+                    Assert.IsTrue(instance[3][1].ItemEquals(rows[3][1]));
+                    Assert.IsTrue(instance[3][2].ItemEquals(rows[3][2]));
+                    Assert.IsTrue(instance[3][3].ItemEquals(rows[3][3]));
+                    Assert.IsTrue(instance[4][0].ItemEquals(rows[4][0]));
+                    Assert.IsTrue(instance[4][1].ItemEquals(rows[4][1]));
+                    Assert.IsTrue(instance[4][2].ItemEquals(rows[4][2]));
+                    Assert.IsTrue(instance[4][3].ItemEquals(rows[4][3]));
+                    Assert.IsTrue(instance[5][0].ItemEquals(rows[5][0]));
+                    Assert.IsTrue(instance[5][1].ItemEquals(rows[5][1]));
+                    Assert.IsTrue(instance[5][2].ItemEquals(rows[5][2]));
+                    Assert.IsTrue(instance[5][3].ItemEquals(rows[5][3]));
+                },
                 logger
             );
 
@@ -3935,31 +3795,28 @@ namespace WodiLib.Test.Sys
 
             var config = InitInstance.TwoDimensionalListForImplementationsTest.GenerateTestTwoDimensionalListConfig();
 
-            var expectedNotifyPropertyChange = new[]
-            {
-                ListConstant.IndexerName,
-                nameof(instance.AllCount),
-                nameof(instance.RowCount),
-                nameof(instance.ColumnCount)
-            };
-
-            var isExpectedState = new Func<TwoDimensionalList<InitInstance.ExtendedListForRow, StubModel>, bool>(
-                target => target.RowCount == config.MinRowCapacity
-                          && target.ColumnCount == config.MinColumnCapacity
-                          && instance[0][0].ItemEquals(config.ItemFactory(0, 0))
-                          && instance[0][1].ItemEquals(config.ItemFactory(0, 1))
-                          && instance[1][0].ItemEquals(config.ItemFactory(1, 0))
-                          && instance[1][1].ItemEquals(config.ItemFactory(1, 1))
-                          && instance[2][0].ItemEquals(config.ItemFactory(2, 0))
-                          && instance[2][1].ItemEquals(config.ItemFactory(2, 1))
-            );
-
             TestTemplate.MutableMethod(
                 instance,
                 target => target.ClearCore(),
                 expectedThrowExecute: false,
-                expectedNotifyPropertyChange,
-                isExpectedState,
+                expectedNotifyPropertyChange: new[]
+                {
+                    ListConstant.IndexerName,
+                    nameof(instance.AllCount),
+                    nameof(instance.RowCount),
+                    nameof(instance.ColumnCount)
+                },
+                instanceVerification: target =>
+                {
+                    Assert.IsTrue(target.RowCount == config.MinRowCapacity);
+                    Assert.IsTrue(target.ColumnCount == config.MinColumnCapacity);
+                    Assert.IsTrue(instance[0][0].ItemEquals(config.ItemFactory(0, 0)));
+                    Assert.IsTrue(instance[0][1].ItemEquals(config.ItemFactory(0, 1)));
+                    Assert.IsTrue(instance[1][0].ItemEquals(config.ItemFactory(1, 0)));
+                    Assert.IsTrue(instance[1][1].ItemEquals(config.ItemFactory(1, 1)));
+                    Assert.IsTrue(instance[2][0].ItemEquals(config.ItemFactory(2, 0)));
+                    Assert.IsTrue(instance[2][1].ItemEquals(config.ItemFactory(2, 1)));
+                },
                 logger
             );
 
@@ -3977,7 +3834,7 @@ namespace WodiLib.Test.Sys
         {
             new object?[]
             {
-                null, false,
+                null, false
             },
             new object[]
             {
@@ -4061,28 +3918,22 @@ namespace WodiLib.Test.Sys
                     InitInstance.InitColumnLength + 1
                 ),
                 false
-            },
+            }
         };
 
         [TestCaseSource(nameof(ItemEqualsTest1CaseSource))]
         public static void ItemEqualsTest1_TestModelArray(StubModel[][]? otherItems, bool expected)
         {
-            var instance = InitInstance.GenerateTwoDimensionalListForImplementationsTest();
-
             var instanceItems = otherItems?.Select(row => new InitInstance.ExtendedListForRow(row));
             var other = instanceItems is null
                 ? null
                 : new InitInstance.TwoDimensionalListForImplementationsTest(instanceItems);
 
-            var isExpectedResult = new Func<bool, bool>(
-                actual => actual == expected
-            );
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: () => InitInstance.GenerateTwoDimensionalListForImplementationsTest(),
                 target => target.ItemEquals(other),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: actual => { Assert.AreEqual(expected, actual); },
                 logger
             );
         }
@@ -4091,7 +3942,7 @@ namespace WodiLib.Test.Sys
         {
             new object?[]
             {
-                null, false,
+                null, false
             },
             new object[]
             {
@@ -4115,23 +3966,17 @@ namespace WodiLib.Test.Sys
                     .Iterate(_ => InitInstance.InitColumnLength.Iterate(_ => new StubModel("init value")))
                     .ToTwoDimensionalArray(),
                 false
-            },
+            }
         };
 
         [TestCaseSource(nameof(ItemEqualsTest2CaseSource))]
         public static void ItemEqualsTest_object(object? other, bool expected)
         {
-            var instance = InitInstance.GenerateTwoDimensionalListForImplementationsTest();
-
-            var isExpectedResult = new Func<bool, bool>(
-                actual => actual == expected
-            );
-
             TestTemplate.PureMethod(
-                instance,
+                createInstance: () => InitInstance.GenerateTwoDimensionalListForImplementationsTest(),
                 target => target.ItemEquals(other),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: actual => { Assert.AreEqual(expected, actual); },
                 logger
             );
         }
@@ -4142,45 +3987,47 @@ namespace WodiLib.Test.Sys
         {
             var instance = InitInstance.GenerateTwoDimensionalListForImplementationsTest();
 
-            var isExpectedResult = new Func<StubModel[][], bool>(
-                result => isTranspose switch
-                {
-                    true => result.Length == InitInstance.InitColumnLength
-                            && result[0].Length == InitInstance.InitRowLength
-                            && result[0][0].ItemEquals(instance[0][0])
-                            && result[0][1].ItemEquals(instance[1][0])
-                            && result[0][2].ItemEquals(instance[2][0])
-                            && result[0][3].ItemEquals(instance[3][0])
-                            && result[1][0].ItemEquals(instance[0][1])
-                            && result[1][1].ItemEquals(instance[1][1])
-                            && result[1][2].ItemEquals(instance[2][1])
-                            && result[1][3].ItemEquals(instance[3][1])
-                            && result[2][0].ItemEquals(instance[0][2])
-                            && result[2][1].ItemEquals(instance[1][2])
-                            && result[2][2].ItemEquals(instance[2][2])
-                            && result[2][3].ItemEquals(instance[3][2]),
-                    false => result.Length == InitInstance.InitRowLength
-                             && result[0].Length == InitInstance.InitColumnLength
-                             && result[0][0].ItemEquals(instance[0][0])
-                             && result[0][1].ItemEquals(instance[0][1])
-                             && result[0][2].ItemEquals(instance[0][2])
-                             && result[1][0].ItemEquals(instance[1][0])
-                             && result[1][1].ItemEquals(instance[1][1])
-                             && result[1][2].ItemEquals(instance[1][2])
-                             && result[2][0].ItemEquals(instance[2][0])
-                             && result[2][1].ItemEquals(instance[2][1])
-                             && result[2][2].ItemEquals(instance[2][2])
-                             && result[3][0].ItemEquals(instance[3][0])
-                             && result[3][1].ItemEquals(instance[3][1])
-                             && result[3][2].ItemEquals(instance[3][2]),
-                }
-            );
-
             TestTemplate.PureMethod(
                 instance,
                 target => target.ToTwoDimensionalArray(isTranspose),
                 expectedThrowExecute: false,
-                isExpectedResult,
+                resultValueVerification: result =>
+                {
+                    if (isTranspose)
+                    {
+                        Assert.IsTrue(result.Length == InitInstance.InitColumnLength);
+                        Assert.IsTrue(result[0].Length == InitInstance.InitRowLength);
+                        Assert.IsTrue(result[0][0].ItemEquals(instance[0][0]));
+                        Assert.IsTrue(result[0][1].ItemEquals(instance[1][0]));
+                        Assert.IsTrue(result[0][2].ItemEquals(instance[2][0]));
+                        Assert.IsTrue(result[0][3].ItemEquals(instance[3][0]));
+                        Assert.IsTrue(result[1][0].ItemEquals(instance[0][1]));
+                        Assert.IsTrue(result[1][1].ItemEquals(instance[1][1]));
+                        Assert.IsTrue(result[1][2].ItemEquals(instance[2][1]));
+                        Assert.IsTrue(result[1][3].ItemEquals(instance[3][1]));
+                        Assert.IsTrue(result[2][0].ItemEquals(instance[0][2]));
+                        Assert.IsTrue(result[2][1].ItemEquals(instance[1][2]));
+                        Assert.IsTrue(result[2][2].ItemEquals(instance[2][2]));
+                        Assert.IsTrue(result[2][3].ItemEquals(instance[3][2]));
+                    }
+                    else
+                    {
+                        Assert.IsTrue(result.Length == InitInstance.InitRowLength);
+                        Assert.IsTrue(result[0].Length == InitInstance.InitColumnLength);
+                        Assert.IsTrue(result[0][0].ItemEquals(instance[0][0]));
+                        Assert.IsTrue(result[0][1].ItemEquals(instance[0][1]));
+                        Assert.IsTrue(result[0][2].ItemEquals(instance[0][2]));
+                        Assert.IsTrue(result[1][0].ItemEquals(instance[1][0]));
+                        Assert.IsTrue(result[1][1].ItemEquals(instance[1][1]));
+                        Assert.IsTrue(result[1][2].ItemEquals(instance[1][2]));
+                        Assert.IsTrue(result[2][0].ItemEquals(instance[2][0]));
+                        Assert.IsTrue(result[2][1].ItemEquals(instance[2][1]));
+                        Assert.IsTrue(result[2][2].ItemEquals(instance[2][2]));
+                        Assert.IsTrue(result[3][0].ItemEquals(instance[3][0]));
+                        Assert.IsTrue(result[3][1].ItemEquals(instance[3][1]));
+                        Assert.IsTrue(result[3][2].ItemEquals(instance[3][2]));
+                    }
+                },
                 logger
             );
         }
@@ -4206,16 +4053,18 @@ namespace WodiLib.Test.Sys
         public static void ConstructorTest_TransportValidate()
         {
             var initValues = InitInstance.InitRowLength.Iterate(_ => new MockExtendedList<StubModel>());
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 factory: () => new InitInstance.TwoDimensionalListForTransportTest(initValues),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // 意図したとおり処理が転送されていること
+                    TestTemplateWithMock.AssertEqualsCalledMemberHistory(
+                        instance.MockTwoDimensionalListValidator,
+                        nameof(instance.MockTwoDimensionalListValidator.Constructor)
+                    );
+                },
                 logger
-            );
-
-            // 意図したとおり処理が転送されていること
-            TestTemplateWithMock.AssertEqualsCalledMemberHistory(
-                instance.MockTwoDimensionalListValidator,
-                nameof(instance.MockTwoDimensionalListValidator.Constructor)
             );
         }
 
@@ -5506,7 +5355,7 @@ namespace WodiLib.Test.Sys
                         MaxRowCapacity = 20,
                         MinRowCapacity = 3,
                         MaxColumnCapacity = 15,
-                        MinColumnCapacity = 2,
+                        MinColumnCapacity = 2
                     };
                 }
 
@@ -5605,7 +5454,7 @@ namespace WodiLib.Test.Sys
             {
                 public MockTwoDimensionalListValidator<MockExtendedList<StubModel>, StubModel>
                     MockTwoDimensionalListValidator
-                    => (MockTwoDimensionalListValidator<MockExtendedList<StubModel>, StubModel>)Validator;
+                    => (MockTwoDimensionalListValidator<MockExtendedList<StubModel>, StubModel>)Validator!;
 
                 public MockExtendedList<MockExtendedList<StubModel>> MockItems
                     => (MockExtendedList<MockExtendedList<StubModel>>)Items;

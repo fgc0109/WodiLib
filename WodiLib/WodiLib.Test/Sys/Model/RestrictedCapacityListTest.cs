@@ -90,44 +90,50 @@ namespace WodiLib.Test.Sys
         [Test]
         public static void ConstructorTest_NoArgs()
         {
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 () => new InitInstance.PropagateTestRestrictedCapacityList(),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // 初期要素数が GetMinCapacity の結果と一致すること
+                    Assert.AreEqual(instance.Count, instance.GetMinCapacity());
+                },
                 logger
             );
-
-            // 初期要素数が GetMinCapacity の結果と一致すること
-            Assert.AreEqual(instance.Count, instance.GetMinCapacity());
         }
 
         [Test]
         public static void ConstructorTest_SpecifyLength()
         {
             const int length = 5;
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 () => new InitInstance.PropagateTestRestrictedCapacityList(length),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // 初期要素数が length と一致すること
+                    Assert.AreEqual(length, instance.Count);
+                },
                 logger
             );
-
-            // 初期要素数が length と一致すること
-            Assert.AreEqual(length, instance.Count);
         }
 
         [Test]
         public static void ConstructorTest_SpecifyInitItems()
         {
             var initItems = 7.Iterate(i => new StubModel(i.ToString())).ToList();
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 () => new InitInstance.PropagateTestRestrictedCapacityList(initItems),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // 初期要素が initItems と一致すること
+                    Assert.AreEqual(instance.Count, 7);
+                    instance.ForEach(
+                        (item, i) => { Assert.IsTrue(item.ItemEquals(initItems[i])); }
+                    );
+                },
                 logger
-            );
-
-            // 初期要素が initItems と一致すること
-            Assert.AreEqual(instance.Count, 7);
-            instance.ForEach(
-                (item, i) => { Assert.IsTrue(item.ItemEquals(initItems[i])); }
             );
         }
 
@@ -136,14 +142,16 @@ namespace WodiLib.Test.Sys
         {
             var list = new MockExtendedList<StubModel>();
 
-            var instance = TestTemplate.Constructor(
+            TestTemplate.Constructor(
                 () => new InitInstance.PropagateTestRestrictedCapacityList(list),
                 expectedThrowCreateNewInstance: false,
+                verification: instance =>
+                {
+                    // Items プロパティの実態がコンストラクタで与えた list であること
+                    Assert.IsTrue(instance.IsReferenceEqualsWithItems(list));
+                },
                 logger
             );
-
-            // Items プロパティの実態がコンストラクタで与えた list であること
-            Assert.IsTrue(instance.IsReferenceEqualsWithItems(list));
         }
 
         #endregion
@@ -1062,7 +1070,7 @@ namespace WodiLib.Test.Sys
             public static TransportMembersTestRestrictedCapacityList GenerateForMembersTest() => new();
 
             /// <summary>
-            /// 内部で使用する <see cref="IExtendedList{T}"/> をモックに差し替えただけ。
+            ///     内部で使用する <see cref="IExtendedList{T}"/> をモックに差し替えただけ。
             /// </summary>
             public class TransportMembersTestRestrictedCapacityList :
                 RestrictedCapacityList<StubModel, TransportMembersTestRestrictedCapacityList>
@@ -1079,7 +1087,7 @@ namespace WodiLib.Test.Sys
                             i => new StubModel(i.ToString()),
                             null,
                             5.Iterate(i => new StubModel(i.ToString()))
-                        ),
+                        )
                     };
                 }
 
@@ -1102,9 +1110,9 @@ namespace WodiLib.Test.Sys
             public static PropagateTestRestrictedCapacityList GenerateForPropagateTest(int count = 0) => new(count);
 
             /// <summary>
-            /// 内部で使用する <see cref="IExtendedList{T}"/> を差し替えないバージョン。
-            /// <see cref="IExtendedList{T}"/> の通知が <see cref="RestrictedCapacityList{T,TImpl}"/> に伝播することを確認するためのクラス。
-            /// またコンストラクタのテストにも使用する。
+            ///     内部で使用する <see cref="IExtendedList{T}"/> を差し替えないバージョン。
+            ///     <see cref="IExtendedList{T}"/> の通知が <see cref="RestrictedCapacityList{T,TImpl}"/> に伝播することを確認するためのクラス。
+            ///     またコンストラクタのテストにも使用する。
             /// </summary>
             public class PropagateTestRestrictedCapacityList :
                 RestrictedCapacityList<StubModel, PropagateTestRestrictedCapacityList>

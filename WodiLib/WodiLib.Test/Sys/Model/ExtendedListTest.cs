@@ -137,6 +137,7 @@ namespace WodiLib.Test.Sys
             TestTemplate.Constructor(
                 () => new ExtendedList<string>(makeListDefaultItem!, validator!, initItems),
                 expectedError,
+                verification: null,
                 logger
             );
         }
@@ -201,10 +202,8 @@ namespace WodiLib.Test.Sys
         [Test]
         public static void DeepCloneTest()
         {
-            var instance = InitInstance.GenerateExtendedList();
-
             TestTemplate.DeepClone(
-                instance,
+                createInstance: () => InitInstance.GenerateExtendedList(),
                 logger
             );
         }
