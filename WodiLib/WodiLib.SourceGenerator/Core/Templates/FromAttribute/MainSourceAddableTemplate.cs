@@ -44,10 +44,7 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         {
             get
             {
-                if (keyResolver is null)
-                {
-                    keyResolver = new BasicPropertyValueKeyResolver(Logger);
-                }
+                keyResolver ??= new BasicPropertyValueKeyResolver(Logger);
 
                 return keyResolver!;
             }
@@ -77,10 +74,7 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         {
             get
             {
-                if (propertyValuesDict is null)
-                {
-                    propertyValuesDict = new BasicPropertyValueDictionary(KeyResolver, Logger);
-                }
+                propertyValuesDict ??= new BasicPropertyValueDictionary(KeyResolver, Logger);
 
                 return propertyValuesDict!;
             }
@@ -93,15 +87,21 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
             = new();
 
         /// <inheritdoc/>
-        public virtual void AddSource(GeneratorExecutionContext context,
-            ITypeDefinitionInfoResolver typeDefinitionInfoResolver)
+        public virtual void AddSource(
+            GeneratorExecutionContext context,
+            ITypeDefinitionInfoResolver typeDefinitionInfoResolver
+        )
         {
             Logger?.AppendLine($"start AddSource from attribute: {TargetAttribute.TypeFullName}");
             Logger?.AppendLine($"SyntaxWorkResultDict Count: {SyntaxWorkResultDict.Count}");
             var workState = new WorkState(
-                context, typeDefinitionInfoResolver,
-                SyntaxWorkResultDict, PropertyDefaultValueDict,
-                PropertyValuesDict, Logger);
+                context,
+                typeDefinitionInfoResolver,
+                SyntaxWorkResultDict,
+                PropertyDefaultValueDict,
+                PropertyValuesDict,
+                Logger
+            );
             foreach (var workResult in SyntaxWorkResultDict)
             {
                 if (!workState.CanGenerateSource(workResult))
@@ -148,8 +148,11 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         }
 
         /// <inheritdoc/>
-        public void PutPropertyDefaultValues(string attributeName, Dictionary<string, PropertyValue> defaultValues,
-            string? parentAttrName)
+        public void PutPropertyDefaultValues(
+            string attributeName,
+            Dictionary<string, PropertyValue> defaultValues,
+            string? parentAttrName
+        )
         {
             Logger?.AppendLine($"PutPropertyDefaultValue (Target Attr: {attributeName}): ");
             foreach (var pair in defaultValues)
@@ -179,15 +182,21 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
             {
                 var nameSpace = workState.Namespace;
 
-                return SourceTextFormatter.Format(new SourceFormatTarget[]
-                {
-                    ($@"namespace {nameSpace}"),
-                    ($@"{{")
-                }, SourceTextFormatter.Format(SourceConstants.IndentSpace,
-                    GenerateBodyWithPartialOuter(workState)), new SourceFormatTarget[]
-                {
-                    ($@"}}")
-                });
+                return SourceTextFormatter.Format(
+                    new SourceFormatTarget[]
+                    {
+                        $"namespace {nameSpace}",
+                        $"{{",
+                    },
+                    SourceTextFormatter.Format(
+                        SourceConstants.IndentSpace,
+                        GenerateBodyWithPartialOuter(workState)
+                    ),
+                    new SourceFormatTarget[]
+                    {
+                        $"}}",
+                    }
+                );
             }
             catch (Exception ex)
             {
@@ -247,20 +256,29 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         /// <param name="typeDefinitionInfo">型情報</param>
         /// <param name="indentSpace">インデント用スペース文字列</param>
         /// <returns>ソースコード文字列（クラス定義開始部、クラス定義終了部）</returns>
-        private (SourceFormatTargetBlock, SourceFormatTargetBlock) GeneratePartialOuterTypeOneSource(string typeName,
-            TypeDefinitionInfo typeDefinitionInfo, string indentSpace)
+        private static (SourceFormatTargetBlock, SourceFormatTargetBlock) GeneratePartialOuterTypeOneSource(
+            string typeName,
+            TypeDefinitionInfo typeDefinitionInfo,
+            string indentSpace
+        )
         {
             var defText = ClassDefinitionSource(typeDefinitionInfo);
 
-            var forwardResult = SourceTextFormatter.Format(indentSpace, new SourceFormatTarget[]
-            {
-                ($@"{defText} {typeName}"),
-                ($@"{{")
-            });
-            var backResult = SourceTextFormatter.Format(indentSpace, new SourceFormatTarget[]
-            {
-                ($@"}}")
-            });
+            var forwardResult = SourceTextFormatter.Format(
+                indentSpace,
+                new SourceFormatTarget[]
+                {
+                    $"{defText} {typeName}",
+                    $"{{",
+                }
+            );
+            var backResult = SourceTextFormatter.Format(
+                indentSpace,
+                new SourceFormatTarget[]
+                {
+                    $"}}",
+                }
+            );
 
             return (forwardResult, backResult);
         }
@@ -272,7 +290,7 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         /// <param name="typeName">出力タイプ名</param>
         /// <param name="typeFullName">出力タイプフル名</param>
         /// <returns>外部クラスのタイプ名配列</returns>
-        private string[] ParseOuterTypePart(string nameSpace, string typeName, string typeFullName)
+        private static string[] ParseOuterTypePart(string nameSpace, string typeName, string typeFullName)
         {
             if (typeFullName.Equals($"{nameSpace}.{typeName}"))
             {
@@ -303,7 +321,8 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         /// <param name="workState">ワーク状態</param>
         /// <returns>ソースコード文字列情報</returns>
         private protected abstract SourceFormatTargetBlock GenerateTypeDefinitionSource(
-            WorkState workState);
+            WorkState workState
+        );
 
         /// <summary>
         ///     クラス定義宣言部のソースを生成する。

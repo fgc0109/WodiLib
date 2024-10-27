@@ -44,7 +44,8 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
 
         /// <inheritdoc/>
         private protected override SourceFormatTargetBlock SourceFormatTargetsPublicStaticProperties(
-            WorkState workState)
+            WorkState workState
+        )
         {
             var workResult = workState.PropertyValues;
 
@@ -53,65 +54,99 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
 
             if (!isValidateRange && !isValidateSafetyRange) return Array.Empty<SourceFormatTarget>();
 
-            return SourceTextFormatter.Format("",
-                SourceTextFormatter.If(isValidateRange,
+            return SourceTextFormatter.Format(
+                "",
+                SourceTextFormatter.If(
+                    isValidateRange,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
-                        MyAttr.MaxValue, workResult, workState, "int.MaxValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.MaxValue.Name, MyAttr.MinValue.Name)),
+                        MyAttr.MaxValue,
+                        workResult,
+                        workState,
+                        "int.MaxValue",
+                        workState.IsAnyPropertyOverwritten(MyAttr.MaxValue.Name, MyAttr.MinValue.Name)
+                    ),
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
-                        MyAttr.MinValue, workResult, workState, "int.MinValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.MaxValue.Name, MyAttr.MinValue.Name))
-                ), SourceTextFormatter.If(isValidateSafetyRange,
+                        MyAttr.MinValue,
+                        workResult,
+                        workState,
+                        "int.MinValue",
+                        workState.IsAnyPropertyOverwritten(MyAttr.MaxValue.Name, MyAttr.MinValue.Name)
+                    )
+                ),
+                SourceTextFormatter.If(
+                    isValidateSafetyRange,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
-                        MyAttr.SafetyMaxValue, workResult, workState, "int.MaxValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.SafetyMaxValue.Name, MyAttr.SafetyMinValue.Name)),
+                        MyAttr.SafetyMaxValue,
+                        workResult,
+                        workState,
+                        "int.MaxValue",
+                        workState.IsAnyPropertyOverwritten(MyAttr.SafetyMaxValue.Name, MyAttr.SafetyMinValue.Name)
+                    ),
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
-                        MyAttr.SafetyMinValue, workResult, workState, "int.MinValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.SafetyMaxValue.Name, MyAttr.SafetyMinValue.Name))
+                        MyAttr.SafetyMinValue,
+                        workResult,
+                        workState,
+                        "int.MinValue",
+                        workState.IsAnyPropertyOverwritten(MyAttr.SafetyMaxValue.Name, MyAttr.SafetyMinValue.Name)
+                    )
                 )
             );
         }
 
         /// <inheritdoc/>
         private protected override SourceFormatTargetBlock SourceFormatTargetsConstructorException(
-            WorkState workState)
+            WorkState workState
+        )
         {
             if (!IsValidateRange(workState)) return Array.Empty<SourceFormatTarget>();
 
-            return SourceTextFormatter.Format("", new SourceFormatTarget[]
-            {
-                ($@"/// <exception cref=""{typeof(ArgumentOutOfRangeException).FullName}"">"),
-                ($@"/// {__}<paramref name=""value""/> が <see cref=""{MyAttr.MinValue.Name}""/> 未満または <see cref=""{MyAttr.MaxValue.Name}""/> を超える場合。"),
-                ($@"/// </exception>")
-            });
+            return SourceTextFormatter.Format(
+                "",
+                new SourceFormatTarget[]
+                {
+                    $@"/// <exception cref=""{typeof(ArgumentOutOfRangeException).FullName}"">",
+                    $@"/// {__}<paramref name=""value""/> が <see cref=""{MyAttr.MinValue.Name}""/> 未満または <see cref=""{MyAttr.MaxValue.Name}""/> を超える場合。",
+                    $"/// </exception>",
+                }
+            );
         }
 
         /// <inheritdoc/>
         private protected override SourceFormatTargetBlock SourceFormatTargetsConstructorBody(
-            WorkState workState)
-            => SourceTextFormatter.Format("",
-                SourceTextFormatter.If(IsValidateRange(workState), new SourceFormatTarget[]
-                {
-                    ($@"{{   // value range"),
-                    ($@"{__}if (value < {MyAttr.MinValue.Name} || {MyAttr.MaxValue.Name} < value) throw new System.ArgumentOutOfRangeException(nameof(value), value, $""value between {{{MyAttr.MinValue.Name}}} and {{{MyAttr.MaxValue.Name}}}"");"),
-                    ($@"}}")
-                }),
-                SourceTextFormatter.If(IsValidateSafetyRange(workState), new SourceFormatTarget[]
-                {
-                    ($@"{{   // safety value range"),
-                    ($@"{__}if (value < {MyAttr.SafetyMinValue.Name} || {MyAttr.SafetyMaxValue.Name} < value) WodiLib.Sys.Cmn.WodiLibLogger.GetInstance().Warning(WodiLib.Sys.WarningMessage.OutOfRange(nameof(value), {MyAttr.SafetyMinValue.Name}, {MyAttr.SafetyMaxValue.Name}, value));"),
-                    ($@"}}")
-                }), new SourceFormatTarget[]
+            WorkState workState
+        )
+            => SourceTextFormatter.Format(
+                "",
+                SourceTextFormatter.If(
+                    IsValidateRange(workState),
+                    new SourceFormatTarget[]
+                    {
+                        $"{{   // value range",
+                        $@"{__}if (value < {MyAttr.MinValue.Name} || {MyAttr.MaxValue.Name} < value) throw new System.ArgumentOutOfRangeException(nameof(value), value, $""value between {{{MyAttr.MinValue.Name}}} and {{{MyAttr.MaxValue.Name}}}"");",
+                        $"}}",
+                    }
+                ),
+                SourceTextFormatter.If(
+                    IsValidateSafetyRange(workState),
+                    new SourceFormatTarget[]
+                    {
+                        $"{{   // safety value range",
+                        $"{__}if (value < {MyAttr.SafetyMinValue.Name} || {MyAttr.SafetyMaxValue.Name} < value) WodiLib.Sys.Cmn.WodiLibLogger.GetInstance().Warning(WodiLib.Sys.WarningMessage.OutOfRange(nameof(value), {MyAttr.SafetyMinValue.Name}, {MyAttr.SafetyMaxValue.Name}, value));",
+                        $"}}",
+                    }
+                ),
+                new SourceFormatTarget[]
                 {
                     // DoConstructorExpansion メソッドで RawValue を更新する可能性があるので RawValue の初期化を先に行う
-                    ($@"{workState.PropertyValues[MyAttr.PropertyName.Name]} = value;"),
-                    ($@"DoConstructorExpansion(value);")
+                    $"{workState.PropertyValues[MyAttr.PropertyName.Name]} = value;",
+                    $"DoConstructorExpansion(value);",
                 }
             );
 
         /// <inheritdoc/>
         private protected sealed override SourceFormatTargetBlock SourceFormatTargetsExtendBody(
-            WorkState workState)
+            WorkState workState
+        )
         {
             var workResult = workState.PropertyValues;
 
@@ -129,10 +164,15 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
             var canXor = IntegralNumericOperation.CanXor(operations);
             var comparableTypes = ComparableTypes(workResult, fullName).ToArray();
 
-            var operationOverloadCodeMaker = new OperationOverloadCodeMaker(workResult.Name, workResult.Namespace,
-                workResult[MyAttr.PropertyName.Name]!, WrapType.FullName!);
+            var operationOverloadCodeMaker = new OperationOverloadCodeMaker(
+                workResult.Name,
+                workResult.Namespace,
+                workResult[MyAttr.PropertyName.Name]!,
+                WrapType.FullName!
+            );
 
-            return SourceTextFormatter.Format("",
+            return SourceTextFormatter.Format(
+                "",
                 operationOverloadCodeMaker.UnaryOperatorIncrement(canIncreaseAndDecrease),
                 operationOverloadCodeMaker.UnaryOperatorDecrement(canIncreaseAndDecrease),
                 operationOverloadCodeMaker.BinaryOperatorNewInstance("+", addAndSubtractableTypes, true),
@@ -152,8 +192,9 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
                 operationOverloadCodeMaker.BinaryOperatorBool(">", comparableTypes, true),
                 new SourceFormatTarget[]
                 {
-                    ($@"partial void DoConstructorExpansion({WrapType} value);")
-                });
+                    $"partial void DoConstructorExpansion({WrapType} value);",
+                }
+            );
         }
 
         /// <returns>範囲チェックを行う場合 <see langword="true"/> </returns>
@@ -166,22 +207,38 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
 
         /// <returns>加減算可能な右項型の一覧</returns>
         private static IEnumerable<string> AddAndSubtractableTypes(PropertyValues workResult, string fullName)
-            => OperationRightTypes(workResult, fullName, IntegralNumericOperation.CanAddAndSubtract,
-                MyAttr.AddAndSubtractTypes.Name);
+            => OperationRightTypes(
+                workResult,
+                fullName,
+                IntegralNumericOperation.CanAddAndSubtract,
+                MyAttr.AddAndSubtractTypes.Name
+            );
 
         /// <returns>加減算可能な右項型の一覧</returns>
         private static IEnumerable<string> MultipleAndDividableTypes(PropertyValues workResult, string fullName)
-            => OperationRightTypes(workResult, fullName, IntegralNumericOperation.CanMultipleAndDivide,
-                MyAttr.MultipleAndDivideOtherTypes.Name);
+            => OperationRightTypes(
+                workResult,
+                fullName,
+                IntegralNumericOperation.CanMultipleAndDivide,
+                MyAttr.MultipleAndDivideOtherTypes.Name
+            );
 
         /// <returns>比較可能な右項型の一覧</returns>
         private static IEnumerable<string> ComparableTypes(PropertyValues workResult, string fullName)
-            => OperationRightTypes(workResult, fullName, IntegralNumericOperation.CanCompare,
-                MyAttr.CompareOtherTypes.Name);
+            => OperationRightTypes(
+                workResult,
+                fullName,
+                IntegralNumericOperation.CanCompare,
+                MyAttr.CompareOtherTypes.Name
+            );
 
         /// <returns>演算可能な右項型の一覧</returns>
-        private static IEnumerable<string> OperationRightTypes(PropertyValues workResult, string fullName,
-            Func<string, bool> funcOperateSameType, string getTypesPropertyName)
+        private static IEnumerable<string> OperationRightTypes(
+            PropertyValues workResult,
+            string fullName,
+            Func<string, bool> funcOperateSameType,
+            string getTypesPropertyName
+        )
         {
             var operateSameType = funcOperateSameType(workResult.GetOrDefault(MyAttr.Operations.Name, "0"));
             var isInitializedTypes = workResult[getTypesPropertyName] is not null;

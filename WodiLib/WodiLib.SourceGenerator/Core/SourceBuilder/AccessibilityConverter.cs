@@ -26,8 +26,11 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
                 Accessibility.ProtectedOrInternal => "internal protected",
                 Accessibility.Private => "private",
                 Accessibility.ProtectedAndInternal => "protected private",
-                _ => throw new ArgumentOutOfRangeException(nameof(accessibility), accessibility,
-                    "Not defined SwitchCase")
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(accessibility),
+                    accessibility,
+                    "Not defined SwitchCase"
+                ),
             };
     }
 }

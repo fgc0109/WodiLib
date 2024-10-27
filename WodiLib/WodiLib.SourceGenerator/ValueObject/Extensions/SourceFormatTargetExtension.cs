@@ -24,18 +24,23 @@ namespace WodiLib.SourceGenerator.ValueObject.Extensions
         /// <param name="prefix">付与するprefix</param>
         /// <param name="suffix">付与するsuffix</param>
         /// <returns>処理結果</returns>
-        public static SourceFormatTargetBlock AppendPrefixAndSuffixIfNotEmpty(this SourceFormatTargetBlock src,
-            string prefix, string suffix)
+        public static SourceFormatTargetBlock AppendPrefixAndSuffixIfNotEmpty(
+            this SourceFormatTargetBlock src,
+            string prefix,
+            string suffix
+        )
         {
             if (src.IsEmpty) return src;
             return new SourceFormatTarget[]
                 {
-                    prefix
+                    prefix,
                 }.Concat(src)
-                .Concat(new SourceFormatTarget[]
-                {
-                    suffix
-                })
+                .Concat(
+                    new SourceFormatTarget[]
+                    {
+                        suffix,
+                    }
+                )
                 .ToArray();
         }
     }

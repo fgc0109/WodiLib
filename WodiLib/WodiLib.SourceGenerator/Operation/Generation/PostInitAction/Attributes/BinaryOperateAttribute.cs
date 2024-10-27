@@ -36,7 +36,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Attributes
             Type = BinaryOperationType.Instance.TypeFullName,
             Summary = "オーバーロードする二項演算子",
             DefaultValue = $"({BinaryOperationType.Instance.TypeFullName}) 0",
-            DefaultValueAsSourceCode = true
+            DefaultValueAsSourceCode = true,
         };
 
         public static readonly PropertyInfo OtherTypes = new()
@@ -44,15 +44,15 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Attributes
             Name = nameof(OtherTypes),
             Type = $"{typeof(Type).FullName}[]",
             Summary = $"他項の型",
-            DefaultValue = null
+            DefaultValue = null,
         };
 
         public static readonly PropertyInfo InnerCastType = new()
         {
             Name = nameof(InnerCastType),
-            Type = typeof(Type).FullName,
+            Type = typeof(Type).FullName!,
             Summary = $"計算時に内部でキャストする型",
-            DefaultValue = null
+            DefaultValue = null,
         };
 
         public static readonly PropertyInfo OtherPosition = new()
@@ -62,16 +62,16 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Attributes
             Summary = $"他項の位置",
             DefaultValue =
                 $"{BinaryOperateOtherPosition.Instance.TypeFullName}.{BinaryOperateOtherPosition.Left.MemberName}",
-            DefaultValueAsSourceCode = true
+            DefaultValueAsSourceCode = true,
         };
 
         public static readonly PropertyInfo ReturnType = new()
         {
             Name = nameof(ReturnType),
-            Type = typeof(Type).FullName,
+            Type = typeof(Type).FullName!,
             Summary = $"返却型",
             Remarks = "null の場合左項の型を返す",
-            DefaultValue = null
+            DefaultValue = null,
         };
 
         public static readonly PropertyInfo ReturnCodeType = new()
@@ -81,7 +81,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Attributes
             Summary = $"返却インスタンスの生成方法",
             DefaultValue =
                 $"{OperationResultReturnCodeType.Instance.TypeFullName}.{OperationResultReturnCodeType.New.MemberName}",
-            DefaultValueAsSourceCode = true
+            DefaultValueAsSourceCode = true,
         };
 
         /// <inheritdoc/>
@@ -97,7 +97,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Attributes
                 InnerCastType,
                 OtherPosition,
                 ReturnType,
-                ReturnCodeType
+                ReturnCodeType,
             };
 
         private BinaryOperateAttribute()

@@ -13,7 +13,8 @@ namespace WodiLib.SourceGenerator.Core
     /// <summary>
     ///     コード解析Workerインタフェース
     /// </summary>
-    internal interface ISyntaxWorker : ISyntaxContextReceiver, ITypeDefinitionInfoResolver
+    internal interface ISyntaxWorker : ISyntaxContextReceiver,
+        ITypeDefinitionInfoResolver
     {
         /// <summary>ロガー</summary>
         ILogger? Logger { get; }

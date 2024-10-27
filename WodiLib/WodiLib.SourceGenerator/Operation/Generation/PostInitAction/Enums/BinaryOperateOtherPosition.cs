@@ -30,7 +30,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Enums
             => new[]
             {
                 Left,
-                Right
+                Right,
             };
 
         private BinaryOperateOtherPosition()

@@ -34,16 +34,19 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.MultiValues
             var properties = GetInitializeProperties(workState)
                 .ToList();
 
-            return SourceTextFormatter.Format("", new SourceFormatTarget[]
+            return SourceTextFormatter.Format(
+                "",
+                new SourceFormatTarget[]
                 {
-                    ($@"{DefinitionSource(defInfo)} {thisType}"),
-                    ($@"{{")
+                    $"{DefinitionSource(defInfo)} {thisType}",
+                    $"{{",
                 },
                 SourceTextFormatter.Format(IndentSpace, ConstructorSource(properties, workState)),
                 new SourceFormatTarget[]
                 {
-                    ($@"}}")
-                });
+                    $"}}",
+                }
+            );
         }
 
         /// <summary>
@@ -86,16 +89,20 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.MultiValues
             var symbol = workState.CurrentSymbol;
 
             var properties = symbol?.GetMembers()
-                                 .Where(member => member.Kind == SymbolKind.Property
-                                                  && member.DeclaredAccessibility == Accessibility.Public)
+                                 .Where(
+                                     member => member.Kind == SymbolKind.Property
+                                               && member.DeclaredAccessibility == Accessibility.Public
+                                 )
                                  .Cast<IPropertySymbol>()
                                  .ToList()
                              ?? new List<IPropertySymbol>();
 
             var initMethods = symbol?.GetMembers()
-                                  .Where(member => member.Kind == SymbolKind.Method
-                                                   && member.DeclaredAccessibility == Accessibility.Public
-                                                   && ((member as IMethodSymbol)?.IsInitOnly ?? false))
+                                  .Where(
+                                      member => member.Kind == SymbolKind.Method
+                                                && member.DeclaredAccessibility == Accessibility.Public
+                                                && ((member as IMethodSymbol)?.IsInitOnly ?? false)
+                                  )
                               ?? new List<ISymbol>();
             var initPropertiesNames = initMethods.Select(method => method.Name.Substring(4) /* "set_" を除去 */)
                 .ToList();
@@ -109,37 +116,47 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.MultiValues
         /// <param name="properties">コンストラクタで初期化するプロパティ一覧</param>
         /// <param name="workState">ワーク状態</param>
         /// <returns>ソースコード文字列ブロック</returns>
-        private static SourceFormatTargetBlock ConstructorSource(IEnumerable<IPropertySymbol> properties,
-            WorkState workState)
+        private static SourceFormatTargetBlock ConstructorSource(
+            IEnumerable<IPropertySymbol> properties,
+            WorkState workState
+        )
         {
             var propertyArray = properties.ToArray();
 
             var typeName = workState.PropertyValues.TargetSymbol?.Name ?? "";
-            var argsDocComments = propertyArray.Select(prop =>
-                $"/// {Tag.Param(prop.Name.ToLowerFirstChar(), Tag.See.Cref(prop.Name))}");
-            var argsCode = string.Join(",",
-                propertyArray.Select(prop => $"{prop.Type} {prop.Name.ToLowerFirstChar()}"));
+            var argsDocComments = propertyArray.Select(
+                prop =>
+                    $"/// {Tag.Param(prop.Name.ToLowerFirstChar(), Tag.See.Cref(prop.Name))}"
+            );
+            var argsCode = string.Join(
+                ",",
+                propertyArray.Select(prop => $"{prop.Type} {prop.Name.ToLowerFirstChar()}")
+            );
             var validateNullArgCodes = propertyArray.Where(prop => prop.Type.TypeKind == TypeKind.Class)
-                .Select(prop =>
-                    $"{__}if ({prop.Name.ToLowerFirstChar()} is null) throw new System.ArgumentNullException(nameof({prop.Name.ToLowerFirstChar()}));");
+                .Select(
+                    prop =>
+                        $"{__}if ({prop.Name.ToLowerFirstChar()} is null) throw new System.ArgumentNullException(nameof({prop.Name.ToLowerFirstChar()}));"
+                );
             var propertySetCodes = propertyArray.Select(prop => $"{__}{prop.Name} = {prop.Name.ToLowerFirstChar()};");
 
-            return SourceTextFormatter.Format("", new SourceFormatTarget[]
+            return SourceTextFormatter.Format(
+                "",
+                new SourceFormatTarget[]
                 {
-                    (@$"/// <summary>"),
-                    (@$"/// {__}コンストラクタ"),
-                    (@$"/// </summary>")
+                    $"/// <summary>",
+                    $"/// {__}コンストラクタ",
+                    $"/// </summary>",
                 },
                 new SourceFormatTargetBlock(argsDocComments.ToArray()),
                 new SourceFormatTarget[]
                 {
-                    (@$"public {typeName}({argsCode}) {{")
+                    $"public {typeName}({argsCode}) {{",
                 },
                 new SourceFormatTargetBlock(validateNullArgCodes.ToArray()),
                 new SourceFormatTargetBlock(propertySetCodes.ToArray()),
                 new SourceFormatTarget[]
                 {
-                    (@$"}}")
+                    $"}}",
                 }
             );
         }

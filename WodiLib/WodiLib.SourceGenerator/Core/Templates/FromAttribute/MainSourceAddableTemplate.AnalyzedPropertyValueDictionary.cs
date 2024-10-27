@@ -79,13 +79,18 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
 
                 private object DefaultValuesLock { get; } = new();
 
-                public WorkInfo(IDictionary<string, PropertyValue> defaultValues, bool isRootAttribute,
-                    string? parentTypeName)
+                public WorkInfo(
+                    IDictionary<string, PropertyValue> defaultValues,
+                    bool isRootAttribute,
+                    string? parentTypeName
+                )
                 {
                     DefaultValues = new Dictionary<string, PropertyValue>(defaultValues);
                     IsRootAttribute = isRootAttribute;
                     IsMerged = IsRootAttribute;
-                    ParentTypeFullName = IsRootAttribute ? "" : parentTypeName!;
+                    ParentTypeFullName = IsRootAttribute
+                        ? ""
+                        : parentTypeName!;
                 }
 
                 public void Merge(WorkInfo other)

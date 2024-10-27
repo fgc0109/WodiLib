@@ -75,7 +75,7 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
                 {
                     MemberName = info.memberName,
                     Summary = info.summary,
-                    Value = info.value
+                    Value = info.value,
                 };
         }
 
@@ -85,33 +85,44 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
 
         /// <returns>SourceGenerator出力ソースコード</returns>
         private string Source()
-            => SourceTextFormatter.Format(new SourceFormatTarget[]
+            => SourceTextFormatter.Format(
+                new SourceFormatTarget[]
                 {
-                    ($@"namespace {NameSpace}"),
-                    ($@"{{")
-                }, SourceTextFormatter.Format(IndentSpace,
+                    $"namespace {NameSpace}",
+                    $"{{",
+                },
+                SourceTextFormatter.Format(
+                    IndentSpace,
                     new SourceFormatTarget[]
                     {
-                        ($@"/// <summary>"),
-                        ($@"/// {__}{Summary}"),
-                        ($@"/// </summary>"),
-                        ($@"[System.Flags]", IsFlags),
-                        ($@"public enum {EnumName}"),
-                        ($@"{{")
+                        $"/// <summary>",
+                        $"/// {__}{Summary}",
+                        $"/// </summary>",
+                        ($"[System.Flags]", IsFlags),
+                        $"public enum {EnumName}",
+                        $"{{",
                     },
-                    SourceTextFormatter.Reduce(IndentSpace, ",",
-                        Members().Select(member => new SourceFormatTargetBlock(
-                            ($@"/// <summary>{member.Summary}</summary>"),
-                            ($@"{member.MemberName} = {member.Value}", !IsFlags),
-                            ($@"{member.MemberName} = 0x{member.Value:X}", IsFlags),
-                            SourceFormatTarget.Empty
-                        )).ToArray()
-                    ).TrimLastEmptyLine()
+                    SourceTextFormatter.Reduce(
+                            IndentSpace,
+                            ",",
+                            Members()
+                                .Select(
+                                    member => new SourceFormatTargetBlock(
+                                        $"/// <summary>{member.Summary}</summary>",
+                                        ($"{member.MemberName} = {member.Value}", !IsFlags),
+                                        ($"{member.MemberName} = 0x{member.Value:X}", IsFlags),
+                                        SourceFormatTarget.Empty
+                                    )
+                                )
+                                .ToArray()
+                        )
+                        .TrimLastEmptyLine()
                 ),
                 new SourceFormatTarget[]
                 {
-                    ($@"    }}"),
-                    ($@"}}")
-                });
+                    $"    }}",
+                    $"}}",
+                }
+            );
     }
 }

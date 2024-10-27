@@ -56,9 +56,11 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         }
 
         /// <inheritDoc/>
-        public virtual IReadOnlyList<PropertyValues>? GetAncestorValues(SyntaxWorkResult workResult,
+        public virtual IReadOnlyList<PropertyValues>? GetAncestorValues(
+            SyntaxWorkResult workResult,
             AnalyzedPropertyValueDictionary propertyDefaultValueDict,
-            ISyntaxWorkResultDictionary syntaxWorkResults)
+            ISyntaxWorkResultDictionary syntaxWorkResults
+        )
         {
             var currentBaseType = workResult.TargetSymbol?.BaseType;
             return currentBaseType is null
@@ -75,8 +77,10 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
             => GetEnumerator();
 
         /// <inheritDoc/>
-        public PropertyValues SetupPropertyValues(SyntaxWorkResult workResult,
-            AnalyzedPropertyValueDictionary propertyDefaultValueDict)
+        public PropertyValues SetupPropertyValues(
+            SyntaxWorkResult workResult,
+            AnalyzedPropertyValueDictionary propertyDefaultValueDict
+        )
         {
             if (Contains(workResult))
             {
@@ -89,7 +93,8 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
 
             var result = new PropertyValues(
                 workResult,
-                propertyDefaultValueDict.Get(workResult.SrcAttributeName).ToReadOnlyDictionary());
+                propertyDefaultValueDict.Get(workResult.SrcAttributeName).ToReadOnlyDictionary()
+            );
 
             var (classKey, attrKey) = KeyResolver.Resolve(workResult);
             if (!Impl.ContainsKey(classKey))
@@ -109,12 +114,17 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
 
         private IReadOnlyList<PropertyValues> SetupPropertyValues(
             IReadOnlyDictionary<string, List<SyntaxWorkResult>> workResults,
-            AnalyzedPropertyValueDictionary propertyDefaultValueDict)
+            AnalyzedPropertyValueDictionary propertyDefaultValueDict
+        )
         {
-            return workResults.Values.SelectMany(results =>
-                results.Select(workResult =>
-                    SetupPropertyValues(workResult, propertyDefaultValueDict))
-            ).ToList();
+            return workResults.Values.SelectMany(
+                    results =>
+                        results.Select(
+                            workResult =>
+                                SetupPropertyValues(workResult, propertyDefaultValueDict)
+                        )
+                )
+                .ToList();
         }
 
         /// <summary>
@@ -124,16 +134,19 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         /// <param name="syntaxWorkResults">対象解析結果</param>
         /// <param name="propertyDefaultValueDict">属性プロパティデフォルト値リスト</param>
         /// <returns><see cref="PropertyValues"/> インスタンス</returns>
-        private IReadOnlyList<PropertyValues>? GetPropertyValues(INamedTypeSymbol target,
+        private IReadOnlyList<PropertyValues>? GetPropertyValues(
+            INamedTypeSymbol target,
             ISyntaxWorkResultDictionary syntaxWorkResults,
-            AnalyzedPropertyValueDictionary propertyDefaultValueDict)
+            AnalyzedPropertyValueDictionary propertyDefaultValueDict
+        )
         {
             var currentTarget = target;
             while (true)
             {
                 if (Contains(target))
                 {
-                    return this[target].Values
+                    return this[target]
+                        .Values
                         .SelectMany(list => list)
                         .ToList();
                 }

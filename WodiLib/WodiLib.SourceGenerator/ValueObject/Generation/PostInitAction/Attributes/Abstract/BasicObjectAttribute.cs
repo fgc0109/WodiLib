@@ -28,9 +28,10 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Summary = $"{Tag.See.Cref("System.Object")} のメソッド自動派生フラグ",
             Remarks =
                 Tag.Para(
-                    $"{Tag.See.Cref("object.Equals(object)")}, {Tag.See.Cref("object.Equals(object)")}, {Tag.See.Cref("object.Equals(object)")} をオーバーライドする。")
+                    $"{Tag.See.Cref("object.Equals(object)")}, {Tag.See.Cref("object.Equals(object)")}, {Tag.See.Cref("object.Equals(object)")} をオーバーライドする。"
+                )
                 + Tag.Para($"対象が Record の場合、設定値によらず {Tag.See.Langword_False} とみなされる。"),
-            DefaultValue = "true"
+            DefaultValue = "true",
         };
 
         public static readonly PropertyInfo ImplementEquatable = new()
@@ -39,7 +40,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Type = "bool",
             Summary = $"{Tag.See.Cref("System.IEquatable{T}")} 自動実装フラグ",
             Remarks = Tag.Para($"対象が Record の場合、設定値によらず {Tag.See.Langword_False} とみなされる。"),
-            DefaultValue = "true"
+            DefaultValue = "true",
         };
 
         public static readonly PropertyInfo CastType = new()
@@ -47,7 +48,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Name = nameof(CastType),
             Type = Enums.CastType.Instance.TypeFullName,
             Summary = "キャスト種別",
-            DefaultValue = Enums.CastType.Code_None
+            DefaultValue = Enums.CastType.Code_None,
         };
 
         /// <inheritdoc/>
@@ -60,7 +61,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             {
                 OverrideBasicMethods,
                 ImplementEquatable,
-                CastType
+                CastType,
             };
     }
 }

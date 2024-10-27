@@ -25,7 +25,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Name = nameof(Operations),
             Type = IntegralNumericOperation.Instance.TypeFullName,
             Summary = "オーバーロード演算子",
-            DefaultValue = 0 // None
+            DefaultValue = 0, // None
         };
 
         public static readonly PropertyInfo AddAndSubtractTypes = new()
@@ -33,7 +33,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Name = nameof(AddAndSubtractTypes),
             Type = "System.Type[]?",
             Summary = "加減算の右項型。",
-            DefaultValue = "null"
+            DefaultValue = "null",
         };
 
         public static readonly PropertyInfo MultipleAndDivideOtherTypes = new()
@@ -41,7 +41,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Name = nameof(MultipleAndDivideOtherTypes),
             Type = "System.Type[]?",
             Summary = "乗除算の右項型。",
-            DefaultValue = "null"
+            DefaultValue = "null",
         };
 
         public static readonly PropertyInfo CompareOtherTypes = new()
@@ -49,15 +49,15 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Name = nameof(CompareOtherTypes),
             Type = "System.Type[]?",
             Summary = "比較の右項型。",
-            DefaultValue = "null"
+            DefaultValue = "null",
         };
 
         public static readonly PropertyInfo IsUseBasicFormattable = new()
         {
             Name = nameof(IsUseBasicFormattable),
             Type = "bool",
-            Summary = $"標準{Tag.See.Cref(typeof(IFormattable).FullName)}の実装フラグ",
-            DefaultValue = "true"
+            Summary = $"標準{Tag.See.Cref(typeof(IFormattable).FullName!)}の実装フラグ",
+            DefaultValue = "true",
         };
 
         /* Dummy */
@@ -66,7 +66,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Name = nameof(MaxValue),
             Type = "int",
             Summary = "許容最大値",
-            DefaultValue = "0"
+            DefaultValue = "0",
         };
 
         /* Dummy */
@@ -75,7 +75,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Name = nameof(MinValue),
             Type = "int",
             Summary = "許容最小値",
-            DefaultValue = "0"
+            DefaultValue = "0",
         };
 
         /* Dummy */
@@ -84,7 +84,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Name = nameof(SafetyMaxValue),
             Type = "int",
             Summary = "安全に使用できる上限値",
-            DefaultValue = "0"
+            DefaultValue = "0",
         };
 
         /* Dummy */
@@ -93,21 +93,24 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Name = nameof(SafetyMinValue),
             Type = "int",
             Summary = "安全に使用できる下限値",
-            DefaultValue = "0"
+            DefaultValue = "0",
         };
 
         public override string Summary => $"単一の{WrapType}を表すValueObject";
 
         /// <inheritdoc/>
         public override IEnumerable<PropertyInfo> Properties()
-            => base.Properties().Concat(new[]
-            {
-                Operations,
-                AddAndSubtractTypes,
-                MultipleAndDivideOtherTypes,
-                CompareOtherTypes,
-                IsUseBasicFormattable
-            });
+            => base.Properties()
+                .Concat(
+                    new[]
+                    {
+                        Operations,
+                        AddAndSubtractTypes,
+                        MultipleAndDivideOtherTypes,
+                        CompareOtherTypes,
+                        IsUseBasicFormattable,
+                    }
+                );
 
         /// <summary>内包型</summary>
         protected abstract string WrapType { get; }

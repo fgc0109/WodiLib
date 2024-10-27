@@ -60,12 +60,14 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
             /// </summary>
             private SourceGeneratedTargetList GeneratedTargetList { get; } = new();
 
-            public WorkState(GeneratorExecutionContext context,
+            public WorkState(
+                GeneratorExecutionContext context,
                 ITypeDefinitionInfoResolver typeDefinitionInfoResolver,
                 ISyntaxWorkResultDictionary syntaxWorkResultDict,
                 AnalyzedPropertyValueDictionary propertyDefaultValueDict,
                 IPropertyValueDictionary propertyValuesDict,
-                ILogger? logger)
+                ILogger? logger
+            )
             {
                 Context = context;
                 TypeDefinitionInfoResolver = typeDefinitionInfoResolver;
@@ -138,7 +140,8 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
                 if (GeneratedTargetList.Contains(currentResult))
                 {
                     Logger?.AppendLine(
-                        $"SyntaxWorkResult: {{{currentResult}}} Cannot GenerateSource Because of Already Generated. ");
+                        $"SyntaxWorkResult: {{{currentResult}}} Cannot GenerateSource Because of Already Generated. "
+                    );
                     return false;
                 }
 
@@ -172,8 +175,11 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
                 var currentTypeDef = TypeDefinitionInfoResolver.Resolve(currentValues.FullName);
                 Current = new CurrentInfo(currentResult, currentValues, currentTypeDef);
 
-                AncestorValues = PropertyValuesDict.GetAncestorValues(currentResult,
-                    PropertyDefaultValueDict, SyntaxWorkResultDict);
+                AncestorValues = PropertyValuesDict.GetAncestorValues(
+                    currentResult,
+                    PropertyDefaultValueDict,
+                    SyntaxWorkResultDict
+                );
             }
 
             /// <summary>
@@ -187,8 +193,11 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
 
                 public string SrcAttributeName => Current.SrcAttributeName;
 
-                public CurrentInfo(SyntaxWorkResult current, PropertyValues propertyValues,
-                    TypeDefinitionInfo typeDefinitionInfo)
+                public CurrentInfo(
+                    SyntaxWorkResult current,
+                    PropertyValues propertyValues,
+                    TypeDefinitionInfo typeDefinitionInfo
+                )
                 {
                     Current = current;
                     PropertyValues = propertyValues;
@@ -238,8 +247,8 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
                             if (ReferenceEquals(x, null)) return false;
                             if (ReferenceEquals(y, null)) return false;
                             if (x.GetType() != y.GetType()) return false;
-                            return SymbolEqualityComparer.Default.Equals(x.Symbol, y.Symbol) &&
-                                   x.AttrData.Equals(y.AttrData);
+                            return SymbolEqualityComparer.Default.Equals(x.Symbol, y.Symbol)
+                                   && x.AttrData.Equals(y.AttrData);
                         }
 
                         public int GetHashCode(SourceGeneratedTargetInfo obj)

@@ -22,9 +22,11 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         /// <param name="propertyDefaultValueDict">属性のデフォルト値リスト</param>
         /// <param name="syntaxWorkResults">解析結果ディクショナリ</param>
         /// <returns>親クラスのプロパティ値リスト</returns>
-        IReadOnlyList<PropertyValues>? GetAncestorValues(SyntaxWorkResult workResult,
+        IReadOnlyList<PropertyValues>? GetAncestorValues(
+            SyntaxWorkResult workResult,
             AnalyzedPropertyValueDictionary propertyDefaultValueDict,
-            ISyntaxWorkResultDictionary syntaxWorkResults);
+            ISyntaxWorkResultDictionary syntaxWorkResults
+        );
 
         /// <summary>
         ///     プロパティ値ディクショナリを使用できるよう準備して返す。
@@ -34,6 +36,7 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         /// <returns>プロパティ値ディクショナリ</returns>
         PropertyValues SetupPropertyValues(
             SyntaxWorkResult workResult,
-            AnalyzedPropertyValueDictionary propertyDefaultValueDict);
+            AnalyzedPropertyValueDictionary propertyDefaultValueDict
+        );
     }
 }

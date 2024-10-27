@@ -55,7 +55,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Enums
                                + FlagValue_And
                                + FlagValue_Or
                                + FlagValue_Xor
-                               + FlagValue_Compare)
+                               + FlagValue_Compare),
             };
 
         public static bool CanIncreaseAndDecrease(string? flagStr)

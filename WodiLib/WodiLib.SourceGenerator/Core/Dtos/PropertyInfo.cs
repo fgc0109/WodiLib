@@ -53,15 +53,18 @@ namespace WodiLib.SourceGenerator.Core.Dtos
         /// <returns>自身の情報から生成した <see cref="SourceFormatTarget"/> 配列</returns>
         public SourceFormatTargetBlock ToSourceFormatTargets()
         {
-            return SourceTextFormatter.Format("",
+            return SourceTextFormatter.Format(
+                "",
                 SourceFormatTargetSummaryBody(),
                 SourceFormatTargetRemarks(),
-                SourceFormatTargetSeeAlso(), new[]
+                SourceFormatTargetSeeAlso(),
+                new[]
                 {
-                    ($@"[{typeof(DefaultValueAttribute).FullName}({(SourceTextDefaultValue())})]"),
-                    ($@"public virtual {Type} {Name} {{ get; init; }} = default!;"),
-                    SourceFormatTarget.Empty
-                });
+                    $"[{typeof(DefaultValueAttribute).FullName}({SourceTextDefaultValue()})]",
+                    $"public virtual {Type} {Name} {{ get; init; }} = default!;",
+                    SourceFormatTarget.Empty,
+                }
+            );
         }
 
         /// <returns>デフォルト値</returns>
@@ -71,15 +74,21 @@ namespace WodiLib.SourceGenerator.Core.Dtos
 
             if (DefaultValue is bool bValue)
             {
-                return new PropertyValue(bValue ? "true" : "false");
+                return new PropertyValue(
+                    bValue
+                        ? "true"
+                        : "false"
+                );
             }
 
             if (DefaultValueAsSourceCode) return new PropertyValue($"{DefaultValue}");
 
             var isStringValue = RegexTypeIsString.IsMatch(Type);
-            return new PropertyValue(isStringValue && wrapDoubleQuoteIfString
-                ? $@"""{DefaultValue}"""
-                : $"{DefaultValue}");
+            return new PropertyValue(
+                isStringValue && wrapDoubleQuoteIfString
+                    ? $@"""{DefaultValue}"""
+                    : $"{DefaultValue}"
+            );
         }
 
         /// <returns>デフォルト値（プロパティデフォルト値ディクショナリ用）</returns>
@@ -89,7 +98,9 @@ namespace WodiLib.SourceGenerator.Core.Dtos
 
             if (DefaultValue is bool bValue)
             {
-                return bValue ? "true" : "false";
+                return bValue
+                    ? "true"
+                    : "false";
             }
 
             if (DefaultValueAsSourceCode) return $"{DefaultValue}";
@@ -104,7 +115,7 @@ namespace WodiLib.SourceGenerator.Core.Dtos
         private SourceFormatTargetBlock SourceFormatTargetSummaryBody()
             => new SourceFormatTarget[]
             {
-                $@"/// {Tag.Summary(Summary.TrimNewLine())}"
+                $"/// {Tag.Summary(Summary.TrimNewLine())}",
             };
 
         /// <returns>Remarksタグ部</returns>
@@ -114,7 +125,7 @@ namespace WodiLib.SourceGenerator.Core.Dtos
 
             return new SourceFormatTarget[]
             {
-                $@"/// {Tag.Remarks(Remarks.TrimNewLine())}"
+                $"/// {Tag.Remarks(Remarks.TrimNewLine())}",
             };
         }
 
@@ -129,16 +140,16 @@ namespace WodiLib.SourceGenerator.Core.Dtos
         /// <summary>
         ///     {seealso} タグ情報
         /// </summary>
-        /// <param name="cref">参照先</param>
-        /// <param name="body">タグ本文</param>
-        public record SeeAlsoInfo(string cref, string? body)
+        /// <param name="Cref">参照先</param>
+        /// <param name="Body">タグ本文</param>
+        public record SeeAlsoInfo(string Cref, string? Body)
         {
             /// <summary>
             ///     ドキュメントコメント文字列を取得する。
             /// </summary>
             /// <returns></returns>
             public string ToDocumentComment()
-                => $"/// {Tag.SeeAlso.Cref(cref, body)}";
+                => $"/// {Tag.SeeAlso.Cref(Cref, Body)}";
 
             public static implicit operator SeeAlsoInfo(string cref)
                 => new(cref, null);

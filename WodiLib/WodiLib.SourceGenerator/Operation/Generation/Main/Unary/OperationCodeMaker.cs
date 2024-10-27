@@ -50,23 +50,23 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Unary
             var returnItemCode = ReturnTypeCode switch
             {
                 OperationResultReturnCodeType.Code_New =>
-                    $@"new {TargetClassName} (checked({operation}tmp));",
+                    $"new {TargetClassName} (checked({operation}tmp));",
                 OperationResultReturnCodeType.Code_ExplicitCast =>
-                    $@"({TargetClassName}) (checked({operation}tmp));",
+                    $"({TargetClassName}) (checked({operation}tmp));",
                 OperationResultReturnCodeType.Code_ImplicitCast =>
-                    $@"checked({operation}tmp);",
-                _ => throw new ArgumentOutOfRangeException(nameof(ReturnTypeCode))
+                    $"checked({operation}tmp);",
+                _ => throw new ArgumentOutOfRangeException(nameof(ReturnTypeCode)),
             };
 
             return new SourceFormatTargetBlock(
-                $@"/// {Tag.Summary($"{operation} 演算子")}",
-                $@"/// {Tag.Param("src", "対象")}",
-                $@"/// {Tag.Returns("演算結果")}",
-                $@"public static {TargetClassName} operator {operation}({TargetClassName} src)",
-                $@"{{",
-                $@"{__}var tmp = ({InnerCastType})src;",
-                $@"{__}return {returnItemCode}",
-                $@"}}",
+                $"/// {Tag.Summary($"{operation} 演算子")}",
+                $"/// {Tag.Param("src", "対象")}",
+                $"/// {Tag.Returns("演算結果")}",
+                $"public static {TargetClassName} operator {operation}({TargetClassName} src)",
+                $"{{",
+                $"{__}var tmp = ({InnerCastType})src;",
+                $"{__}return {returnItemCode}",
+                $"}}",
                 SourceFormatTarget.Empty
             );
         }

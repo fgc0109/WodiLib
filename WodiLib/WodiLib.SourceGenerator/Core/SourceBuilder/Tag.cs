@@ -79,7 +79,7 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
         /// <param name="elements">属性（名, 値）</param>
         /// <returns>タグ文字列</returns>
         private static string Base(string tag, params (string name, string value)[] elements)
-            => $@"<{tag}{ElementsToString(elements)}/>";
+            => $"<{tag}{ElementsToString(elements)}/>";
 
         /// <summary>
         ///     Bodyありタグ
@@ -89,7 +89,7 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
         /// <param name="elements">属性（名, 値）</param>
         /// <returns>タグ文字列</returns>
         private static string Base(string tag, string body, params (string name, string value)[] elements)
-            => $@"<{tag}{ElementsToString(elements)}>{body}</{tag}>";
+            => $"<{tag}{ElementsToString(elements)}>{body}</{tag}>";
 
         /// <summary>
         ///     属性リストをタグ用文字列に変換する。

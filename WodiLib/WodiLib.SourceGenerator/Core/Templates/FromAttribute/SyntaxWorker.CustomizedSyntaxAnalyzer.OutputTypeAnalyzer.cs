@@ -57,9 +57,11 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
                         }
 
                         outer.Logger?.AppendLine(
-                            $"constructorValues: {string.Join(", ", targetAttr.ConstructorArguments.Select((item, idx) => $"arg{idx}: {item.ToValueString()}"))}");
+                            $"constructorValues: {string.Join(", ", targetAttr.ConstructorArguments.Select((item, idx) => $"arg{idx}: {item.ToValueString()}"))}"
+                        );
                         outer.Logger?.AppendLine(
-                            $"targetAttr.NamedArguments: {string.Join(", ", targetAttr.NamedArguments.Select(item => $"{item.Key}: {item.Value.ToValueString()}"))}");
+                            $"targetAttr.NamedArguments: {string.Join(", ", targetAttr.NamedArguments.Select(item => $"{item.Key}: {item.Value.ToValueString()}"))}"
+                        );
                         outer.Logger?.AppendLine($"target Namespace: {targetClass.Namespace()}");
                         outer.Logger?.AppendLine($"target className: {targetClass.Name}");
 

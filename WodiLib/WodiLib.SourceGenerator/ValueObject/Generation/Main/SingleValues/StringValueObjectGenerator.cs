@@ -39,7 +39,8 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
             => false;
 
         private protected override SourceFormatTargetBlock SourceFormatTargetsPublicStaticProperties(
-            WorkState workState)
+            WorkState workState
+        )
         {
             var workResult = workState.PropertyValues;
 
@@ -50,52 +51,90 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
             var isValidateLength = IsValidateLength(workState);
 
             if (new[]
-            {
-                isValidateAnyPattern,
-                isValidateByteLength,
-                isValidateLength
-            }.All(b => !b)) return Array.Empty<SourceFormatTarget>();
+                {
+                    isValidateAnyPattern,
+                    isValidateByteLength,
+                    isValidateLength,
+                }.All(b => !b)) return Array.Empty<SourceFormatTarget>();
 
-            return SourceTextFormatter.Format("",
-                SourceTextFormatter.If(isValidatePattern,
+            return SourceTextFormatter.Format(
+                "",
+                SourceTextFormatter.If(
+                    isValidatePattern,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_String(
-                        MyAttr.Pattern, workResult, workState)
+                        MyAttr.Pattern,
+                        workResult,
+                        workState
+                    )
                 ),
-                SourceTextFormatter.If(isValidateSafetyPattern,
+                SourceTextFormatter.If(
+                    isValidateSafetyPattern,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_String(
-                        MyAttr.SafetyPattern, workResult, workState)
+                        MyAttr.SafetyPattern,
+                        workResult,
+                        workState
+                    )
                 ),
-                SourceTextFormatter.If(isValidateAnyPattern,
+                SourceTextFormatter.If(
+                    isValidateAnyPattern,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Enum(
-                        MyAttr.PatternOption, workResult, workState,
-                        workState.IsAnyPropertyOverwritten(MyAttr.Pattern.Name, MyAttr.SafetyPattern.Name,
-                            MyAttr.PatternOption.Name))
+                        MyAttr.PatternOption,
+                        workResult,
+                        workState,
+                        workState.IsAnyPropertyOverwritten(
+                            MyAttr.Pattern.Name,
+                            MyAttr.SafetyPattern.Name,
+                            MyAttr.PatternOption.Name
+                        )
+                    )
                 ),
-                SourceTextFormatter.If(isValidateByteLength,
+                SourceTextFormatter.If(
+                    isValidateByteLength,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
-                        MyAttr.ByteMaxLength, workResult, workState, "int.MaxValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.ByteMaxLength.Name, MyAttr.ByteMinLength.Name)),
+                        MyAttr.ByteMaxLength,
+                        workResult,
+                        workState,
+                        "int.MaxValue",
+                        workState.IsAnyPropertyOverwritten(MyAttr.ByteMaxLength.Name, MyAttr.ByteMinLength.Name)
+                    ),
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
-                        MyAttr.ByteMinLength, workResult, workState, "0",
-                        workState.IsAnyPropertyOverwritten(MyAttr.ByteMaxLength.Name, MyAttr.ByteMinLength.Name))
+                        MyAttr.ByteMinLength,
+                        workResult,
+                        workState,
+                        "0",
+                        workState.IsAnyPropertyOverwritten(MyAttr.ByteMaxLength.Name, MyAttr.ByteMinLength.Name)
+                    )
                 ),
-                SourceTextFormatter.If(isValidateLength,
+                SourceTextFormatter.If(
+                    isValidateLength,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
-                        MyAttr.MaxLength, workResult, workState, "int.MaxValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.MaxLength.Name, MyAttr.MinLength.Name)),
+                        MyAttr.MaxLength,
+                        workResult,
+                        workState,
+                        "int.MaxValue",
+                        workState.IsAnyPropertyOverwritten(MyAttr.MaxLength.Name, MyAttr.MinLength.Name)
+                    ),
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant(
-                        MyAttr.MinLength, workResult, workState, "0",
-                        isOverwrittenProperty: workState.IsAnyPropertyOverwritten(MyAttr.MaxLength.Name,
-                            MyAttr.MinLength.Name))
+                        MyAttr.MinLength,
+                        workResult,
+                        workState,
+                        "0",
+                        isOverwrittenProperty: workState.IsAnyPropertyOverwritten(
+                            MyAttr.MaxLength.Name,
+                            MyAttr.MinLength.Name
+                        )
+                    )
                 )
             );
         }
 
         /// <inheritdoc/>
         private protected override SourceFormatTargetBlock SourceFormatTargetsConstructorException(
-            WorkState workState)
+            WorkState workState
+        )
         {
-            return SourceTextFormatter.Format("",
+            return SourceTextFormatter.Format(
+                "",
                 SourceFormatTargetsConstructorArgumentNullException(),
                 SourceFormatTargetsConstructorArgumentOutOfRangeException(workState),
                 SourceFormatTargetsConstructorArgumentException(workState)
@@ -104,9 +143,11 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
 
         /// <inheritdoc/>
         private protected override SourceFormatTargetBlock SourceFormatTargetsConstructorBody(
-            WorkState workState)
+            WorkState workState
+        )
         {
-            return SourceTextFormatter.Format("",
+            return SourceTextFormatter.Format(
+                "",
                 SourceFormatTargetsValidateNotNull(),
                 SourceFormatTargetsValidateNotEmpty(workState),
                 SourceFormatTargetsValidatePattern(workState),
@@ -116,8 +157,8 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
                 new SourceFormatTarget[]
                 {
                     // DoConstructorExpansion メソッドで RawValue を更新する可能性があるので RawValue の初期化を先に行う
-                    ($@"{workState.PropertyValues[MyAttr.PropertyName.Name]} = value;"),
-                    ($@"DoConstructorExpansion(value);")
+                    $"{workState.PropertyValues[MyAttr.PropertyName.Name]} = value;",
+                    $"DoConstructorExpansion(value);",
                 }
             );
         }
@@ -128,15 +169,23 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
             var workResult = workState.PropertyValues;
             var typeDef = workState.ResolveTypeDefinitionInfo(workState.FullName);
 
-            var operationOverloadCodeMaker = new OperationOverloadCodeMaker(workResult.Name, workResult.Namespace,
-                workResult[MyAttr.PropertyName.Name]!, WrapType.FullName!);
+            var operationOverloadCodeMaker = new OperationOverloadCodeMaker(
+                workResult.Name,
+                workResult.Namespace,
+                workResult[MyAttr.PropertyName.Name]!,
+                WrapType.FullName!
+            );
 
-            return SourceTextFormatter.Format("",
-                operationOverloadCodeMaker.BinaryOperatorNewInstance("+", new[] { workResult.FullName },
-                    !typeDef.IsAbstract),
+            return SourceTextFormatter.Format(
+                "",
+                operationOverloadCodeMaker.BinaryOperatorNewInstance(
+                    "+",
+                    new[] { workResult.FullName },
+                    !typeDef.IsAbstract
+                ),
                 new SourceFormatTarget[]
                 {
-                    ($@"partial void DoConstructorExpansion(string value);")
+                    $"partial void DoConstructorExpansion(string value);",
                 }
             );
         }
@@ -181,8 +230,11 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
         /// <returns>バイトサイズの範囲チェックを行う場合 <see langword="true"/></returns>
         private static bool IsValidateByteLength(WorkState workState)
         {
-            var isDefaultByteMax = ToInt32FromIntString((string)MyAttr.ByteMaxLength.DefaultValue!).ToString().Equals(
-                workState.PropertyValues[MyAttr.ByteMaxLength.Name]);
+            var isDefaultByteMax = ToInt32FromIntString((string)MyAttr.ByteMaxLength.DefaultValue!)
+                .ToString()
+                .Equals(
+                    workState.PropertyValues[MyAttr.ByteMaxLength.Name]
+                );
             var isDefaultByteMin = ((int)MyAttr.ByteMinLength.DefaultValue!).ToString()
                 .Equals(workState.PropertyValues[MyAttr.ByteMinLength.Name]);
             return !isDefaultByteMax || !isDefaultByteMin;
@@ -191,7 +243,8 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
         /// <returns>文字列長の範囲チェックを行う場合 <see langword="true"/></returns>
         private static bool IsValidateLength(WorkState workState)
         {
-            var isDefaultMaxLength = ToInt32FromIntString((string)MyAttr.MaxLength.DefaultValue!).ToString()
+            var isDefaultMaxLength = ToInt32FromIntString((string)MyAttr.MaxLength.DefaultValue!)
+                .ToString()
                 .Equals(workState.PropertyValues[MyAttr.MaxLength.Name]);
             var isDefaultMinLength = ((int)MyAttr.MinLength.DefaultValue!).ToString()
                 .Equals(workState.PropertyValues[MyAttr.MinLength.Name]);
@@ -201,123 +254,169 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
         /// <returns><see cref="ArgumentNullException"/> ドキュメントコメント文字列パート</returns>
         private static SourceFormatTargetBlock SourceFormatTargetsConstructorArgumentNullException()
         {
-            return SourceTextFormatter.Format("", new SourceFormatTarget[]
-            {
-                ($@"/// <exception cref=""{typeof(ArgumentNullException).FullName}"">"),
-                ($@"///     {Sentence.ErrorDesc.Null(Tag.ParamRef("value"))}"),
-                ($@"/// </exception>")
-            });
+            return SourceTextFormatter.Format(
+                "",
+                new SourceFormatTarget[]
+                {
+                    $@"/// <exception cref=""{typeof(ArgumentNullException).FullName}"">",
+                    $"///     {Sentence.ErrorDesc.Null(Tag.ParamRef("value"))}",
+                    $"/// </exception>",
+                }
+            );
         }
 
         /// <returns><see cref="ArgumentOutOfRangeException"/> ドキュメントコメント文字列パート</returns>
         private static SourceFormatTargetBlock SourceFormatTargetsConstructorArgumentOutOfRangeException(
-            WorkState workState)
+            WorkState workState
+        )
         {
-            return SourceTextFormatter.Format("",
-                SourceTextFormatter.ReduceMany($"/// {__}", "、または",
-                    SourceTextFormatter.If(IsValidateByteLength(workState), new SourceFormatTarget[]
-                    {
-                        ($@"{Sentence.ErrorDesc.OutOfRange($@"{Tag.ParamRef("value")} のデータサイズ", Tag.See.Cref(MyAttr.ByteMinLength.Name), Tag.See.Cref(MyAttr.ByteMaxLength.Name))}")
-                    }),
-                    SourceTextFormatter.If(IsValidateOutOfRange(workState), new SourceFormatTarget[]
-                    {
-                        ($@"{Sentence.ErrorDesc.OutOfRange($@"{Tag.ParamRef("value")} の文字列長", Tag.See.Cref(MyAttr.MinLength.Name), Tag.See.Cref(MyAttr.MaxLength.Name))}")
-                    })
+            return SourceTextFormatter.Format(
+                    "",
+                    SourceTextFormatter.ReduceMany(
+                        $"/// {__}",
+                        "、または",
+                        SourceTextFormatter.If(
+                            IsValidateByteLength(workState),
+                            new SourceFormatTarget[]
+                            {
+                                $"{Sentence.ErrorDesc.OutOfRange($"{Tag.ParamRef("value")} のデータサイズ", Tag.See.Cref(MyAttr.ByteMinLength.Name), Tag.See.Cref(MyAttr.ByteMaxLength.Name))}",
+                            }
+                        ),
+                        SourceTextFormatter.If(
+                            IsValidateOutOfRange(workState),
+                            new SourceFormatTarget[]
+                            {
+                                $"{Sentence.ErrorDesc.OutOfRange($"{Tag.ParamRef("value")} の文字列長", Tag.See.Cref(MyAttr.MinLength.Name), Tag.See.Cref(MyAttr.MaxLength.Name))}",
+                            }
+                        )
+                    )
                 )
-            ).AppendPrefixAndSuffixIfNotEmpty(
-                ($@"/// <exception cref=""{typeof(ArgumentOutOfRangeException).FullName}"">"),
-                ($@"/// </exception>")
-            );
+                .AppendPrefixAndSuffixIfNotEmpty(
+                    $@"/// <exception cref=""{typeof(ArgumentOutOfRangeException).FullName}"">",
+                    $"/// </exception>"
+                );
         }
 
         /// <returns><see cref="ArgumentException"/> ドキュメントコメント文字列パート</returns>
         private static SourceFormatTargetBlock SourceFormatTargetsConstructorArgumentException(
-            WorkState workState)
+            WorkState workState
+        )
         {
-            return SourceTextFormatter.Format("",
-                SourceTextFormatter.ReduceMany($"/// {__}", "、または",
-                    SourceTextFormatter.If(IsValidateEmpty(workState), new SourceFormatTarget[]
-                    {
-                        ($@"{Tag.ParamRef("value")} が 空文字 の場合")
-                    }),
-                    SourceTextFormatter.If(IsValidateNewLine(workState), new SourceFormatTarget[]
-                    {
-                        ($@"{Tag.ParamRef("value")} に改行コードが含まれる場合")
-                    }),
-                    SourceTextFormatter.If(IsValidatePattern(workState), new SourceFormatTarget[]
-                    {
-                        ($@"{Tag.ParamRef("value")} が {Tag.See.Cref(MyAttr.Pattern.Name)} を満たさない場合")
-                    })
+            return SourceTextFormatter.Format(
+                    "",
+                    SourceTextFormatter.ReduceMany(
+                        $"/// {__}",
+                        "、または",
+                        SourceTextFormatter.If(
+                            IsValidateEmpty(workState),
+                            new SourceFormatTarget[]
+                            {
+                                $"{Tag.ParamRef("value")} が 空文字 の場合",
+                            }
+                        ),
+                        SourceTextFormatter.If(
+                            IsValidateNewLine(workState),
+                            new SourceFormatTarget[]
+                            {
+                                $"{Tag.ParamRef("value")} に改行コードが含まれる場合",
+                            }
+                        ),
+                        SourceTextFormatter.If(
+                            IsValidatePattern(workState),
+                            new SourceFormatTarget[]
+                            {
+                                $"{Tag.ParamRef("value")} が {Tag.See.Cref(MyAttr.Pattern.Name)} を満たさない場合",
+                            }
+                        )
+                    )
                 )
-            ).AppendPrefixAndSuffixIfNotEmpty(
-                ($@"/// <exception cref=""{typeof(ArgumentException).FullName}"">"),
-                ($@"/// </exception>")
-            );
+                .AppendPrefixAndSuffixIfNotEmpty(
+                    $@"/// <exception cref=""{typeof(ArgumentException).FullName}"">",
+                    $"/// </exception>"
+                );
         }
 
         /// <returns>非 <see langword="null"/> チェックソースコード文字列パート</returns>
         private static SourceFormatTargetBlock SourceFormatTargetsValidateNotNull()
-            => SourceTextFormatter.Format("", new SourceFormatTarget[]
-            {
-                ($@"{{   // Validate NotNull"),
-                ($@"    if (value is null) throw new System.ArgumentNullException(nameof(value));"),
-                ($@"}}")
-            });
+            => SourceTextFormatter.Format(
+                "",
+                new SourceFormatTarget[]
+                {
+                    $"{{   // Validate NotNull",
+                    $"    if (value is null) throw new System.ArgumentNullException(nameof(value));",
+                    $"}}",
+                }
+            );
 
         /// <returns>非空文字チェックソースコード文字列パート</returns>
         private static SourceFormatTargetBlock SourceFormatTargetsValidateNotEmpty(WorkState workState)
-            => SourceTextFormatter.If(IsValidateEmpty(workState), new SourceFormatTarget[]
-            {
-                ($@"{{   // Validate NotEmpty"),
-                ($@"    if (value.Equals("""")) throw new System.ArgumentException($""{{nameof(value)}} cannot empty string."");"),
-                ($@"}}")
-            });
+            => SourceTextFormatter.If(
+                IsValidateEmpty(workState),
+                new SourceFormatTarget[]
+                {
+                    $"{{   // Validate NotEmpty",
+                    $@"    if (value.Equals("""")) throw new System.ArgumentException($""{{nameof(value)}} cannot empty string."");",
+                    $"}}",
+                }
+            );
 
         /// <returns>文字列パターンチェックソースコード文字列パート</returns>
         private static SourceFormatTargetBlock SourceFormatTargetsValidatePattern(WorkState workState)
-            => SourceTextFormatter.If(IsValidateAnyPattern(workState), new SourceFormatTarget[]
-            {
-                ($@"{{   // Validate for Pattern"),
-                ($@"    var requireRegex = new System.Text.RegularExpressions.Regex({MyAttr.Pattern.Name}, (System.Text.RegularExpressions.RegexOptions) {MyAttr.PatternOption.Name});",
-                    IsValidatePattern(workState)),
-                ($@"    if (!requireRegex.IsMatch(value)) throw new System.ArgumentException(""No match pattern."", nameof(value));",
-                    IsValidatePattern(workState)),
-                ($@"    var safetyRegex = new System.Text.RegularExpressions.Regex({MyAttr.SafetyPattern.Name}, (System.Text.RegularExpressions.RegexOptions) {MyAttr.PatternOption.Name});",
-                    IsValidateSafetyPattern(workState)),
-                ($@"    if (!safetyRegex.IsMatch(value)) WodiLib.Sys.Cmn.WodiLibLogger.GetInstance().Warning(WodiLib.Sys.WarningMessage.NotMatchRegex(value, safetyRegex));",
-                    IsValidateSafetyPattern(workState)),
-                ($@"}}")
-            });
+            => SourceTextFormatter.If(
+                IsValidateAnyPattern(workState),
+                new SourceFormatTarget[]
+                {
+                    $"{{   // Validate for Pattern",
+                    ($"    var requireRegex = new System.Text.RegularExpressions.Regex({MyAttr.Pattern.Name}, (System.Text.RegularExpressions.RegexOptions) {MyAttr.PatternOption.Name});",
+                        IsValidatePattern(workState)),
+                    ($@"    if (!requireRegex.IsMatch(value)) throw new System.ArgumentException(""No match pattern."", nameof(value));",
+                        IsValidatePattern(workState)),
+                    ($"    var safetyRegex = new System.Text.RegularExpressions.Regex({MyAttr.SafetyPattern.Name}, (System.Text.RegularExpressions.RegexOptions) {MyAttr.PatternOption.Name});",
+                        IsValidateSafetyPattern(workState)),
+                    ($"    if (!safetyRegex.IsMatch(value)) WodiLib.Sys.Cmn.WodiLibLogger.GetInstance().Warning(WodiLib.Sys.WarningMessage.NotMatchRegex(value, safetyRegex));",
+                        IsValidateSafetyPattern(workState)),
+                    $"}}",
+                }
+            );
 
         /// <returns>改行チェックソースコード文字列パート</returns>
         private static SourceFormatTargetBlock SourceFormatTargetsValidateNewLine(WorkState workState)
-            => SourceTextFormatter.If(IsValidateNewLine(workState), new SourceFormatTarget[]
-            {
-                ($@"{{   // Validate NewLine"),
-                ($@"    if ( value.Contains(""\n"") || value.Contains(""\r\n"") ) {{ throw new System.ArgumentException($""Cannot use NewLine for {{nameof(value)}}. (value: {{value}})""); }}"),
-                ($@"}}")
-            });
+            => SourceTextFormatter.If(
+                IsValidateNewLine(workState),
+                new SourceFormatTarget[]
+                {
+                    $"{{   // Validate NewLine",
+                    $@"    if ( value.Contains(""\n"") || value.Contains(""\r\n"") ) {{ throw new System.ArgumentException($""Cannot use NewLine for {{nameof(value)}}. (value: {{value}})""); }}",
+                    $"}}",
+                }
+            );
 
         /// <returns>バイトサイズチェックソースコード文字列パート</returns>
         private static SourceFormatTargetBlock SourceFormatTargetsValidateByteLength(WorkState workState)
-            => SourceTextFormatter.If(IsValidateByteLength(workState), new SourceFormatTarget[]
-            {
-                ($@"{{   // Validate for ByteLength"),
-                ($@"    var encoding = System.Text.Encoding.GetEncoding(""{workState.PropertyValues[MyAttr.ByteLengthEncoding.Name]}"");"),
-                ($@"    var byteLength = encoding.GetByteCount(value);"),
-                ($@"    if (byteLength < {MyAttr.ByteMinLength.Name} || {MyAttr.ByteMaxLength.Name} < byteLength) throw new System.ArgumentOutOfRangeException(nameof(value), byteLength, $""byteLength between {MyAttr.ByteMinLength.Name} and {MyAttr.ByteMaxLength.Name}"");"),
-                ($@"}}")
-            });
+            => SourceTextFormatter.If(
+                IsValidateByteLength(workState),
+                new SourceFormatTarget[]
+                {
+                    $"{{   // Validate for ByteLength",
+                    $@"    var encoding = System.Text.Encoding.GetEncoding(""{workState.PropertyValues[MyAttr.ByteLengthEncoding.Name]}"");",
+                    $"    var byteLength = encoding.GetByteCount(value);",
+                    $@"    if (byteLength < {MyAttr.ByteMinLength.Name} || {MyAttr.ByteMaxLength.Name} < byteLength) throw new System.ArgumentOutOfRangeException(nameof(value), byteLength, $""byteLength between {MyAttr.ByteMinLength.Name} and {MyAttr.ByteMaxLength.Name}"");",
+                    $"}}",
+                }
+            );
 
         /// <returns>文字列長チェックソースコード文字列パート</returns>
         private static SourceFormatTargetBlock SourceFormatTargetsValidateLength(WorkState workState)
-            => SourceTextFormatter.If(IsValidateLength(workState), new SourceFormatTarget[]
-            {
-                ($@"{{   // Validate for Length"),
-                ($@"    var length = value.Length;"),
-                ($@"    if (length < {MyAttr.MinLength.Name} || {MyAttr.MaxLength.Name} < length) throw new System.ArgumentOutOfRangeException(nameof(value), length, $""length between {MyAttr.MinLength.Name} and {MyAttr.MaxLength.Name}"");"),
-                ($@"}}")
-            });
+            => SourceTextFormatter.If(
+                IsValidateLength(workState),
+                new SourceFormatTarget[]
+                {
+                    $"{{   // Validate for Length",
+                    $"    var length = value.Length;",
+                    $@"    if (length < {MyAttr.MinLength.Name} || {MyAttr.MaxLength.Name} < length) throw new System.ArgumentOutOfRangeException(nameof(value), length, $""length between {MyAttr.MinLength.Name} and {MyAttr.MaxLength.Name}"");",
+                    $"}}",
+                }
+            );
 
         /// <summary>
         ///     int 文字列を int に変換する。
@@ -330,7 +429,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
             {
                 "int.MaxValue" => int.MaxValue,
                 "int.MinValue" => int.MinValue,
-                _ => int.Parse(src)
+                _ => int.Parse(src),
             };
         }
     }

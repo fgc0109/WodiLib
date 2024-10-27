@@ -17,8 +17,12 @@ namespace WodiLib.SourceGenerator.Core.Exceptions
     {
         private ArgumentException Original { get; }
 
-        public DuplicateHintNameException(ArgumentException original, string hintName) : base(ErrorMessage(original,
-            hintName))
+        public DuplicateHintNameException(ArgumentException original, string hintName) : base(
+            ErrorMessage(
+                original,
+                hintName
+            )
+        )
         {
             Original = original;
         }

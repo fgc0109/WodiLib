@@ -33,7 +33,7 @@ namespace WodiLib.SourceGenerator.Operation
                     BinaryOperationType.Instance,
                     OperationResultReturnCodeType.Instance,
                     ShiftOperationType.Instance,
-                    UnaryOperationType.Instance
+                    UnaryOperationType.Instance,
                 };
 
                 return result;

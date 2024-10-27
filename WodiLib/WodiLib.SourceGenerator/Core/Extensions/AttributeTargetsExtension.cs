@@ -19,7 +19,8 @@ namespace WodiLib.SourceGenerator.Core.Extensions
     {
         /// <returns>ソースコード文字列</returns>
         public static string ToSource(this AttributeTargets src)
-            => AllTargets().Where(target => (target & src) != 0)
+            => AllTargets()
+                .Where(target => (target & src) != 0)
                 .Select(target => $"{typeof(AttributeTargets).FullName}.{target.ToString()}")
                 .Join(" | ");
 

@@ -46,8 +46,12 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
         /// <param name="targetClassNameSpace">対象クラス名前空間</param>
         /// <param name="rawValuePropertyName">値を保持するプロパティ名</param>
         /// <param name="rawValueType">内部保持する値の型名</param>
-        public OperationOverloadCodeMaker(string targetClassName, string targetClassNameSpace,
-            string rawValuePropertyName, string rawValueType)
+        public OperationOverloadCodeMaker(
+            string targetClassName,
+            string targetClassNameSpace,
+            string rawValuePropertyName,
+            string rawValueType
+        )
         {
             TargetClassName = targetClassName;
             TargetClassFullName = $"{targetClassNameSpace}.{targetClassName}";
@@ -64,12 +68,12 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
             => canIncrease
                 ? new[]
                 {
-                    $@"/// {Tag.Summary($"++ 演算子")}",
-                    $@"/// {Tag.Param(UnaryOperatorArgName, "項")}",
-                    $@"/// {Tag.Returns("演算結果")}",
-                    $@"{OperatorPrefix()} ++{SingleArgParam()} => "
-                    + $@"new {TargetClassName}(checked(({RawValueType})({UnaryOperatorArgName}.{RawValuePropertyName} + ({RawValueType})1)));",
-                    SourceFormatTarget.Empty
+                    $"/// {Tag.Summary($"++ 演算子")}",
+                    $"/// {Tag.Param(UnaryOperatorArgName, "項")}",
+                    $"/// {Tag.Returns("演算結果")}",
+                    $"{OperatorPrefix()} ++{SingleArgParam()} => "
+                    + $"new {TargetClassName}(checked(({RawValueType})({UnaryOperatorArgName}.{RawValuePropertyName} + ({RawValueType})1)));",
+                    SourceFormatTarget.Empty,
                 }
                 : Array.Empty<SourceFormatTarget>();
 
@@ -82,12 +86,12 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
             => canDecrease
                 ? new[]
                 {
-                    $@"/// {Tag.Summary($"-- 演算子")}",
-                    $@"/// {Tag.Param(UnaryOperatorArgName, "項")}",
-                    $@"/// {Tag.Returns("演算結果")}",
-                    $@"{OperatorPrefix()} --{SingleArgParam()} => "
-                    + $@"new {TargetClassName}(checked(({RawValueType})({UnaryOperatorArgName}.{RawValuePropertyName} - ({RawValueType})1)));",
-                    SourceFormatTarget.Empty
+                    $"/// {Tag.Summary($"-- 演算子")}",
+                    $"/// {Tag.Param(UnaryOperatorArgName, "項")}",
+                    $"/// {Tag.Returns("演算結果")}",
+                    $"{OperatorPrefix()} --{SingleArgParam()} => "
+                    + $"new {TargetClassName}(checked(({RawValueType})({UnaryOperatorArgName}.{RawValuePropertyName} - ({RawValueType})1)));",
+                    SourceFormatTarget.Empty,
                 }
                 : Array.Empty<SourceFormatTarget>();
 
@@ -100,12 +104,12 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
             => canOperate
                 ? new[]
                 {
-                    $@"/// {Tag.Summary($"~ 演算子")}",
-                    $@"/// {Tag.Param(UnaryOperatorArgName, "項")}",
-                    $@"/// {Tag.Returns("演算結果")}",
-                    $@"{OperatorPrefix()} ~{SingleArgParam()} => "
-                    + $@"new {TargetClassName}(checked(({RawValueType})(~{UnaryOperatorArgName}.{RawValuePropertyName})));",
-                    SourceFormatTarget.Empty
+                    $"/// {Tag.Summary($"~ 演算子")}",
+                    $"/// {Tag.Param(UnaryOperatorArgName, "項")}",
+                    $"/// {Tag.Returns("演算結果")}",
+                    $"{OperatorPrefix()} ~{SingleArgParam()} => "
+                    + $"new {TargetClassName}(checked(({RawValueType})(~{UnaryOperatorArgName}.{RawValuePropertyName})));",
+                    SourceFormatTarget.Empty,
                 }
                 : Array.Empty<SourceFormatTarget>();
 
@@ -116,17 +120,23 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
         /// <param name="otherFullNames">他項の型リスト</param>
         /// <param name="canOperate">コード生成可否</param>
         /// <returns>ソースコード文字列ブロック</returns>
-        public SourceFormatTargetBlock BinaryOperatorNewInstance(string ope, IEnumerable<string> otherFullNames,
-            bool canOperate)
+        public SourceFormatTargetBlock BinaryOperatorNewInstance(
+            string ope,
+            IEnumerable<string> otherFullNames,
+            bool canOperate
+        )
             => canOperate
                 ? SourceFormatTargetBlock.Merge(
-                    otherFullNames.Select(name => name.Equals(TargetClassFullName)
-                        ? BinaryOperatorNewInstanceBySameClass(ope, true)
-                            .TrimLastEmptyLine()
-                        : BinaryOperatorNewInstanceByOtherClass(ope, new[] { name }, true)
-                            .TrimLastEmptyLine()
-                    ).ToArray()
-                ).AddNewLine()
+                        otherFullNames.Select(
+                                name => name.Equals(TargetClassFullName)
+                                    ? BinaryOperatorNewInstanceBySameClass(ope, true)
+                                        .TrimLastEmptyLine()
+                                    : BinaryOperatorNewInstanceByOtherClass(ope, new[] { name }, true)
+                                        .TrimLastEmptyLine()
+                            )
+                            .ToArray()
+                    )
+                    .AddNewLine()
                 : Array.Empty<SourceFormatTarget>();
 
         /// <summary>
@@ -139,13 +149,13 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
             => canOperate
                 ? new[]
                 {
-                    $@"/// {Tag.Summary($"{ope} 演算子")}",
-                    $@"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
-                    $@"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
-                    $@"/// {Tag.Returns("演算結果")}",
-                    $@"{OperatorPrefix()} {ope}{DoubleArgParam(TargetClassName)} => "
-                    + $@"new {TargetClassName} (checked(({RawValueType})({BinaryOperatorLeftArgName}.{RawValuePropertyName} {ope} {BinaryOperatorRightArgName}.{RawValuePropertyName})));",
-                    SourceFormatTarget.Empty
+                    $"/// {Tag.Summary($"{ope} 演算子")}",
+                    $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
+                    $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
+                    $"/// {Tag.Returns("演算結果")}",
+                    $"{OperatorPrefix()} {ope}{DoubleArgParam(TargetClassName)} => "
+                    + $"new {TargetClassName} (checked(({RawValueType})({BinaryOperatorLeftArgName}.{RawValuePropertyName} {ope} {BinaryOperatorRightArgName}.{RawValuePropertyName})));",
+                    SourceFormatTarget.Empty,
                 }
                 : Array.Empty<SourceFormatTarget>();
 
@@ -156,22 +166,27 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
         /// <param name="rightClassTypes">右項のタイプ</param>
         /// <param name="canOperate">コード生成可否</param>
         /// <returns>ソースコード文字列ブロック</returns>
-        public SourceFormatTargetBlock BinaryOperatorNewInstanceByOtherClass(string ope,
-            IEnumerable<string> rightClassTypes, bool canOperate)
+        public SourceFormatTargetBlock BinaryOperatorNewInstanceByOtherClass(
+            string ope,
+            IEnumerable<string> rightClassTypes,
+            bool canOperate
+        )
             => canOperate
                 ? SourceFormatTargetBlock.Merge(
-                    rightClassTypes.Select(rightClassType =>
-                        new SourceFormatTargetBlock
-                        (
-                            $@"/// {Tag.Summary($"{ope} 演算子")}",
-                            $@"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
-                            $@"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
-                            $@"/// {Tag.Returns("演算結果")}",
-                            $@"{OperatorPrefix()} {ope}{DoubleArgParam(rightClassType)} => "
-                            + $@"new {TargetClassName} (checked(({RawValueType})({BinaryOperatorLeftArgName}.{RawValuePropertyName} {ope} ({RawValueType}){BinaryOperatorRightArgName})));"
-                        )
-                    ).ToArray()
-                ).AddNewLine()
+                        rightClassTypes.Select(
+                                rightClassType =>
+                                    new SourceFormatTargetBlock(
+                                        $"/// {Tag.Summary($"{ope} 演算子")}",
+                                        $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
+                                        $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
+                                        $"/// {Tag.Returns("演算結果")}",
+                                        $"{OperatorPrefix()} {ope}{DoubleArgParam(rightClassType)} => "
+                                        + $"new {TargetClassName} (checked(({RawValueType})({BinaryOperatorLeftArgName}.{RawValuePropertyName} {ope} ({RawValueType}){BinaryOperatorRightArgName})));"
+                                    )
+                            )
+                            .ToArray()
+                    )
+                    .AddNewLine()
                 : Array.Empty<SourceFormatTarget>();
 
 
@@ -182,18 +197,24 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
         /// <param name="otherFullNames">右項型</param>
         /// <param name="canOperate">コード生成可否</param>
         /// <returns>ソースコード文字列ブロック</returns>
-        public SourceFormatTargetBlock BinaryOperatorBool(string ope, IEnumerable<string> otherFullNames,
-            bool canOperate)
+        public SourceFormatTargetBlock BinaryOperatorBool(
+            string ope,
+            IEnumerable<string> otherFullNames,
+            bool canOperate
+        )
             => canOperate
                 ? SourceFormatTargetBlock.Merge(
-                    otherFullNames.Select(otherFullName =>
-                        otherFullName.Equals(TargetClassFullName)
-                            ? BinaryOperatorBoolBySameClass(ope, true)
-                                .TrimLastEmptyLine()
-                            : BinaryOperatorBoolByOtherClass(ope, otherFullName, true)
-                                .TrimLastEmptyLine()
-                    ).ToArray()
-                ).AddNewLine()
+                        otherFullNames.Select(
+                                otherFullName =>
+                                    otherFullName.Equals(TargetClassFullName)
+                                        ? BinaryOperatorBoolBySameClass(ope, true)
+                                            .TrimLastEmptyLine()
+                                        : BinaryOperatorBoolByOtherClass(ope, otherFullName, true)
+                                            .TrimLastEmptyLine()
+                            )
+                            .ToArray()
+                    )
+                    .AddNewLine()
                 : Array.Empty<SourceFormatTarget>();
 
 
@@ -207,13 +228,13 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
             => canOperate
                 ? new[]
                 {
-                    $@"/// {Tag.Summary($"{ope} 演算子")}",
-                    $@"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
-                    $@"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
-                    $@"/// {Tag.Returns("演算結果")}",
-                    $@"{OperatorPrefix("bool")} {ope}{DoubleArgParam()} => "
-                    + $@"{BinaryOperatorLeftArgName}.{RawValuePropertyName} {ope} {BinaryOperatorRightArgName}.{RawValuePropertyName};",
-                    SourceFormatTarget.Empty
+                    $"/// {Tag.Summary($"{ope} 演算子")}",
+                    $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
+                    $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
+                    $"/// {Tag.Returns("演算結果")}",
+                    $"{OperatorPrefix("bool")} {ope}{DoubleArgParam()} => "
+                    + $"{BinaryOperatorLeftArgName}.{RawValuePropertyName} {ope} {BinaryOperatorRightArgName}.{RawValuePropertyName};",
+                    SourceFormatTarget.Empty,
                 }
                 : Array.Empty<SourceFormatTarget>();
 
@@ -225,26 +246,46 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
         /// <param name="rightClassType">右項型</param>
         /// <param name="canOperate">コード生成可否</param>
         /// <returns>ソースコード文字列ブロック</returns>
-        public SourceFormatTargetBlock BinaryOperatorBoolByOtherClass(string ope, string rightClassType,
-            bool canOperate)
+        public SourceFormatTargetBlock BinaryOperatorBoolByOtherClass(
+            string ope,
+            string rightClassType,
+            bool canOperate
+        )
             => canOperate
                 ? new[]
                 {
-                    $@"/// {Tag.Summary($"{ope} 演算子")}",
-                    $@"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
-                    $@"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
-                    $@"/// {Tag.Returns("演算結果")}",
-                    $@"{OperatorPrefix("bool")} {ope}{DoubleArgParam(rightClassType)} => "
-                    + $@"{BinaryOperatorLeftArgName}.{RawValuePropertyName} {ope} ({RawValueType}){BinaryOperatorRightArgName};",
-                    $@"/// {Tag.Summary($"{ope} 演算子")}",
-                    $@"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
-                    $@"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
-                    $@"/// {Tag.Returns("演算結果")}",
-                    $@"{OperatorPrefix("bool")} {ope}{DoubleArgParam(rightClassType, TargetClassName)} => "
-                    + $@"({RawValueType}){BinaryOperatorLeftArgName} {ope} {BinaryOperatorRightArgName}.{RawValuePropertyName};",
-                    SourceFormatTarget.Empty
+                    $"/// {Tag.Summary($"{ope} 演算子")}",
+                    $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
+                    $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
+                    $"/// {Tag.Returns("演算結果")}",
+                    $"{OperatorPrefix("bool")} {ope}{DoubleArgParam(rightClassType)} => "
+                    + $"{BinaryOperatorLeftArgName}.{RawValuePropertyName} {ope} ({RawValueType}){BinaryOperatorRightArgName};",
+                    $"/// {Tag.Summary($"{ope} 演算子")}",
+                    $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
+                    $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
+                    $"/// {Tag.Returns("演算結果")}",
+                    $"{OperatorPrefix("bool")} {ope}{DoubleArgParam(rightClassType, TargetClassName)} => "
+                    + $"({RawValueType}){BinaryOperatorLeftArgName} {ope} {BinaryOperatorRightArgName}.{RawValuePropertyName};",
+                    SourceFormatTarget.Empty,
                 }
                 : Array.Empty<SourceFormatTarget>();
+
+        /// <summary>
+        ///     単項演算子のソースコードプレフィックスを生成する。
+        /// </summary>
+        /// <param name="returnType">演算子の返却型</param>
+        /// <returns>ソースコード文字列パーツ</returns>
+        private static string OperatorPrefix(string returnType)
+            => $"public static {returnType} operator";
+
+        /// <summary>
+        ///     引数を二つもつラムダ式のパラメータ定義ソースコードを生成する。
+        /// </summary>
+        /// <param name="leftType">左項の型</param>
+        /// <param name="rightType">右項の型</param>
+        /// <returns>ソースコード文字列パーツ</returns>
+        private static string DoubleArgParam(string leftType, string rightType)
+            => $"({leftType} {BinaryOperatorLeftArgName}, {rightType} {BinaryOperatorRightArgName})";
 
         /// <summary>
         ///     単項演算子のソースコードプレフィックスを生成する。
@@ -254,19 +295,11 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
             => OperatorPrefix(TargetClassName);
 
         /// <summary>
-        ///     単項演算子のソースコードプレフィックスを生成する。
-        /// </summary>
-        /// <param name="returnType">演算子の返却型</param>
-        /// <returns>ソースコード文字列パーツ</returns>
-        private string OperatorPrefix(string returnType)
-            => $@"public static {returnType} operator";
-
-        /// <summary>
         ///     引数を一つもつラムダ式のパラメータ定義ソースコードを生成する。
         /// </summary>
         /// <returns>ソースコード文字列パーツ</returns>
         private string SingleArgParam()
-            => $@"({TargetClassName} {UnaryOperatorArgName})";
+            => $"({TargetClassName} {UnaryOperatorArgName})";
 
         /// <summary>
         ///     引数として自身の型を二つもつラムダ式のパラメータ定義ソースコードを生成する。
@@ -282,15 +315,6 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
         /// <returns>ソースコード文字列パーツ</returns>
         private string DoubleArgParam(string otherType)
             => DoubleArgParam(TargetClassName, otherType);
-
-        /// <summary>
-        ///     引数を二つもつラムダ式のパラメータ定義ソースコードを生成する。
-        /// </summary>
-        /// <param name="leftType">左項の型</param>
-        /// <param name="rightType">右項の型</param>
-        /// <returns>ソースコード文字列パーツ</returns>
-        private string DoubleArgParam(string leftType, string rightType)
-            => $@"({leftType} {BinaryOperatorLeftArgName}, {rightType} {BinaryOperatorRightArgName})";
     }
 
     internal static class OperationOverloadCodeMakerExtension
@@ -302,8 +326,11 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
         /// <param name="ope">演算子</param>
         /// <param name="canOperate">コード生成可否</param>
         /// <returns>ソースコード文字列</returns>
-        public static SourceFormatTargetBlock BinaryOperatorNewInstanceByInt(this OperationOverloadCodeMaker src,
-            string ope, bool canOperate)
+        public static SourceFormatTargetBlock BinaryOperatorNewInstanceByInt(
+            this OperationOverloadCodeMaker src,
+            string ope,
+            bool canOperate
+        )
             => src.BinaryOperatorNewInstance(ope, new[] { "int" }, canOperate);
     }
 }

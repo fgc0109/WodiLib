@@ -37,29 +37,32 @@ namespace WodiLib.SourceGenerator.Core
         public void Initialize(GeneratorInitializationContext context)
         {
             var cnt = 0;
-            context.RegisterForPostInitialization(i =>
-            {
-                var logger = @delegate.CreateLogger();
-                foreach (var info in @delegate.GetPostInitializationRegisterInfoList(logger))
+            context.RegisterForPostInitialization(
+                i =>
                 {
-                    cnt++;
-                    try
+                    var logger = @delegate.CreateLogger();
+                    foreach (var info in @delegate.GetPostInitializationRegisterInfoList(logger))
                     {
-                        logger?.AppendLine(info.ToString());
-                        info.AddSource(i);
+                        cnt++;
+                        try
+                        {
+                            logger?.AppendLine(info.ToString());
+                            info.AddSource(i);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger?.AppendLine(
+                                $"        {cnt}{Environment.NewLine}{info}{Environment.NewLine}{ex}{Environment.NewLine}"
+                            );
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        logger?.AppendLine(
-                            $"        {cnt}{Environment.NewLine}{info}{Environment.NewLine}{ex}{Environment.NewLine}");
-                    }
-                }
 
-                if (logger?.HasLog ?? false)
-                {
-                    i.AddSource("RegisterForPostInitialization.log", logger.ToOutputText());
+                    if (logger?.HasLog ?? false)
+                    {
+                        i.AddSource("RegisterForPostInitialization.log", logger.ToOutputText());
+                    }
                 }
-            });
+            );
 
             try
             {
@@ -67,8 +70,10 @@ namespace WodiLib.SourceGenerator.Core
             }
             catch (Exception ex)
             {
-                context.RegisterForPostInitialization(i =>
-                    i.AddSource("CreateSyntaxWorkerError.log", $"{ex.Message}{Environment.NewLine}{ex.Message}"));
+                context.RegisterForPostInitialization(
+                    i =>
+                        i.AddSource("CreateSyntaxWorkerError.log", $"{ex.Message}{Environment.NewLine}{ex.Message}")
+                );
                 Console.WriteLine(ex.Message);
             }
         }
@@ -131,7 +136,7 @@ namespace WodiLib.SourceGenerator.Core
         /// </summary>
         /// <param name="worker">構文処理</param>
         /// <param name="context">コンテキスト</param>
-        private void OutputSyntaxWorkerLog(TWorker worker, GeneratorExecutionContext context)
+        private static void OutputSyntaxWorkerLog(TWorker worker, GeneratorExecutionContext context)
         {
             var logger = worker.Logger;
             if (logger is null) return;

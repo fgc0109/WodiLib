@@ -43,7 +43,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Enums
             {
                 New,
                 ImplicitCast,
-                ExplicitCast
+                ExplicitCast,
             };
 
         private OperationResultReturnCodeType()

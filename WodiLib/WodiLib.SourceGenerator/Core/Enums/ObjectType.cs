@@ -29,7 +29,7 @@ namespace WodiLib.SourceGenerator.Core.Enums
         Property,
 
         /// <summary>その他</summary>
-        Other
+        Other,
     }
 
     /// <summary>

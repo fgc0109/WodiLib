@@ -25,10 +25,13 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Enums
         public override string EnumName => nameof(UnaryOperationType);
         public override string Summary => "単項演算子";
 
-        public static EnumMember Increase = ("Increase", "インクリメント", FlagValue_Increase);
-        public static EnumMember Decrease = ("Decrease", "デクリメント", FlagValue_Decrease);
-        public static EnumMember Xcrease = ("Xecrease", "インクリメント & デクリメント", FlagValue_Increase + FlagValue_Decrease);
-        public static EnumMember Complement = ("Complement", "補完", FlagValue_Complement);
+        public static readonly EnumMember Increase = ("Increase", "インクリメント", FlagValue_Increase);
+        public static readonly EnumMember Decrease = ("Decrease", "デクリメント", FlagValue_Decrease);
+
+        public static readonly EnumMember Xcrease = ("Xcrease", "インクリメント & デクリメント",
+            FlagValue_Increase + FlagValue_Decrease);
+
+        public static readonly EnumMember Complement = ("Complement", "補完", FlagValue_Complement);
 
         public override IEnumerable<EnumMember> Members()
             => new[]
@@ -36,7 +39,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Enums
                 Increase,
                 Decrease,
                 Xcrease,
-                Complement
+                Complement,
             };
 
         public static bool CanIncrease(string? flagStr)

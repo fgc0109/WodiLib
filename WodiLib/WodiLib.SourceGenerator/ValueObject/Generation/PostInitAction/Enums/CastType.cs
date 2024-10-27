@@ -17,9 +17,9 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Enums
     /// </summary>
     internal class CastType : InitializeEnumSourceAddable
     {
-        public static readonly int Code_None = 0;
-        public static readonly int Code_Explicit = 1;
-        public static readonly int Code_Implicit = 2;
+        public const int Code_None = 0;
+        public const int CodeExplicit = 1;
+        public const int CodeImplicit = 2;
 
         public override string NameSpace => GenerationConst.NameSpaces.Enums;
         public override string EnumName => nameof(CastType);
@@ -29,32 +29,32 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Enums
             => new EnumMember[]
             {
                 ("None", "キャスト不可", Code_None),
-                ("Explicit", "明示的なキャスト可能", Code_Explicit),
-                ("Implicit", "暗黙的なキャスト可能", Code_Implicit)
+                ("Explicit", "明示的なキャスト可能", CodeExplicit),
+                ("Implicit", "暗黙的なキャスト可能", CodeImplicit),
             };
 
         public static string ToSourceText(string code)
         {
             if (code.Equals(Code_None.ToString())) return "";
-            if (code.Equals(Code_Explicit.ToString())) return "explicit";
-            if (code.Equals(Code_Implicit.ToString())) return "implicit";
+            if (code.Equals(CodeExplicit.ToString())) return "explicit";
+            if (code.Equals(CodeImplicit.ToString())) return "implicit";
             throw new ArgumentOutOfRangeException(nameof(code), code, "not found");
         }
 
         public static string ToDocumentText(string code)
         {
             if (code.Equals(Code_None.ToString())) return "";
-            if (code.Equals(Code_Explicit.ToString())) return "明示的";
-            if (code.Equals(Code_Implicit.ToString())) return "暗黙的";
+            if (code.Equals(CodeExplicit.ToString())) return "明示的";
+            if (code.Equals(CodeImplicit.ToString())) return "暗黙的";
             throw new ArgumentOutOfRangeException(nameof(code), code, "not found");
         }
 
         public static bool CanOperation(string code)
-            => (new List<string>
+            => new List<string>
             {
-                Code_Explicit.ToString(),
-                Code_Implicit.ToString()
-            }).Contains(code);
+                CodeExplicit.ToString(),
+                CodeImplicit.ToString(),
+            }.Contains(code);
 
         private CastType()
         {

@@ -68,7 +68,7 @@ namespace WodiLib.SourceGenerator.Test.Operation
         }
 
         [UnaryOperate(
-            Operation = UnaryOperationType.Xecrease
+            Operation = UnaryOperationType.Xcrease
                         | UnaryOperationType.Complement,
             InnerCastType = typeof(int))]
         public partial class AllOperationOverrideObject

@@ -31,22 +31,26 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
             }
 
             /// <inheritdoc/>
-            public SourceFormatTarget SourceFormatTargetEqualsObject(PropertyValues workResult,
-                ITypeDefinitionInfoResolver typeDefinitionInfoResolver)
+            public SourceFormatTarget SourceFormatTargetEqualsObject(
+                PropertyValues workResult,
+                ITypeDefinitionInfoResolver typeDefinitionInfoResolver
+            )
             {
                 var className = workResult.Name;
-                return (
-                    $@"public override bool Equals(object? obj) => ReferenceEquals(this, obj) || obj is {className} other && Equals(other);");
+                return
+                    $"public override bool Equals(object? obj) => ReferenceEquals(this, obj) || obj is {className} other && Equals(other);";
             }
 
             /// <inheritdoc/>
-            public SourceFormatTarget SourceFormatTargetEqualsOther(PropertyValues workResult,
-                ITypeDefinitionInfoResolver typeDefinitionInfoResolver)
+            public SourceFormatTarget SourceFormatTargetEqualsOther(
+                PropertyValues workResult,
+                ITypeDefinitionInfoResolver typeDefinitionInfoResolver
+            )
             {
                 var className = workResult.Name;
                 var propertyName = workResult[MyAttr.PropertyName.Name];
 
-                return ($@"public bool Equals({className}? other) => {propertyName}.Equals(other?.{propertyName});");
+                return $"public bool Equals({className}? other) => {propertyName}.Equals(other?.{propertyName});";
             }
         }
     }

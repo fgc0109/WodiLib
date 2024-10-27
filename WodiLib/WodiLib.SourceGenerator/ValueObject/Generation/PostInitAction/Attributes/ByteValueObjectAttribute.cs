@@ -24,7 +24,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Type = "byte",
             Summary = "許容最大値",
             DefaultValue = "byte.MaxValue",
-            DefaultValueAsSourceCode = true
+            DefaultValueAsSourceCode = true,
         };
 
         private new static readonly PropertyInfo MinValue = new()
@@ -33,7 +33,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Type = "byte",
             Summary = "許容最小値",
             DefaultValue = "byte.MinValue",
-            DefaultValueAsSourceCode = true
+            DefaultValueAsSourceCode = true,
         };
 
         private new static readonly PropertyInfo SafetyMaxValue = new()
@@ -42,7 +42,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Type = "byte",
             Summary = "安全に使用できる上限値",
             DefaultValue = "byte.MaxValue",
-            DefaultValueAsSourceCode = true
+            DefaultValueAsSourceCode = true,
         };
 
         private new static readonly PropertyInfo SafetyMinValue = new()
@@ -51,7 +51,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Type = "byte",
             Summary = "安全に使用できる下限値",
             DefaultValue = "byte.MinValue",
-            DefaultValueAsSourceCode = true
+            DefaultValueAsSourceCode = true,
         };
 
         protected override string WrapType => "byte";
@@ -59,13 +59,16 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
         public override string AttributeName => nameof(ByteValueObjectAttribute);
 
         public override IEnumerable<PropertyInfo> Properties()
-            => base.Properties().Concat(new[]
-            {
-                MaxValue,
-                MinValue,
-                SafetyMaxValue,
-                SafetyMinValue
-            });
+            => base.Properties()
+                .Concat(
+                    new[]
+                    {
+                        MaxValue,
+                        MinValue,
+                        SafetyMaxValue,
+                        SafetyMinValue,
+                    }
+                );
 
         public static ByteValueObjectAttribute Instance { get; } = new();
     }

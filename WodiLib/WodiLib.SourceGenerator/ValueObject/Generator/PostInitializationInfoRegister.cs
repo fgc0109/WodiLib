@@ -31,7 +31,7 @@ namespace WodiLib.SourceGenerator.ValueObject
                     StringValueObjectAttribute.Instance,
                     // enums
                     CastType.Instance,
-                    IntegralNumericOperation.Instance
+                    IntegralNumericOperation.Instance,
                 };
 
                 return result;

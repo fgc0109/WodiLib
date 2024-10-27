@@ -27,7 +27,7 @@ namespace WodiLib.SourceGenerator.Core.Extensions
                 StructDeclarationSyntax => ObjectType.Struct,
                 RecordDeclarationSyntax => ObjectType.Record,
                 PropertyDeclarationSyntax => ObjectType.Property,
-                _ => ObjectType.Other
+                _ => ObjectType.Other,
             };
         }
     }

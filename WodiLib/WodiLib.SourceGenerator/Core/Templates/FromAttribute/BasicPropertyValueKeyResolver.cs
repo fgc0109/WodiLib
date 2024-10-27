@@ -45,7 +45,8 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
             var targetKeyName = workResult.FullName;
             var srcKeyName = workResult.SrcAttributeName;
             Logger?.AppendLine(
-                $"BasicPropertyValueKeyResolver resolve for SyntaxWorkResult: ({targetKeyName}, {srcKeyName})");
+                $"BasicPropertyValueKeyResolver resolve for SyntaxWorkResult: ({targetKeyName}, {srcKeyName})"
+            );
             return (targetKeyName, srcKeyName);
         }
     }

@@ -23,7 +23,10 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         /// <param name="attributeName">属性名</param>
         /// <param name="defaultValues">プロパティ名と値のディクショナリ</param>
         /// <param name="parentAttrName">対象属性が継承されたものである場合、継承元の属性名</param>
-        void PutPropertyDefaultValues(string attributeName, Dictionary<string, PropertyValue> defaultValues,
-            string? parentAttrName);
+        void PutPropertyDefaultValues(
+            string attributeName,
+            Dictionary<string, PropertyValue> defaultValues,
+            string? parentAttrName
+        );
     }
 }

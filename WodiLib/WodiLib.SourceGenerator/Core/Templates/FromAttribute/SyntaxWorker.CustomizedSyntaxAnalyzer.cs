@@ -28,7 +28,7 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
             private static readonly IAnalyzeTransfer[] AnalyzeTransfers =
             {
                 new InputAttributeAnalyzer(),
-                new OutputTypeAnalyzer()
+                new OutputTypeAnalyzer(),
             };
 
             /// <inheritdoc/>
@@ -62,16 +62,16 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
 
                     var targetFullName = targetClass.ToString();
 
-                    var DefinitionInfo = new TypeDefinitionInfo
+                    var definitionInfo = new TypeDefinitionInfo
                     {
                         TypeFullName = targetFullName,
                         ObjectType = objectType,
                         Accessibility = targetClass.DeclaredAccessibility,
                         IsAbstract = targetClass.IsAbstract,
-                        IsStatic = targetClass.IsStatic
+                        IsStatic = targetClass.IsStatic,
                     };
-                    outer.Logger?.AppendLine($"TypeDefinition: {DefinitionInfo}");
-                    outer.TypeDefinitionDict[targetFullName] = DefinitionInfo;
+                    outer.Logger?.AppendLine($"TypeDefinition: {definitionInfo}");
+                    outer.TypeDefinitionDict[targetFullName] = definitionInfo;
 
                     outer.Logger?.AppendLine("finish AnalyzeClassSyntax");
                 }
@@ -81,8 +81,11 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
                 }
             }
 
-            private static void AnalyzeForTransfer(GeneratorSyntaxContext context, SyntaxWorker outer,
-                INamedTypeSymbol targetClass)
+            private static void AnalyzeForTransfer(
+                GeneratorSyntaxContext context,
+                SyntaxWorker outer,
+                INamedTypeSymbol targetClass
+            )
             {
                 var cnt = 0;
                 foreach (var transfer in AnalyzeTransfers)

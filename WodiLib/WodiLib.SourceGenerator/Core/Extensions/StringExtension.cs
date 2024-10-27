@@ -83,7 +83,7 @@ namespace WodiLib.SourceGenerator.Core.Extensions
         }
 
         /// <summary>
-        /// 山括弧 ("&lt;", "&gt;") を下線 ("_") に 置換する。
+        ///     山括弧 ("&lt;", "&gt;") を下線 ("_") に 置換する。
         /// </summary>
         /// <param name="src">対象文字列</param>
         /// <returns>処理結果</returns>

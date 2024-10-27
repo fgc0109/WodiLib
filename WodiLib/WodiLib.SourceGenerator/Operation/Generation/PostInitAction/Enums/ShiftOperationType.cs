@@ -33,7 +33,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Enums
             {
                 Left,
                 Right,
-                Both
+                Both,
             };
 
         public static bool CanLeftShift(string? flagStr)

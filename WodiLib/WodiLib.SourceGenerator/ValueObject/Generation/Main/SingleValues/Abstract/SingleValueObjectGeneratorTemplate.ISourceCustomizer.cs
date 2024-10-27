@@ -25,8 +25,10 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
             /// <param name="workResult"></param>
             /// <param name="typeDefinitionInfoResolver"></param>
             /// <returns></returns>
-            SourceFormatTarget SourceFormatTargetEqualsObject(PropertyValues workResult,
-                ITypeDefinitionInfoResolver typeDefinitionInfoResolver);
+            SourceFormatTarget SourceFormatTargetEqualsObject(
+                PropertyValues workResult,
+                ITypeDefinitionInfoResolver typeDefinitionInfoResolver
+            );
 
             /// <summary>
             ///     同じ型のインスタンスとの比較コード
@@ -34,8 +36,10 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
             /// <param name="workResult"></param>
             /// <param name="typeDefinitionInfoResolver"></param>
             /// <returns></returns>
-            SourceFormatTarget SourceFormatTargetEqualsOther(PropertyValues workResult,
-                ITypeDefinitionInfoResolver typeDefinitionInfoResolver);
+            SourceFormatTarget SourceFormatTargetEqualsOther(
+                PropertyValues workResult,
+                ITypeDefinitionInfoResolver typeDefinitionInfoResolver
+            );
         }
     }
 }

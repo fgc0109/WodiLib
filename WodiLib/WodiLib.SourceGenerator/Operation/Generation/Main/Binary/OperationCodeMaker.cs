@@ -51,8 +51,14 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Binary
         /// <param name="returnType">返戻型</param>
         /// <param name="targetClassIsLeft">対象クラスを左項に配置するかどうか</param>
         /// <param name="returnTypeCode">演算結果返却コード種別コード値</param>
-        public OperationCodeMaker(string targetClassName, string[] otherTypes, string innerCastType, string returnType,
-            bool targetClassIsLeft, int returnTypeCode)
+        public OperationCodeMaker(
+            string targetClassName,
+            string[] otherTypes,
+            string innerCastType,
+            string returnType,
+            bool targetClassIsLeft,
+            int returnTypeCode
+        )
         {
             TargetClassName = targetClassName;
             OtherTypes = otherTypes;
@@ -85,21 +91,20 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Binary
             var returnItemCode = ReturnTypeCode switch
             {
                 OperationResultReturnCodeType.Code_New =>
-                    $@"new {ReturnType} (checked(({InnerCastType}) ({caster.LeftItemCode} {operation} {caster.RightItemCode})));",
+                    $"new {ReturnType} (checked(({InnerCastType}) ({caster.LeftItemCode} {operation} {caster.RightItemCode})));",
                 OperationResultReturnCodeType.Code_ExplicitCast =>
-                    $@"({ReturnType}) (checked(({InnerCastType}) ({caster.LeftItemCode} {operation} {caster.RightItemCode})));",
+                    $"({ReturnType}) (checked(({InnerCastType}) ({caster.LeftItemCode} {operation} {caster.RightItemCode})));",
                 OperationResultReturnCodeType.Code_ImplicitCast =>
-                    $@"checked(({InnerCastType}) ({caster.LeftItemCode} {operation} {caster.RightItemCode}));",
-                _ => throw new ArgumentOutOfRangeException(nameof(ReturnTypeCode))
+                    $"checked(({InnerCastType}) ({caster.LeftItemCode} {operation} {caster.RightItemCode}));",
+                _ => throw new ArgumentOutOfRangeException(nameof(ReturnTypeCode)),
             };
 
-            return new SourceFormatTargetBlock
-            (
-                $@"/// {Tag.Summary($"{operation} 演算子")}",
-                $@"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
-                $@"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
-                $@"/// {Tag.Returns("演算結果")}",
-                $@"public static {ReturnType} operator {operation}({ArgsDefinition(otherType)}) => {returnItemCode}",
+            return new SourceFormatTargetBlock(
+                $"/// {Tag.Summary($"{operation} 演算子")}",
+                $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
+                $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
+                $"/// {Tag.Returns("演算結果")}",
+                $"public static {ReturnType} operator {operation}({ArgsDefinition(otherType)}) => {returnItemCode}",
                 SourceFormatTarget.Empty
             );
         }
@@ -109,7 +114,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Binary
             var (leftClass, rightClass) = TargetClassIsLeft
                 ? (TargetClassName, otherType)
                 : (otherType, TargetClassName);
-            return $@"{leftClass} {BinaryOperatorLeftArgName}, {rightClass} {BinaryOperatorRightArgName}";
+            return $"{leftClass} {BinaryOperatorLeftArgName}, {rightClass} {BinaryOperatorRightArgName}";
         }
 
         private class CastItemCodeMaker
@@ -119,8 +124,12 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Binary
             public string InnerCastType { get; }
             public bool TargetClassIsLeft { get; }
 
-            public CastItemCodeMaker(string targetClassType, string otherType, string innerCastType,
-                bool targetClassIsLeft)
+            public CastItemCodeMaker(
+                string targetClassType,
+                string otherType,
+                string innerCastType,
+                bool targetClassIsLeft
+            )
             {
                 TargetClassType = targetClassType;
                 OtherType = otherType;

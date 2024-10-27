@@ -23,7 +23,7 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
             /// </summary>
             /// <param name="itemName">項目名</param>
             /// <returns>例外メッセージ</returns>
-            public static string Null(string itemName) => $@"{itemName} が {Tag.See.Langword_Null} の場合";
+            public static string Null(string itemName) => $"{itemName} が {Tag.See.Langword_Null} の場合";
 
             /// <summary>
             ///     OutOfRange例外メッセージを取得する。
@@ -33,7 +33,7 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
             /// <param name="max">最大値</param>
             /// <returns>例外メッセージ</returns>
             public static string OutOfRange(string itemName, string min, string max) =>
-                $@"{itemName} が {min} 未満 または {max} を超える場合";
+                $"{itemName} が {min} 未満 または {max} を超える場合";
         }
     }
 }

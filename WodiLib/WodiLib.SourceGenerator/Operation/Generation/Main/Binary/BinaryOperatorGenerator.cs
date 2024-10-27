@@ -67,19 +67,28 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Binary
             var returnTypeCode = int.Parse(propValues[MyAttr.ReturnCodeType.Name]!);
 
             var codeMaker =
-                new OperationCodeMaker(thisType, otherTypes, innerCastType, returnType, targetClassIsLeft,
-                    returnTypeCode);
+                new OperationCodeMaker(
+                    thisType,
+                    otherTypes,
+                    innerCastType,
+                    returnType,
+                    targetClassIsLeft,
+                    returnTypeCode
+                );
 
-            return SourceTextFormatter.Format("", new SourceFormatTarget[]
+            return SourceTextFormatter.Format(
+                "",
+                new SourceFormatTarget[]
                 {
-                    ($@"{DefinitionSource(defInfo)} {thisType}"),
-                    ($@"{{")
+                    $"{DefinitionSource(defInfo)} {thisType}",
+                    $"{{",
                 },
                 SourceTextFormatter.Format(IndentSpace, OperationBlock(codeMaker, operation)),
                 new SourceFormatTarget[]
                 {
-                    ($@"}}")
-                });
+                    $"}}",
+                }
+            );
         }
 
         /// <summary>
@@ -118,20 +127,21 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Binary
         /// <returns></returns>
         private static SourceFormatTargetBlock OperationBlock(OperationCodeMaker codeMaker, string operationCode)
             => SourceFormatTargetBlock.Merge(
-                new (string ope, Func<string, bool> determineMake)[]
-                    {
-                        ("+", BinaryOperationType.CanAdd),
-                        ("-", BinaryOperationType.CanSubtract),
-                        ("*", BinaryOperationType.CanMultiple),
-                        ("/", BinaryOperationType.CanDivide),
-                        ("%", BinaryOperationType.CanModulo),
-                        ("&", BinaryOperationType.CanAnd),
-                        ("|", BinaryOperationType.CanOr),
-                        ("^", BinaryOperationType.CanXor)
-                    }.Where(param => param.determineMake(operationCode))
-                    .Select(param => codeMaker.MakeSourceFormatTargetBinaryOperator(param.ope))
-                    .ToArray()
-            ).TrimLastEmptyLine();
+                    new (string ope, Func<string, bool> determineMake)[]
+                        {
+                            ("+", BinaryOperationType.CanAdd),
+                            ("-", BinaryOperationType.CanSubtract),
+                            ("*", BinaryOperationType.CanMultiple),
+                            ("/", BinaryOperationType.CanDivide),
+                            ("%", BinaryOperationType.CanModulo),
+                            ("&", BinaryOperationType.CanAnd),
+                            ("|", BinaryOperationType.CanOr),
+                            ("^", BinaryOperationType.CanXor),
+                        }.Where(param => param.determineMake(operationCode))
+                        .Select(param => codeMaker.MakeSourceFormatTargetBinaryOperator(param.ope))
+                        .ToArray()
+                )
+                .TrimLastEmptyLine();
 
         private BinaryOperatorGenerator()
         {

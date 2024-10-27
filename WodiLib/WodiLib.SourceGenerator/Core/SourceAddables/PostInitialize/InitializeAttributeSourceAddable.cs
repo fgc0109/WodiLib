@@ -36,7 +36,7 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
         public virtual string? Remarks => null;
 
         /// <summary>派生クラスへの継承フラグ</summary>
-        public virtual bool Inherited { get; } = true;
+        public virtual bool Inherited => true;
 
         /// <summary>複数属性付与可能フラグ</summary>
         public virtual bool AllowMultiple { get; }
@@ -90,23 +90,23 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
             return SourceTextFormatter.Format(
                 new SourceFormatTarget[]
                 {
-                    $@"namespace {NameSpace}",
-                    $@"{{"
+                    $"namespace {NameSpace}",
+                    $"{{",
                 },
                 SourceTextFormatter.Format(
                     IndentSpace,
                     new SourceFormatTarget[]
                     {
-                        $@"/// <summary>",
-                        $@"/// {__}{Summary}",
-                        $@"/// </summary>"
+                        $"/// <summary>",
+                        $"/// {__}{Summary}",
+                        $"/// </summary>",
                     },
                     RemarksSourceText(),
                     new SourceFormatTarget[]
                     {
-                        $@"[System.AttributeUsage({AttributeTargets.ToSource()}, Inherited = {Inherited.ToString().ToLower()}, AllowMultiple = {AllowMultiple.ToString().ToLower()})]",
-                        $@"internal class {AttributeName} : System.Attribute",
-                        $@"{{"
+                        $"[System.AttributeUsage({AttributeTargets.ToSource()}, Inherited = {Inherited.ToString().ToLower()}, AllowMultiple = {AllowMultiple.ToString().ToLower()})]",
+                        $"internal class {AttributeName} : System.Attribute",
+                        $"{{",
                     },
                     SourceTextFormatter.ReduceMany(
                             IndentSpace,
@@ -121,8 +121,8 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
                 ),
                 new SourceFormatTarget[]
                 {
-                    $@"{__}}}",
-                    $@"}}"
+                    $"{__}}}",
+                    $"}}",
                 }
             );
         }
@@ -136,9 +136,9 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
                 IndentSpace,
                 new SourceFormatTarget[]
                 {
-                    $@"/// <remarks>",
-                    $@"/// {__}{Remarks.TrimNewLine()}",
-                    $@"/// </remarks>"
+                    $"/// <remarks>",
+                    $"/// {__}{Remarks.TrimNewLine()}",
+                    $"/// </remarks>",
                 }
             );
         }

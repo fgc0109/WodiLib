@@ -45,9 +45,9 @@ namespace WodiLib.SourceGenerator.Core.Dtos
 
         /// <inheritdoc/>
         public override string ToString()
-            => $"{{ TypeFullName = {TypeFullName}, ObjectType = {ObjectType}, " +
-               $"Accessibility = {Accessibility}, " +
-               $"IsAbstract = {IsAbstract}, IsStatic = {IsStatic}, " +
-               $"IsSealed = {IsSealed} }}";
+            => $"{{ TypeFullName = {TypeFullName}, ObjectType = {ObjectType}, "
+               + $"Accessibility = {Accessibility}, "
+               + $"IsAbstract = {IsAbstract}, IsStatic = {IsStatic}, "
+               + $"IsSealed = {IsSealed} }}";
     }
 }

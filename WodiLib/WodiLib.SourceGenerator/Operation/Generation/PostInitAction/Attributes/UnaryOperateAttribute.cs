@@ -36,14 +36,14 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Attributes
             Type = UnaryOperationType.Instance.TypeFullName,
             Summary = "オーバーロードする単項演算子",
             DefaultValue = $"({UnaryOperationType.Instance.TypeFullName}) 0",
-            DefaultValueAsSourceCode = true
+            DefaultValueAsSourceCode = true,
         };
 
         public static readonly PropertyInfo InnerCastType = new()
         {
             Name = nameof(InnerCastType),
-            Type = typeof(Type).FullName,
-            Summary = $"計算時に内部でキャストする型"
+            Type = typeof(Type).FullName!,
+            Summary = $"計算時に内部でキャストする型",
         };
 
         public static readonly PropertyInfo ReturnCodeType = new()
@@ -53,7 +53,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Attributes
             Summary = $"返却インスタンスの生成方法",
             DefaultValue =
                 $"{OperationResultReturnCodeType.Instance.TypeFullName}.{OperationResultReturnCodeType.New.MemberName}",
-            DefaultValueAsSourceCode = true
+            DefaultValueAsSourceCode = true,
         };
 
         /// <inheritdoc/>
@@ -65,7 +65,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Attributes
             {
                 Operation,
                 InnerCastType,
-                ReturnCodeType
+                ReturnCodeType,
             };
 
         private UnaryOperateAttribute()

@@ -42,11 +42,14 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
                     if (sourceAddable is null)
                     {
                         outer.Logger?.AppendLine(
-                            $"Cancel AnalyzePropertySyntax because \"{targetClassName}\" is not registered.");
+                            $"Cancel AnalyzePropertySyntax because \"{targetClassName}\" is not registered."
+                        );
                         return;
                     }
 
-                    var props = context.Node.SyntaxTree.GetRoot().DescendantNodes().OfType<PropertyDeclarationSyntax>()
+                    var props = context.Node.SyntaxTree.GetRoot()
+                        .DescendantNodes()
+                        .OfType<PropertyDeclarationSyntax>()
                         .Select(prop => (IPropertySymbol?)context.SemanticModel.GetDeclaredSymbol(prop));
 
                     var defaultValueDict = CreateDefaultValueDict(outer, props);
@@ -67,8 +70,10 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
                 /// <param name="outer"><see cref="ISyntaxWorker"/> インスタンス</param>
                 /// <param name="props">プロパティ一覧</param>
                 /// <returns>処理結果</returns>
-                private static Dictionary<string, PropertyValue> CreateDefaultValueDict(ISyntaxWorker outer,
-                    IEnumerable<IPropertySymbol?> props)
+                private static Dictionary<string, PropertyValue> CreateDefaultValueDict(
+                    ISyntaxWorker outer,
+                    IEnumerable<IPropertySymbol?> props
+                )
                 {
                     var defaultValueDict = new Dictionary<string, PropertyValue>();
 

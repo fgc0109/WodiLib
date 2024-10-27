@@ -30,22 +30,25 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Enums
         public override string EnumName => nameof(BinaryOperationType);
         public override string Summary => "二項演算子";
 
-        public static EnumMember Add = ("Add", "加算", FlagValue_Add);
-        public static EnumMember Subtract = ("Subtract", "減算", FlagValue_Subtract);
-        public static EnumMember AddAndSubtract = ("AddAndSubtract", "加減算", FlagValue_Add + FlagValue_Subtract);
-        public static EnumMember Multiple = ("Multiple", "乗算", FlagValue_Multiple);
-        public static EnumMember Divide = ("Divide", "除算", FlagValue_Divide);
+        public static readonly EnumMember Add = ("Add", "加算", FlagValue_Add);
+        public static readonly EnumMember Subtract = ("Subtract", "減算", FlagValue_Subtract);
 
-        public static EnumMember MultipleAndDivide =
+        public static readonly EnumMember
+            AddAndSubtract = ("AddAndSubtract", "加減算", FlagValue_Add + FlagValue_Subtract);
+
+        public static readonly EnumMember Multiple = ("Multiple", "乗算", FlagValue_Multiple);
+        public static readonly EnumMember Divide = ("Divide", "除算", FlagValue_Divide);
+
+        public static readonly EnumMember MultipleAndDivide =
             ("MultipleAndDivide", "乗除算", FlagValue_Multiple + FlagValue_Divide);
 
-        public static EnumMember FourArithmeticOperations = ("FourArithmeticOperations", "四則演算",
+        public static readonly EnumMember FourArithmeticOperations = ("FourArithmeticOperations", "四則演算",
             FlagValue_Add + FlagValue_Subtract + FlagValue_Multiple + FlagValue_Divide);
 
-        public static EnumMember Modulo = ("Modulo", "剰余", FlagValue_Modulo);
-        public static EnumMember And = ("And", "And", FlagValue_And);
-        public static EnumMember Or = ("Or", "Or", FlagValue_Or);
-        public static EnumMember Xor = ("Xor", "Xor", FlagValue_Xor);
+        public static readonly EnumMember Modulo = ("Modulo", "剰余", FlagValue_Modulo);
+        public static readonly EnumMember And = ("And", "And", FlagValue_And);
+        public static readonly EnumMember Or = ("Or", "Or", FlagValue_Or);
+        public static readonly EnumMember Xor = ("Xor", "Xor", FlagValue_Xor);
 
         public override IEnumerable<EnumMember> Members()
             => new[]
@@ -60,7 +63,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Enums
                 Modulo,
                 And,
                 Or,
-                Xor
+                Xor,
             };
 
         public static bool CanAdd(string? flagStr)

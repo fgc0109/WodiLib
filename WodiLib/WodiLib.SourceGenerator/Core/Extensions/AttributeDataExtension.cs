@@ -13,12 +13,12 @@ using Microsoft.CodeAnalysis;
 namespace WodiLib.SourceGenerator.Core.Extensions
 {
     /// <summary>
-    /// <see cref="AttributeDataExtension"/> 拡張クラス
+    ///     <see cref="AttributeDataExtension"/> 拡張クラス
     /// </summary>
     internal static class AttributeDataExtension
     {
         /// <summary>
-        /// 指定したプロパティの値を取得する。
+        ///     指定したプロパティの値を取得する。
         /// </summary>
         /// <param name="src">取得対象</param>
         /// <param name="propertyName">プロパティ名</param>
@@ -37,7 +37,7 @@ namespace WodiLib.SourceGenerator.Core.Extensions
         }
 
         /// <summary>
-        /// 引数で指定された属性プロパティ値を取得する。
+        ///     引数で指定された属性プロパティ値を取得する。
         /// </summary>
         /// <param name="src">取得対象</param>
         /// <param name="propertyName">プロパティ名</param>
@@ -45,14 +45,24 @@ namespace WodiLib.SourceGenerator.Core.Extensions
         /// <returns>属性プロパティが指定されていた場合、その値。指定されていない場合、<see langword="null"/></returns>
         private static T? GetPropertyInitializedValue<T>(this AttributeData src, string propertyName)
         {
-            return (T?)src.NamedArguments
-                .FirstOrDefault(arg => arg.Key.Equals(propertyName))
-                .Value
-                .Value;
+            var findResult = src.NamedArguments.FirstOrDefault(arg => arg.Key.Equals(propertyName));
+            if (findResult.Key is null)
+            {
+                return default;
+            }
+
+            if (typeof(T) == typeof(string[]))
+            {
+                return (T?)(object)findResult.Value.Values.Select(v => (string?)v.Value).ToArray();
+            }
+
+            return typeof(T).IsArray
+                ? (T?)(object)findResult.Value.Values.Select(v => v.Value).ToArray()
+                : (T?)findResult.Value.Value;
         }
 
         /// <summary>
-        /// <see cref="DefaultValueAttribute"/> で指定されたデフォルト値を取得する。
+        ///     <see cref="DefaultValueAttribute"/> で指定されたデフォルト値を取得する。
         /// </summary>
         /// <param name="src">取得対象</param>
         /// <param name="propertyName">プロパティ名</param>
@@ -64,11 +74,13 @@ namespace WodiLib.SourceGenerator.Core.Extensions
                 ?.GetMembers()
                 .FirstOrDefault(member => member.Name.Equals(propertyName))
                 ?.GetAttributes()
-                .FirstOrDefault(attr =>
-                    attr.AttributeClass
-                        ?.FullName()
-                        .Equals(typeof(DefaultValueAttribute).FullName)
-                    ?? false)
+                .FirstOrDefault(
+                    attr =>
+                        attr.AttributeClass
+                            ?.FullName()
+                            .Equals(typeof(DefaultValueAttribute).FullName)
+                        ?? false
+                )
                 ?.ConstructorArguments[0]
                 .Value;
         }

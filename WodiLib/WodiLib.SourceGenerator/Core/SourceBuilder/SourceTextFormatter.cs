@@ -66,8 +66,11 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
         /// <param name="separator">結合文字列</param>
         /// <param name="targets">整形対象</param>
         /// <returns>整形した<see cref="SourceFormatTarget"/> 配列</returns>
-        public static SourceFormatTargetBlock Reduce(string prefix, string separator,
-            SourceFormatTargetBlock targets)
+        public static SourceFormatTargetBlock Reduce(
+            string prefix,
+            string separator,
+            SourceFormatTargetBlock targets
+        )
         {
             var filtered = FilteredText(targets);
             var resultLen = targets.Length;
@@ -96,8 +99,11 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
         /// <param name="separator">結合文字列</param>
         /// <param name="targets">整形対象</param>
         /// <returns>整形した<see cref="SourceFormatTarget"/> 配列</returns>
-        public static SourceFormatTargetBlock Reduce(string prefix, string separator,
-            params SourceFormatTargetBlock[] targets)
+        public static SourceFormatTargetBlock Reduce(
+            string prefix,
+            string separator,
+            params SourceFormatTargetBlock[] targets
+        )
         {
             var resultLen = targets.Length;
             var result = new SourceFormatTargetBlock[resultLen];
@@ -124,8 +130,10 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
         /// <param name="prefix">成形時に各業の先頭に付与する文字列</param>
         /// <param name="targets">整形対象</param>
         /// <returns>整形した<see cref="SourceFormatTarget"/> 配列</returns>
-        public static SourceFormatTargetBlock ReduceMany(string prefix,
-            params SourceFormatTargetBlock[] targets)
+        public static SourceFormatTargetBlock ReduceMany(
+            string prefix,
+            params SourceFormatTargetBlock[] targets
+        )
             => Reduce(prefix, "", targets.SelectMany(line => line).ToArray());
 
         /// <summary>
@@ -135,8 +143,11 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
         /// <param name="separator">結合文字列</param>
         /// <param name="targets">整形対象</param>
         /// <returns>整形した<see cref="SourceFormatTarget"/> 配列</returns>
-        public static SourceFormatTargetBlock ReduceMany(string prefix, string separator,
-            params SourceFormatTargetBlock[] targets)
+        public static SourceFormatTargetBlock ReduceMany(
+            string prefix,
+            string separator,
+            params SourceFormatTargetBlock[] targets
+        )
             => Reduce(prefix, separator, targets.SelectMany(line => line).ToArray());
 
         /// <summary>
@@ -208,11 +219,15 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
         /// <param name="prefix">成形時に各業の先頭に付与する文字列</param>
         /// <param name="generateTarget">生成処理</param>
         /// <returns>整形した<see cref="SourceFormatTarget"/> 配列</returns>
-        public static SourceFormatTargetBlock If(bool isAppend, string prefix,
-            params Func<SourceFormatTargetBlock>[] generateTarget)
+        public static SourceFormatTargetBlock If(
+            bool isAppend,
+            string prefix,
+            params Func<SourceFormatTargetBlock>[] generateTarget
+        )
             => isAppend
                 ? FilteredTextMany(generateTarget.Select(f => f()).ToArray())
-                    .Select(s => new SourceFormatTarget($"{prefix}{s}")).ToArray()
+                    .Select(s => new SourceFormatTarget($"{prefix}{s}"))
+                    .ToArray()
                 : Array.Empty<SourceFormatTarget>();
 
         /// <summary>
@@ -229,7 +244,8 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
         /// <param name="targets">処理対象</param>
         /// <returns>処理結果</returns>
         private static IEnumerable<string> FilteredTextMany(SourceFormatTargetBlock[] targets)
-            => targets.SelectMany(row => row).Where(line => line.IsAppend)
+            => targets.SelectMany(row => row)
+                .Where(line => line.IsAppend)
                 .Select(line => line.Text);
     }
 }

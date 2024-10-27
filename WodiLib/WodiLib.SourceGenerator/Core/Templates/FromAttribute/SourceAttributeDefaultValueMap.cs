@@ -21,9 +21,9 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         /// </summary>
         /// <param name="propertyName"></param>
         public PropertyValue this[string propertyName]
-            => Impl[propertyName];
+            => impl[propertyName];
 
-        private readonly Dictionary<string, PropertyValue> Impl;
+        private readonly Dictionary<string, PropertyValue> impl;
 
         /// <summary>
         ///     コンストラクタ
@@ -31,9 +31,9 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         /// <param name="src">デフォルト値ディクショナリ</param>
         public SourceAttributeDefaultValueMap(Dictionary<string, PropertyValue> src)
         {
-            Impl = src;
+            impl = src;
         }
 
-        public IReadOnlyDictionary<string, PropertyValue> ToReadOnlyDictionary() => Impl;
+        public IReadOnlyDictionary<string, PropertyValue> ToReadOnlyDictionary() => impl;
     }
 }

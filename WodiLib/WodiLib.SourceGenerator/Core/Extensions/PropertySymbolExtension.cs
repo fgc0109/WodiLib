@@ -23,8 +23,11 @@ namespace WodiLib.SourceGenerator.Core.Extensions
         /// <returns></returns>
         public static TypedConstant? GetDefaultValue(this IPropertySymbol target)
         {
-            var defaultValueAttr = target.GetAttributes().FirstOrDefault(attr =>
-                attr.AttributeClass?.FullName().Equals(typeof(DefaultValueAttribute).FullName) ?? false);
+            var defaultValueAttr = target.GetAttributes()
+                .FirstOrDefault(
+                    attr =>
+                        attr.AttributeClass?.FullName().Equals(typeof(DefaultValueAttribute).FullName) ?? false
+                );
             return defaultValueAttr?.ConstructorArguments[0];
         }
     }

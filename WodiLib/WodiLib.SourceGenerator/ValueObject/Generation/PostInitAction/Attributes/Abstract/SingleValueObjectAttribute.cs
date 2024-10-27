@@ -23,7 +23,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Name = "PropertyName",
             Type = "string",
             Summary = "プロパティ名",
-            DefaultValue = "RawValue"
+            DefaultValue = "RawValue",
         };
 
         public static readonly PropertyInfo IsComparable = new()
@@ -33,15 +33,18 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             Summary = "比較可否",
             Remarks =
                 $"{Tag.See.Langword_True}の場合、{Tag.See.Cref($"{typeof(IComparer<>).Namespace}.IComparer{{T}}.Compare(T,T)")}を実装する。",
-            DefaultValue = "false"
+            DefaultValue = "false",
         };
 
         /// <inheritdoc/>
         public override IEnumerable<PropertyInfo> Properties()
-            => base.Properties().Concat(new[]
-            {
-                PropertyName,
-                IsComparable
-            });
+            => base.Properties()
+                .Concat(
+                    new[]
+                    {
+                        PropertyName,
+                        IsComparable,
+                    }
+                );
     }
 }

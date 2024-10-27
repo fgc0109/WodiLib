@@ -41,7 +41,8 @@ namespace WodiLib.SourceGenerator.Core.Dtos
 
         public PropertyValues(
             SyntaxWorkResult workResult,
-            IReadOnlyDictionary<string, PropertyValue> defaultValueDict)
+            IReadOnlyDictionary<string, PropertyValue> defaultValueDict
+        )
         {
             WorkResult = workResult;
             PropertyValueDict = workResult.MakePropertyValuesDict();
@@ -49,9 +50,11 @@ namespace WodiLib.SourceGenerator.Core.Dtos
         }
 
         public string? this[string key] =>
-            PropertyValueDict.ContainsKey(key) ? PropertyValueDict[key].ToValueString()
-            : DefaultValueDict.ContainsKey(key) ? DefaultValueDict[key].ToValueString()
-            : null;
+            PropertyValueDict.ContainsKey(key)
+                ? PropertyValueDict[key].ToValueString()
+                : DefaultValueDict.ContainsKey(key)
+                    ? DefaultValueDict[key].ToValueString()
+                    : null;
 
         /// <summary>
         ///     指定したキー名の値が <see langword="null"/> であるかを返す。
@@ -101,9 +104,11 @@ namespace WodiLib.SourceGenerator.Core.Dtos
         /// <param name="key">キー名</param>
         /// <returns><cee cref="PropertyValue"/> インスタンス</returns>
         public string[]? GetArrayValue(string key)
-            => PropertyValueDict.ContainsKey(key) ? PropertyValueDict[key].ToValueStrings()
-                : DefaultValueDict.ContainsKey(key) ? DefaultValueDict[key].ToValueStrings()
-                : null;
+            => PropertyValueDict.ContainsKey(key)
+                ? PropertyValueDict[key].ToValueStrings()
+                : DefaultValueDict.ContainsKey(key)
+                    ? DefaultValueDict[key].ToValueStrings()
+                    : null;
 
         public override string ToString()
             => $"FullName: {FullName}, "

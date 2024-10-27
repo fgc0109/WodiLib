@@ -24,8 +24,14 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
 
         public int Count
             => Impl.Values
-                .Aggregate(0, (cnt, dict) => cnt + dict.Values.Aggregate(0,
-                    (cnt2, list) => cnt2 + list.Count));
+                .Aggregate(
+                    0,
+                    (cnt, dict) => cnt
+                                   + dict.Values.Aggregate(
+                                       0,
+                                       (cnt2, list) => cnt2 + list.Count
+                                   )
+                );
 
         private ILogger? Logger { get; }
 
@@ -33,8 +39,10 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
 
         private Dictionary<string, Dictionary<string, List<SyntaxWorkResult>>> Impl { get; } = new();
 
-        public BasicSyntaxWorkResultDictionary(IPropertyValueKeyResolver keyResolver,
-            ILogger? logger)
+        public BasicSyntaxWorkResultDictionary(
+            IPropertyValueKeyResolver keyResolver,
+            ILogger? logger
+        )
         {
             KeyResolver = keyResolver;
             Logger = logger;
@@ -56,7 +64,8 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
             Impl[targetKeyName][srcKeyName].Add(workResult);
             var itemLength = Impl[targetKeyName][srcKeyName].Count;
             Logger?.AppendLine(
-                $"BaseSyntaxWorkResultDictionary Add for key: {targetKeyName}, {srcKeyName} ({itemLength} items)");
+                $"BaseSyntaxWorkResultDictionary Add for key: {targetKeyName}, {srcKeyName} ({itemLength} items)"
+            );
         }
 
         /// <inheritDoc/>

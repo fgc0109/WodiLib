@@ -49,16 +49,19 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Unary
 
             var codeMaker = new OperationCodeMaker(thisType, innerCastType, returnTypeCode);
 
-            return SourceTextFormatter.Format("", new SourceFormatTarget[]
+            return SourceTextFormatter.Format(
+                "",
+                new SourceFormatTarget[]
                 {
-                    ($@"{DefinitionSource(defInfo)} {thisType}"),
-                    ($@"{{")
+                    $"{DefinitionSource(defInfo)} {thisType}",
+                    $"{{",
                 },
                 SourceTextFormatter.Format(IndentSpace, OperationBlock(codeMaker, operation)),
                 new SourceFormatTarget[]
                 {
-                    ($@"}}")
-                });
+                    $"}}",
+                }
+            );
         }
 
         /// <summary>
@@ -97,15 +100,16 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Unary
         /// <returns></returns>
         private static SourceFormatTargetBlock OperationBlock(OperationCodeMaker codeMaker, string operationCode)
             => SourceFormatTargetBlock.Merge(
-                new (string ope, Func<string, bool> determineMake)[]
-                    {
-                        ("++", UnaryOperationType.CanIncrease),
-                        ("--", UnaryOperationType.CanDecrease),
-                        ("~", UnaryOperationType.CanComplement)
-                    }.Where(param => param.determineMake(operationCode))
-                    .Select(param => codeMaker.MakeSourceFormatTargetUnaryOperator(param.ope))
-                    .ToArray()
-            ).TrimLastEmptyLine();
+                    new (string ope, Func<string, bool> determineMake)[]
+                        {
+                            ("++", UnaryOperationType.CanIncrease),
+                            ("--", UnaryOperationType.CanDecrease),
+                            ("~", UnaryOperationType.CanComplement),
+                        }.Where(param => param.determineMake(operationCode))
+                        .Select(param => codeMaker.MakeSourceFormatTargetUnaryOperator(param.ope))
+                        .ToArray()
+                )
+                .TrimLastEmptyLine();
 
         private UnaryOperatorGenerator()
         {

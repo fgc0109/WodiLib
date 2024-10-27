@@ -18,17 +18,17 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
             /// <summary>
             ///     null
             /// </summary>
-            public static string Langword_Null => Base("langword", "null");
+            public static readonly string Langword_Null = Base("langword", "null");
 
             /// <summary>
             ///     false
             /// </summary>
-            public static string Langword_True => Base("langword", "true");
+            public static readonly string Langword_True = Base("langword", "true");
 
             /// <summary>
             ///     false
             /// </summary>
-            public static string Langword_False => Base("langword", "false");
+            public static readonly string Langword_False = Base("langword", "false");
 
             /// <summary>
             ///     cref要素
@@ -44,7 +44,7 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
             /// <param name="value">属性値</param>
             /// <returns>タグ文字列</returns>
             private static string Base(string attrName, string value) =>
-                $@"<see {ElementsToString((attrName, value))}/>";
+                $"<see {ElementsToString((attrName, value))}/>";
         }
     }
 }
