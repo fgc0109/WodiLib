@@ -15,50 +15,55 @@ namespace WodiLib.Test.Tools
     /// <summary>
     ///     <see cref="IWodiLibListValidator{T}"/> モック用
     /// </summary>
-    public class MockWodiLibListValidator<T> : MockBase<IWodiLibListValidator<T>>,
+    internal class MockWodiLibListValidator<T> : MockBase<IWodiLibListValidator<T>>,
         IWodiLibListValidator<T>
     {
         public void Constructor(NamedValue<IEnumerable<T>> initItems)
         {
-            AddCalledHistory(nameof(Constructor));
+            AddCalledHistory(nameof(Constructor), initItems.Value);
         }
 
         public void Get(NamedValue<int> index, NamedValue<int> count)
         {
-            AddCalledHistory(nameof(Get));
+            AddCalledHistory(nameof(Get), index.Value, count.Value);
         }
 
         public void Set(NamedValue<int> index, NamedValue<IEnumerable<T>> items)
         {
-            AddCalledHistory(nameof(Set));
+            AddCalledHistory(nameof(Set), index.Value, items.Value);
         }
 
         public void Insert(NamedValue<int> index, NamedValue<IEnumerable<T>> items)
         {
-            AddCalledHistory(nameof(Insert));
+            AddCalledHistory(nameof(Insert), index.Value, items.Value);
         }
 
         public void Overwrite(NamedValue<int> index, NamedValue<IEnumerable<T>> items)
         {
-            AddCalledHistory(nameof(Overwrite));
+            AddCalledHistory(nameof(Overwrite), index.Value, items.Value);
         }
 
         public void Move(NamedValue<int> oldIndex, NamedValue<int> newIndex, NamedValue<int> count)
         {
-            AddCalledHistory(nameof(Move));
+            AddCalledHistory(nameof(Move), oldIndex.Value, newIndex.Value, count.Value);
         }
 
         public void Remove(NamedValue<int> index, NamedValue<int> count)
         {
-            AddCalledHistory(nameof(Remove));
+            AddCalledHistory(nameof(Remove), index.Value, count.Value);
         }
 
         public void AdjustLength(NamedValue<int> length)
         {
-            AddCalledHistory(nameof(AdjustLength));
+            AddCalledHistory(nameof(AdjustLength), length.Value);
         }
 
-        public void Reset(NamedValue<IEnumerable<T>> items)
+        public void Reset(NamedValue<IEnumerable<T>> settings, bool canChangeSize = true)
+        {
+            AddCalledHistory(nameof(Reset), settings.Value, canChangeSize);
+        }
+
+        public void Reset()
         {
             AddCalledHistory(nameof(Reset));
         }

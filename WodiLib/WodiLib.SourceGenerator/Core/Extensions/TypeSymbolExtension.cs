@@ -48,8 +48,7 @@ namespace WodiLib.SourceGenerator.Core.Extensions
                     resultBuilder.Append(
                         string.Join(
                             ",",
-                            namedTypeSymbol.TypeArguments.Select(
-                                t => t.FullName()
+                            namedTypeSymbol.TypeArguments.Select(t => t.FullName()
                             )
                         )
                     );

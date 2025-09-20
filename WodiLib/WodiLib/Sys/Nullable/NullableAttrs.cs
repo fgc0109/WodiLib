@@ -24,14 +24,16 @@ namespace System.Diagnostics.CodeAnalysis
 
     /// <summary>Specifies that an output may be null even if the corresponding type disallows it.</summary>
     [AttributeUsage(
-        AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
+        AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue
+    )]
     internal sealed class MaybeNullAttribute : Attribute
     {
     }
 
     /// <summary>Specifies that an output will not be null even if the corresponding type allows it.</summary>
     [AttributeUsage(
-        AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
+        AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue
+    )]
     internal sealed class NotNullAttribute : Attribute
     {
     }
@@ -71,8 +73,10 @@ namespace System.Diagnostics.CodeAnalysis
     }
 
     /// <summary>Specifies that the output will be non-null if the named parameter is non-null.</summary>
-    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue,
-        AllowMultiple = true)]
+    [AttributeUsage(
+        AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue,
+        AllowMultiple = true
+    )]
     internal sealed class NotNullIfNotNullAttribute : Attribute
     {
         /// <summary>Initializes the attribute with the associated parameter name.</summary>

@@ -10,7 +10,7 @@ namespace WodiLib.Test.Sys
     [TestFixture]
     public class ListExtensionTest
     {
-        private static Logger logger = default!;
+        private static Logger logger = null!;
 
         [SetUp]
         public static void Setup()
@@ -32,8 +32,8 @@ namespace WodiLib.Test.Sys
 
 
             var makeDefaultValueFunc = defaultValue == -1
-                ? null
-                : new Func<int, int>(i => defaultValue);
+                ? null!
+                : new Func<int, int>(_ => defaultValue);
 
             var errorOccured = false;
             try
@@ -47,18 +47,20 @@ namespace WodiLib.Test.Sys
             }
 
             // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+            Assert.AreEqual(isError, errorOccured);
 
             if (errorOccured) return;
 
             // 長さが意図した値であること
-            Assert.AreEqual(list.Count, adjustLength);
+            Assert.AreEqual(adjustLength, list.Count);
 
             // 手を加えなかった部分の値がそのままであること
-            var checkLength = initLength < adjustLength ? initLength : adjustLength;
+            var checkLength = initLength < adjustLength
+                ? initLength
+                : adjustLength;
             for (var i = 0; i < checkLength; i++)
             {
-                Assert.AreEqual(list[i], i);
+                Assert.AreEqual(i, list[i]);
             }
 
             // 手を加えた部分の値が defaultValue と一致すること
@@ -66,7 +68,7 @@ namespace WodiLib.Test.Sys
             if (addLength < 0) addLength = 0;
             for (var i = 0; i < addLength; i++)
             {
-                Assert.AreEqual(list[i + checkLength], defaultValue);
+                Assert.AreEqual(defaultValue, list[i + checkLength]);
             }
         }
     }

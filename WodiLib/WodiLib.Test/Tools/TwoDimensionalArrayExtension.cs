@@ -5,7 +5,7 @@ namespace WodiLib.Test.Tools
     public static class TwoDimensionalArrayExtension
     {
         /// <summary>
-        /// 二次元配列を比較する。
+        ///     二次元配列を比較する。
         /// </summary>
         /// <param name="src">判定対象</param>
         /// <param name="other">比較インスタンス</param>
@@ -17,7 +17,8 @@ namespace WodiLib.Test.Tools
             if (src.Length == 0) return true;
 
             var hasNotEqualItem = src.Select((srcLine, i) =>
-                    srcLine.SequenceEqual(other[i]))
+                    srcLine.SequenceEqual(other[i])
+                )
                 .All(b => b);
             return hasNotEqualItem;
         }

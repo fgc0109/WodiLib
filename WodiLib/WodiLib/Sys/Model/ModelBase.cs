@@ -17,19 +17,16 @@ namespace WodiLib.Sys
     /// <summary>
     ///     各Modelクラス基底クラス
     /// </summary>
-    /// <typeparam name="TChild">Model実装クラス型</typeparam>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public abstract partial class ModelBase<TChild> :
-        INotifyPropertyChanged,
-        IEqualityComparable<TChild>,
-        IDeepCloneable<TChild>
-        where TChild : ModelBase<TChild>
+    public abstract partial class ModelBase : INotifyPropertyChanged
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Property
+        /*
+         * 実際にモデルクラスを作成する際はこのクラスを継承するのではなく
+         * モデルクラスに ModelAttribute を付与する。
+         */
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        private event PropertyChangedEventHandler? _propertyChanged;
+        #region Events
 
         /// <inheritdoc/>
         public virtual event PropertyChangedEventHandler PropertyChanged
@@ -43,63 +40,56 @@ namespace WodiLib.Sys
             remove => _propertyChanged -= value;
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Constructors
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
+        #region Fields
+
+        private event PropertyChangedEventHandler? _propertyChanged;
+
+        #endregion
+
+        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Constructors
+
         /// <summary>
-        /// コンストラクタ（通常）
+        ///     コンストラクタ（通常）
         /// </summary>
         protected ModelBase()
         {
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <inheritdoc/>
-        public abstract bool ItemEquals(TChild? other);
-
-        /// <inheritdoc/>
-        public virtual bool ItemEquals(object? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return ItemEquals(other as TChild);
-        }
-
-        /// <inheritdoc/>
-        public virtual TChild DeepClone()
-        {
-            // TODO: ビルドエラー回避のため一時的に virtual 宣言。あとで abstract 宣言する。
-            throw new NotImplementedException();
-        }
-        // public abstract TChild DeepClone();
-
-        /// <inheritdoc/>
-        object IDeepCloneable.DeepClone()
-            => DeepClone();
+        #endregion
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Methods
+
+        #region protected
 
         /// <summary>
-        /// フィールドに要素をセットする。
-        /// 値が変化する場合、プロパティ変更通知イベントを発火させる。
+        ///     フィールドに要素をセットする。
+        ///     値が変化する場合、プロパティ変更通知イベントを発火させる。
         /// </summary>
         /// <remarks>
-        /// 値が変更しているかどうかは
+        ///     値が変更しているかどうかは
         ///     <ul>
-        ///     <li><typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していれば <see cref="IEqualityComparable.ItemEquals"/> による比較により決定する</li>
-        ///     <li><typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していなければ <see cref="EqualityComparer{T}.Default"/> による比較により決定する</li>
+        ///         <li>
+        ///             <typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していれば
+        ///             <see cref="IEqualityComparable.ItemEquals"/> による比較により決定する
+        ///         </li>
+        ///         <li>
+        ///             <typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していなければ
+        ///             <see cref="EqualityComparer{T}.Default"/> による比較により決定する
+        ///         </li>
         ///     </ul>
         /// </remarks>
-        /// <param name="source"></param>
-        /// <param name="value"></param>
-        /// <param name="propertyName"></param>
-        /// <typeparam name="T"></typeparam>
+        /// <param name="source">値を設定する変数</param>
+        /// <param name="value">設定する値</param>
+        /// <param name="propertyName">プロパティ名</param>
+        /// <typeparam name="T">値型</typeparam>
         protected void SetField<T>(ref T source, T value, [CallerMemberName] string propertyName = "")
         {
             var isNotDifference = EqualsHelper.NullableEquals(source, value);
@@ -111,28 +101,42 @@ namespace WodiLib.Sys
         }
 
         /// <summary>
-        /// フィールドに要素をセットする。
-        /// 値が変化する場合、引数で受け取った名前のプロパティ変更通知を発火させる。
+        ///     フィールドに要素をセットする。
+        ///     値が変化する場合、プロパティ変更通知イベントを発火させる。
         /// </summary>
         /// <remarks>
-        /// 値が変更しているかどうかは
+        ///     値が変更しているかどうかは
         ///     <ul>
-        ///     <li><typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していれば <see cref="IEqualityComparable.ItemEquals"/> による比較により決定する</li>
-        ///     <li><typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していなければ <see cref="EqualityComparer{T}.Default"/> による比較により決定する</li>
+        ///         <li>
+        ///             <typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していれば
+        ///             <see cref="IEqualityComparable.ItemEquals"/> による比較により決定する
+        ///         </li>
+        ///         <li>
+        ///             <typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していなければ
+        ///             <see cref="EqualityComparer{T}.Default"/> による比較により決定する
+        ///         </li>
         ///     </ul>
         /// </remarks>
-        /// <param name="source"></param>
-        /// <param name="value"></param>
-        /// <param name="notifyChangePropertyNames"></param>
-        /// <typeparam name="T"></typeparam>
-        protected void SetField<T>(ref T source, T value, IEnumerable<string> notifyChangePropertyNames)
+        /// <param name="value">設定する値</param>
+        /// <param name="getter">値取得関数（編集前の値を取得するために必要）</param>
+        /// <param name="setter">値設定関数</param>
+        /// <param name="propertyName">プロパティ名</param>
+        /// <typeparam name="T">値型</typeparam>
+        protected void SetField<T>(
+            T value,
+            Func<T> getter,
+            Action<T> setter,
+            [CallerMemberName] string propertyName = ""
+        )
         {
+            var source = getter();
+
             var isNotDifference = EqualsHelper.NullableEquals(source, value);
 
             if (isNotDifference) return;
 
-            source = value;
-            notifyChangePropertyNames.ForEach(NotifyPropertyChanged);
+            setter(value);
+            NotifyPropertyChanged(propertyName);
         }
 
         /// <summary>
@@ -260,5 +264,11 @@ namespace WodiLib.Sys
                 notifyArgs?.ForEach(arg => _propertyChanged?.Invoke(this, arg));
             };
         }
+
+        #endregion
+
+        #endregion
+
+        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     }
 }

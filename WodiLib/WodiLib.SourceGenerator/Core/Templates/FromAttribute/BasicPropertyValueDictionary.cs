@@ -117,12 +117,10 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
             AnalyzedPropertyValueDictionary propertyDefaultValueDict
         )
         {
-            return workResults.Values.SelectMany(
-                    results =>
-                        results.Select(
-                            workResult =>
-                                SetupPropertyValues(workResult, propertyDefaultValueDict)
-                        )
+            return workResults.Values.SelectMany(results =>
+                    results.Select(workResult =>
+                        SetupPropertyValues(workResult, propertyDefaultValueDict)
+                    )
                 )
                 .ToList();
         }

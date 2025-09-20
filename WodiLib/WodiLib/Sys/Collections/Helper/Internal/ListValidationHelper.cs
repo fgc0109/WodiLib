@@ -26,7 +26,8 @@ namespace WodiLib.Sys.Collections
         /// </exception>
         public static void SelectIndex(NamedValue<int> index, NamedValue<int> listCount)
         {
-            var max = Math.Max(listCount.Value - 1, 0);
+            // var max = Math.Max(listCount.Value - 1, 0);
+            var max = listCount.Value - 1; // listCount == 0 の場合の最大値は 0 ではなく -1 (必ずOutOfRangeExceptionが発生する)
             const int min = 0;
             ThrowHelper.ValidateArgumentValueRange(
                 index.Value < min || max < index.Value,
@@ -64,7 +65,7 @@ namespace WodiLib.Sys.Collections
         /// <param name="count">要素数</param>
         /// <param name="listCount">リスト要素数</param>
         /// <exception cref="ArgumentOutOfRangeException">
-        ///     <paramref name="count"/> が 0 未満 または <paramref name="listCount"/> を超える場合
+        ///     <paramref name="count"/> が 0 未満 または <paramref name="listCount"/> を超える場合。
         /// </exception>
         public static void Count(NamedValue<int> count, NamedValue<int> listCount)
         {
@@ -120,6 +121,22 @@ namespace WodiLib.Sys.Collections
         public static void ItemCountNotZero(NamedValue<int> listCount)
         {
             ThrowHelper.ValidateListItemCountNotZero(listCount.Value == 0, listCount.Name);
+        }
+
+        /// <summary>
+        ///     要素数が適切であることを検証する。
+        /// </summary>
+        /// <param name="count">要素数</param>
+        /// <param name="capacity">要素数</param>
+        /// <param name="itemName">エラーメッセージ中の項目名</param>
+        /// <exception cref="ArgumentException">リストの要素数が不適切な場合</exception>
+        public static void ItemCount(int count, int capacity, string itemName = "initItems")
+        {
+            ThrowHelper.ValidateArgumentNotMatch(
+                count != capacity,
+                $"{itemName}",
+                $"現在の${itemName}({capacity})"
+            );
         }
     }
 }

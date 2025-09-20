@@ -70,7 +70,8 @@ namespace WodiLib.SourceGenerator.Test.Operation
         [UnaryOperate(
             Operation = UnaryOperationType.Xcrease
                         | UnaryOperationType.Complement,
-            InnerCastType = typeof(int))]
+            InnerCastType = typeof(int)
+        )]
         public partial class AllOperationOverrideObject
         {
             private readonly int value;
@@ -86,7 +87,8 @@ namespace WodiLib.SourceGenerator.Test.Operation
 
         [UnaryOperate(
             Operation = UnaryOperationType.Increase,
-            InnerCastType = typeof(int))]
+            InnerCastType = typeof(int)
+        )]
         public partial class IncreasableObject
         {
             private readonly int value;
@@ -102,7 +104,8 @@ namespace WodiLib.SourceGenerator.Test.Operation
 
         [UnaryOperate(
             Operation = UnaryOperationType.Decrease,
-            InnerCastType = typeof(int))]
+            InnerCastType = typeof(int)
+        )]
         public partial class DecreasableObject
         {
             private readonly int value;
@@ -118,7 +121,8 @@ namespace WodiLib.SourceGenerator.Test.Operation
 
         [UnaryOperate(
             Operation = UnaryOperationType.Complement,
-            InnerCastType = typeof(int))]
+            InnerCastType = typeof(int)
+        )]
         public partial class ComplementableObject
         {
             private readonly int value;

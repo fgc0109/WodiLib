@@ -94,13 +94,24 @@ namespace WodiLib.Sys
         ///     GreaterOrEqualエラーメッセージ
         /// </summary>
         /// <param name="itemName">項目名</param>
-        /// <param name="limit">上限値</param>
+        /// <param name="limit">下限値</param>
         /// <param name="value">設定値</param>
         /// <returns>エラーメッセージ</returns>
         public static string GreaterOrEqual(string itemName, IntOrStr limit, int value)
         {
-            return $"{itemName}は{(limit.ToValueString())}以上である必要があります。" +
-                   $"(設定値：{value}";
+            return $"{itemName}は{limit.ToValueString()}以上である必要があります。" + $"(設定値：{value}";
+        }
+
+        /// <summary>
+        ///     LessOrEqualエラーメッセージ
+        /// </summary>
+        /// <param name="itemName">項目名</param>
+        /// <param name="limit">上限値</param>
+        /// <param name="value">設定値</param>
+        /// <returns>エラーメッセージ</returns>
+        public static string LessOrEqual(string itemName, IntOrStr limit, int value)
+        {
+            return $"{itemName}は{limit.ToValueString()}以下である必要があります。" + $"(設定値：{value}";
         }
 
         /// <summary>
@@ -114,6 +125,31 @@ namespace WodiLib.Sys
         public static string OutOfRange(string itemName, IntOrStr min, IntOrStr max, int setValue)
         {
             return $"{itemName}は{min.ToValueString()}～{max.ToValueString()}のみ設定できます。(設定値：{setValue})";
+        }
+
+        /// <summary>
+        ///     Enum不適切値エラーメッセージ
+        /// </summary>
+        /// <remarks>
+        ///     文字列 "{enumName} として不適切な{searchValueType}です。" を返す。
+        /// </remarks>
+        /// <param name="enumName">Enum名</param>
+        /// <param name="searchValueType">検索対象値名</param>
+        /// <returns></returns>
+        public static string InappropriateEnumSearchValue(string enumName, string searchValueType)
+        {
+            return $"{enumName} として不適切な{searchValueType}です。";
+        }
+
+        /// <summary>
+        ///     リストの範囲取得メソッドでインデックスと取得数の相関チェックエラー時のメッセージ
+        /// </summary>
+        /// <param name="indexArgName">インデックス引数名</param>
+        /// <param name="countArgName">取得数引数名</param>
+        /// <returns>エラーメッセージ</returns>
+        public static string ListRange(string indexArgName, string countArgName)
+        {
+            return $"{indexArgName}および{countArgName}が有効な範囲を示していません。";
         }
 
         /// <summary>
@@ -175,6 +211,16 @@ namespace WodiLib.Sys
         }
 
         /// <summary>
+        ///     2次元テーブルの行要素変更時の列数不正エラーメッセージ。
+        /// </summary>
+        /// <param name="rowNum">エラー行数</param>
+        /// <returns>エラーメッセージ</returns>
+        public static string TwoDimListInnerItemLength(int rowNum)
+        {
+            return $"{rowNum}行目の要素数が基準要素数と異なります。";
+        }
+
+        /// <summary>
         ///     オブジェクト不適切エラーメッセージ
         /// </summary>
         /// <param name="itemName">エラー項目名</param>
@@ -215,8 +261,12 @@ namespace WodiLib.Sys
         /// <returns>エラーメッセージ</returns>
         public static string InvalidAnyCast(string itemName, params string[] needCastClassNameList)
         {
-            return $"{itemName}は{string.Join(", ", needCastClassNameList)}のいずれかに" +
-                   $"キャスト可能である必要があります。";
+            if (needCastClassNameList.Length == 1)
+            {
+                return $"{itemName}は{needCastClassNameList[0]}にキャスト可能である必要があります。";
+            }
+
+            return $"{itemName}は{string.Join(", ", needCastClassNameList)}のいずれかにキャスト可能である必要があります。";
         }
 
         /// <summary>

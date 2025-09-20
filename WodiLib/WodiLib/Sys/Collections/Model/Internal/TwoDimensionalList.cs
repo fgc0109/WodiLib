@@ -7,16 +7,17 @@
 // ========================================
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 
+// ReSharper disable ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+
 namespace WodiLib.Sys.Collections
 {
     /// <summary>
-    ///     WodiLib内部で使用する二次元リスト実装クラス
+    ///     容量制限のある二次元リスト
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -33,643 +34,608 @@ namespace WodiLib.Sys.Collections
     ///         行数 > 0 かつ 列数 == 0 の状況にはなりうるが、行数 == 0 かつ 列数 > 0 の状況にはなりえない。
     ///     </para>
     /// </remarks>
-    /// <typeparam name="TRow">リスト行データ型</typeparam>
-    /// <typeparam name="TItem">リスト要素型</typeparam>
-    internal partial class TwoDimensionalList<TRow, TItem>
-        : ModelBase<TwoDimensionalList<TRow, TItem>>,
-            ITwoDimensionalList<TRow, TItem>
-        where TRow : IExtendedList<TItem>
+    /// <typeparam name="TEditableRowElement">行要素型</typeparam>
+    /// <typeparam name="TFixedRowElement">行要素長さ固定型</typeparam>
+    /// <typeparam name="TReadOnlyRowElement">行要素読取専用型</typeparam>
+    /// <typeparam name="TRowElementSettings">行要素設定DTO</typeparam>
+    /// <typeparam name="TEditableListElement">リスト要素型</typeparam>
+    /// <typeparam name="TReadOnlyListElement">リスト要素読取専用型</typeparam>
+    /// <typeparam name="TListElementSettings">リスト要素設定DTO</typeparam>
+    internal class TwoDimensionalList<
+        TEditableRowElement,
+        TFixedRowElement,
+        TReadOnlyRowElement,
+        TRowElementSettings,
+        TEditableListElement,
+        TReadOnlyListElement,
+        TListElementSettings
+    > : FixedLength2DList<TEditableRowElement, TFixedRowElement, TReadOnlyRowElement, TRowElementSettings,
+            TEditableListElement, TReadOnlyListElement, TListElementSettings>,
+        I2DList<TFixedRowElement, TReadOnlyRowElement, TRowElementSettings, TEditableListElement,
+            TReadOnlyListElement, TListElementSettings>
+        where TEditableRowElement : TFixedRowElement
+        where TFixedRowElement : TReadOnlyRowElement
+        where TReadOnlyRowElement : TRowElementSettings, INotifyPropertyChanged, INotifyCollectionChanged
+        where TRowElementSettings : notnull
+        where TEditableListElement : TReadOnlyListElement
+        where TReadOnlyListElement : TListElementSettings
+        where TListElementSettings : notnull
     {
-        /*
-         * このクラスの実装観点は ExtendedList<T> と同じ。
-         * ExtendedList<T> とは違いこのクラス自身が二次元リストの実装となり、
-         * イベント通知なども行う。
-         */
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Events
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Constructors
 
-        public event NotifyCollectionChangedEventHandler CollectionChanged
-        {
-            add => Items.CollectionChanged += value;
-            remove => Items.CollectionChanged -= value;
-        }
+        #region Required
 
-        public void AddRowPropertyChanged(PropertyChangedEventHandler handler)
-        {
-            ThrowHelper.ValidateArgumentNotNull(handler is null, nameof(handler));
-
-            rowEventHandlers.AddPropertyChangedEventHandler(handler);
-        }
-
-        public void RemoveRowPropertyChanged(PropertyChangedEventHandler handler)
-        {
-            ThrowHelper.ValidateArgumentNotNull(handler is null, nameof(handler));
-
-            rowEventHandlers.RemovePropertyChangedEventHandler(handler);
-        }
-
-        public void AddRowCollectionChanged(NotifyCollectionChangedEventHandler handler)
-        {
-            ThrowHelper.ValidateArgumentNotNull(handler is null, nameof(handler));
-
-            rowEventHandlers.AddCollectionChangedEventHandler(handler);
-        }
-
-        public void RemoveRowCollectionChanged(NotifyCollectionChangedEventHandler handler)
-        {
-            ThrowHelper.ValidateArgumentNotNull(handler is null, nameof(handler));
-
-            rowEventHandlers.RemoveCollectionChangedEventHandler(handler);
-        }
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Public Properties
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        public TRow this[int rowIndex]
-        {
-            get => this.GetRow(rowIndex);
-            set => this.SetRow(rowIndex, value);
-        }
-
-        public TItem this[int rowIndex, int columnIndex]
-        {
-            get => this.GetItem(rowIndex, 1, columnIndex, 1).First().First();
-            set => this.SetItem(rowIndex, columnIndex, value);
-        }
-
-        public bool IsEmpty => RowCount == 0;
-        public int RowCount => Items.Count;
-
-        public int ColumnCount => RowCount > 0
-            ? Items[0].Count
-            : 0;
-
-        public int AllCount => RowCount * ColumnCount;
-
-        public ITwoDimensionalListValidator<TRow, TItem>? Validator { get; }
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Protected Properties
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        private protected virtual IExtendedList<TRow> Items { get; }
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Private Properties
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        private Func<IEnumerable<TItem>, TRow> FuncMakeDefaultRowFromItems => config.RowFactoryFromItems;
-        private Func<int, int, TItem> FuncMakeDefaultItem => config.ItemFactory;
-
-        private int MaxRowCapacity => config.MaxRowCapacity;
-        private int MinRowCapacity => config.MinRowCapacity;
-        private int MaxColumnCapacity => config.MaxColumnCapacity;
-        private int MinColumnCapacity => config.MinColumnCapacity;
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Fields
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        private readonly Config config;
-
-        private readonly RowEventHandlers rowEventHandlers;
-
-        private readonly InnerListNotifyPropertyChangeActionReserver notifyPropertyChangedActionReserver;
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Constructors
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        internal TwoDimensionalList(IEnumerable<TRow> values, Config config)
-        {
-            this.config = config;
-            Validator = config.ValidatorFactory(this);
-
-            var initItems = values.ToArray();
-
-            Validator?.Constructor((nameof(values), initItems));
-
-            AddNotifyInnerItemPropertyChanged(initItems);
-            Items = new ExtendedList<TRow>(
-                rowIndex => FuncMakeDefaultRowFromItems(
-                    ColumnCount.Iterate(columnIndex => FuncMakeDefaultItem(rowIndex, columnIndex))
-                ),
-                default!, // 利用しないため
-                initItems
-            );
-            notifyPropertyChangedActionReserver =
-                new InnerListNotifyPropertyChangeActionReserver(NotifyPropertyChanged);
-            rowEventHandlers = new RowEventHandlers(this);
-
-            PropagatePropertyChangeEvent();
-        }
-
-        internal TwoDimensionalList(IEnumerable<IEnumerable<TItem>> items, Config config)
-            : this(
-                items.Select(line => config.RowFactoryFromItems(line)),
-                config
-            )
+        internal TwoDimensionalList(SimpleList<TEditableRowElement> itemsImpl, Config config) : base(itemsImpl, config)
         {
         }
 
-        internal TwoDimensionalList(int rowLength, int columnLength, Config config)
-            : this(
-                rowLength.Iterate(
-                    rowIndex => columnLength.Iterate(columnIndex => config.ItemFactory(rowIndex, columnIndex))
-                ),
-                config
-            )
-        {
-        }
+        #endregion
 
-        internal TwoDimensionalList(Config config) : this(
-            config.MinRowCapacity.Iterate(
-                rowIndex => config.MinColumnCapacity.Iterate(columnIndex => config.ItemFactory(rowIndex, columnIndex))
-            ),
-            config
-        )
-        {
-        }
-
-        private TwoDimensionalList(TwoDimensionalList<TRow, TItem> src) : this(src, src.config)
-        {
-        }
-
-        /// <summary>
-        ///     各変更通知を自身に伝播させる。
-        /// </summary>
-        private void PropagatePropertyChangeEvent()
-        {
-            Items.PropertyChanged += ItemsOnPropertyChanged;
-            Items.CollectionChanged += ItemsOnCollectionChanged;
-        }
+        #endregion
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Public Methods
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
+        #region Methods
+
+        #region public
+
+        #region Capacity
+
+        /// <inheritdoc/>
         public int GetMaxRowCapacity() => MaxRowCapacity;
 
+        /// <inheritdoc/>
         public int GetMinRowCapacity() => MinRowCapacity;
 
+        /// <inheritdoc/>
         public int GetMaxColumnCapacity() => MaxColumnCapacity;
 
+        /// <inheritdoc/>
         public int GetMinColumnCapacity() => MinColumnCapacity;
 
-        public IEnumerable<TRow> GetRowRangeCore(int rowIndex, int rowCount)
-            => Items.GetRangeCore(rowIndex, rowCount);
-
-        public IEnumerable<IEnumerable<TItem>> GetColumnRangeCore(int columnIndex, int columnCount)
-            => Items.Select(row => row.GetRangeCore(columnIndex, columnCount))
-                .ToTransposedArray();
-
-        public IEnumerable<IEnumerable<TItem>> GetItemCore(int rowIndex, int rowCount, int columnIndex, int columnCount)
-            => Items.GetRange(rowIndex, rowCount).Select(row => row.GetRangeCore(columnIndex, columnCount));
-
-        public void SetRowRangeCore(int rowIndex, IEnumerable<TRow> items)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            var itemsArray = items.ToArray();
-            var beforeItems = Items.GetRangeCore(rowIndex, itemsArray.Length);
-            RemoveEventsForRemovalRows(beforeItems);
-
-            Items.SetRangeCore(rowIndex, itemsArray);
-            AddEventsForNewRows(itemsArray);
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void SetColumnRangeCore(int columnIndex, IEnumerable<IEnumerable<TItem>> items)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            var transposedItems = items.ToTransposedArray();
-            Items.Zip(transposedItems)
-                .ForEach(
-                    zip =>
-                    {
-                        var (row, setItems) = zip;
-                        row.SetRangeCore(columnIndex, setItems);
-                    }
-                );
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void SetItemCore(int rowIndex, int columnIndex, TItem item)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            var row = Items.GetCore(rowIndex);
-            row.SetCore(columnIndex, item);
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void AddRowRangeCore(IEnumerable<TRow> items)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            var itemsArray = items.ToArray();
-            Items.AddRangeCore(itemsArray);
-            AddEventsForNewRows(itemsArray);
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void AddColumnRangeCore(IEnumerable<IEnumerable<TItem>> items)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            var transposedItems = items.ToTransposedArray();
-            Items.Zip(transposedItems)
-                .ForEach(
-                    zip =>
-                    {
-                        var (row, setItems) = zip;
-                        row.AddRangeCore(setItems);
-                    }
-                );
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void InsertRowRangeCore(int rowIndex, IEnumerable<TRow> items)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            var itemsArray = items.ToArray();
-            Items.InsertRangeCore(rowIndex, itemsArray);
-            AddEventsForNewRows(itemsArray);
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void InsertColumnRangeCore(int columnIndex, IEnumerable<IEnumerable<TItem>> items)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            var transposedItems = items.ToTransposedArray();
-            Items.Zip(transposedItems)
-                .ForEach(
-                    zip =>
-                    {
-                        var (row, setItems) = zip;
-                        row.InsertRangeCore(columnIndex, setItems);
-                    }
-                );
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void OverwriteRowCore(int rowIndex, IEnumerable<TRow> items)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            var itemsArray = items.ToArray();
-            var overwriteParams = OverwriteParam<TRow>.Factory.Create(Items, rowIndex, itemsArray);
-
-            RemoveEventsForRemovalRows(overwriteParams.ReplaceOldItems);
-            Items.OverwriteCore(rowIndex, itemsArray);
-            AddEventsForNewRows(overwriteParams.ReplaceNewItems);
-            AddEventsForNewRows(overwriteParams.InsertItems);
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void OverwriteColumnCore(int columnIndex, IEnumerable<IEnumerable<TItem>> items)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            var transposedItems = items.ToTransposedArray();
-            Items.Zip(transposedItems)
-                .ForEach(
-                    zip =>
-                    {
-                        var (row, overwriteItems) = zip;
-                        row.OverwriteCore(columnIndex, overwriteItems);
-                    }
-                );
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void MoveRowRangeCore(int oldRowIndex, int newRowIndex, int count)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            Items.MoveRangeCore(oldRowIndex, newRowIndex, count);
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void MoveColumnRangeCore(int oldColumnIndex, int newColumnIndex, int count)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            Items.ForEach(
-                row => { row.MoveRangeCore(oldColumnIndex, newColumnIndex, count); }
-            );
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void RemoveRowRangeCore(int rowIndex, int count)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            Items.RemoveRangeCore(rowIndex, count);
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void RemoveColumnRangeCore(int columnIndex, int count)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            Items.ForEach(
-                row => { row.RemoveRangeCore(columnIndex, count); }
-            );
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void AdjustLengthCore(int rowLength, int columnLength)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            Items.Take(rowLength)
-                .ForEach(
-                    row => { row.AdjustLengthCore(columnLength); }
-                );
-            Items.AdjustLengthCore(rowLength);
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void ResetCore(IEnumerable<TRow> rows)
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            var rowArray = rows.ToArray();
-            var columnLength = rowArray.Length > 0
-                ? rowArray[0].Count
-                : 0;
-            var isChangedColumnLength = columnLength != ColumnCount;
-
-            Items.ResetCore(rowArray);
-
-            if (isChangedColumnLength)
-            {
-                notifyPropertyChangedActionReserver.Notify(nameof(ColumnCount));
-            }
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public void ClearCore()
-        {
-            StartReserveInnerListNotifiedPropertyChangedEvents();
-
-            var isChangedColumnLength = config.MinRowCapacity != ColumnCount;
-
-            var newItems =
-                config.MinRowCapacity.Iterate(r => config.MinColumnCapacity.Iterate(c => config.ItemFactory(r, c)));
-            var newRows = newItems.Select(newRow => config.RowFactoryFromItems(newRow)).ToArray();
-
-            RemoveEventsForRemovalRows(Items);
-            Items.ResetCore(newRows);
-            AddEventsForNewRows(newRows);
-
-            if (isChangedColumnLength)
-            {
-                notifyPropertyChangedActionReserver.Notify(nameof(ColumnCount));
-            }
-
-            ReleaseReservedInnerListNotifiedPropertyChangedEvents();
-        }
-
-        public IEnumerator<TRow> GetEnumerator()
-            => Items.GetEnumerator();
-
-        public override bool ItemEquals(TwoDimensionalList<TRow, TItem>? other)
-            => ItemEquals(other);
-
-        public bool ItemEquals(ITwoDimensionalList<TRow, TItem>? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            if (RowCount != other.RowCount || ColumnCount != other.ColumnCount) return false;
-            return Items.Zip(other)
-                .All(
-                    zip =>
-                    {
-                        var (thisRow, otherRow) = zip;
-                        return thisRow.ItemEquals(otherRow);
-                    }
-                );
-        }
-
-        public override bool ItemEquals(object? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-
-            switch (other)
-            {
-                case IEnumerable<TRow> enumerable:
-                {
-                    var otherArray = enumerable.ToArray();
-                    return RowCount == otherArray.Length
-                           && this.Zip(otherArray).All(zip => zip.Item1.ItemEquals(zip.Item2));
-                }
-                case IEnumerable<IEnumerable<TItem>> enumerable2:
-                {
-                    var otherTwoDimArray = enumerable2.ToTwoDimensionalArray();
-                    return RowCount == otherTwoDimArray.Length
-                           && this.Zip(otherTwoDimArray)
-                               .All(
-                                   zip => zip.Item1.ItemEquals(zip.Item2)
-                               );
-                }
-                default:
-                    return Equals(other);
-            }
-        }
-
-        public TItem[][] ToTwoDimensionalArray(bool isTranspose = false)
-            => isTranspose
-                ? Items.Select(row => row.AsEnumerable()).ToTransposedArray()
-                : Items.Select(row => row.AsEnumerable()).ToTwoDimensionalArray();
-
-        public override TwoDimensionalList<TRow, TItem> DeepClone() => new(this);
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Interface Implementation
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        // @formatter:off
-        #region GetEnumerator
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
         #endregion
 
-        #region DeepClone
+        #region CRUD
 
-        ITwoDimensionalList<TRow, TItem> IDeepCloneable<ITwoDimensionalList<TRow, TItem>>.DeepClone() => DeepClone();
-
-        #endregion
-        // @formatter:on
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Private Static Methods
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        private static IEnumerable<string> ConvertInnerListNotifiedPropertyName(string propertyName)
+        /// <inheritdoc/>
+        public TFixedRowElement AddRow(TRowElementSettings settings)
         {
-            // Items の "Count" が変化した場合、行数と総数の変更通知に変換する
-            if (propertyName.Equals(nameof(ExtendedList<TItem>.Count)))
-            {
-                return new[]
-                {
-                    nameof(RowCount),
-                    nameof(AllCount)
-                };
-            }
-
-            // それ以外は要素の更新として通知
-            return new[] { ListConstant.IndexerName };
+            ValidateAddRow(settings);
+            return AddRowInternal(settings);
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Private Methods
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>
-        ///     行要素のプロパティ変更通知を自身のプロパティ変更通知として通知する。
-        /// </summary>
-        /// <param name="sender">発火元</param>
-        /// <param name="e">通知イベント引数</param>
-        private void ItemsOnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> AddRowRange(IEnumerable<TRowElementSettings> settings)
         {
-            var propName = e.PropertyName;
-            var notifyPropertyNames = ConvertInnerListNotifiedPropertyName(propName);
+            var settingsArray = settings?.ToArray() ?? null!;
 
-            notifyPropertyNames.ForEach(notifyPropertyChangedActionReserver.Notify);
+            ValidateAddRowRange(settingsArray);
+            return AddRowRangeInternal(settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableListElement> AddColumn(IEnumerable<TListElementSettings> settings)
+        {
+            var settingsArray = settings?.ToArray() ?? null!;
+
+            ValidateAddColumn(settingsArray);
+            return AddColumnInternal(settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> AddColumnRange(
+            IEnumerable<IEnumerable<TListElementSettings>> settings
+        )
+        {
+            var settingsArray = settings?.ToArray() ?? null!;
+
+            ValidateAddColumnRange(settingsArray);
+            return AddColumnRangeInternal(settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public TFixedRowElement InsertRow(int rowIndex, TRowElementSettings settings)
+        {
+            ValidateInsertRow(rowIndex, settings);
+            return InsertRowInternal(rowIndex, settings);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> InsertRowRange(int rowIndex, IEnumerable<TRowElementSettings> settings)
+        {
+            var settingsArray = settings?.ToArray() ?? null!;
+
+            ValidateInsertRowRange(rowIndex, settingsArray);
+            return InsertRowRangeInternal(rowIndex, settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableListElement> InsertColumn(
+            int columnIndex,
+            IEnumerable<TListElementSettings> settings
+        )
+        {
+            var settingsArray = settings?.ToArray() ?? null!;
+
+            ValidateInsertColumn(columnIndex, settingsArray);
+            return InsertColumnInternal(columnIndex, settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> InsertColumnRange(
+            int columnIndex,
+            IEnumerable<IEnumerable<TListElementSettings>> settings
+        )
+        {
+            var settingsArray = settings?.ToArray() ?? null!;
+
+            ValidateInsertColumnRange(columnIndex, settingsArray);
+            return InsertColumnRangeInternal(columnIndex, settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> OverwriteRow(int rowIndex, IEnumerable<TRowElementSettings> settings)
+        {
+            var settingsArray = settings?.ToArray() ?? null!;
+
+            ValidateOverwriteRow(rowIndex, settingsArray);
+            return OverwriteRowInternal(rowIndex, settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> OverwriteColumn(
+            int columnIndex,
+            IEnumerable<IEnumerable<TListElementSettings>> settings
+        )
+        {
+            var settingsArray = settings?.ToArray() ?? null!;
+
+            ValidateOverwriteColumn(columnIndex, settingsArray);
+            return OverwriteColumnInternal(columnIndex, settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public TFixedRowElement RemoveRow(int rowIndex)
+        {
+            ValidateRemoveRow(rowIndex);
+            return RemoveRowInternal(rowIndex);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> RemoveRowRange(int rowIndex, int count)
+        {
+            ValidateRemoveRowRange(rowIndex, count);
+            return RemoveRowRangeInternal(rowIndex, count);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> RemoveColumnRange(int columnIndex, int count)
+        {
+            ValidateRemoveColumnRange(columnIndex, count);
+            return RemoveColumnRangeInternal(columnIndex, count);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> AdjustRowLength(int length)
+        {
+            ValidateAdjustRowLength(length);
+            return AdjustRowLengthInternal(length);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> AdjustRowLengthIfShort(int length)
+        {
+            ValidateAdjustRowLength(length);
+            if (RowCount >= length)
+            {
+                return Array.Empty<TFixedRowElement>();
+            }
+
+            return AdjustRowLengthInternal(length);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> AdjustRowLengthIfLong(int length)
+        {
+            ValidateAdjustRowLength(length);
+            if (RowCount <= length)
+            {
+                return Array.Empty<TFixedRowElement>();
+            }
+
+            return AdjustRowLengthInternal(length);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableListElement> RemoveColumn(int columnIndex)
+        {
+            ValidateRemoveColumn(columnIndex);
+            return RemoveColumnInternal(columnIndex);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> AdjustColumnLength(int length)
+        {
+            ValidateAdjustColumnLength(length);
+            return AdjustColumnLengthInternal(length);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> AdjustColumnLengthIfShort(int length)
+        {
+            ValidateAdjustColumnLength(length);
+            if (ColumnCount >= length)
+            {
+                return Array.Empty<IEnumerable<TEditableListElement>>();
+            }
+
+            return AdjustColumnLengthInternal(length);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> AdjustColumnLengthIfLong(int length)
+        {
+            ValidateAdjustColumnLength(length);
+            if (ColumnCount <= length)
+            {
+                return Array.Empty<IEnumerable<TEditableListElement>>();
+            }
+
+            return AdjustColumnLengthInternal(length);
         }
 
         /// <summary>
-        ///     行要素のコレクション変更通知を自身のプロパティ変更通知として通知する。
+        ///     要素を与えられた内容で一新する。
         /// </summary>
-        /// <param name="sender">発火元</param>
-        /// <param name="args">通知イベント引数</param>
-        private void ItemsOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs args)
+        /// <param name="settings">二次元リストに詰め直す要素</param>
+        /// <returns>新たに二次元リストに詰め直した要素</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合、
+        ///     または <paramref name="settings"/> に <see langword="null"/> 要素が含まれる場合。
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="settings"/> の行数が <see cref="GetMinRowCapacity"/> 未満
+        ///     または <see cref="GetMaxRowCapacity"/> を超える場合、
+        ///     列数が <see cref="GetMinColumnCapacity"/> 未満
+        ///     または <see cref="GetMaxColumnCapacity"/> を超える場合。
+        /// </exception>
+        /// <remarks>
+        ///     このメソッドは <paramref name="settings"/> の行数が
+        ///     <see cref="GetMinRowCapacity"/> 以上 <see cref="GetMaxRowCapacity"/> 以下、
+        ///     列数が <see cref="GetMinColumnCapacity"/> 以上 <see cref="GetMaxColumnCapacity"/> 以下であれば
+        ///     成功する。<br/>
+        ///     現在の行数・列数と一致しない場合エラーとしたい場合は、
+        ///     容量固定型にキャストしてから同メソッドを呼び出す。
+        /// </remarks>
+        public new IEnumerable<TFixedRowElement> Reset(
+            IEnumerable<TRowElementSettings> settings
+        )
         {
-            notifyPropertyChangedActionReserver.Notify(ListConstant.IndexerName);
+            var settingsArray = settings?.ToArray() ?? null!;
+
+            ValidateReset(settingsArray);
+            return ResetInternal(settingsArray);
         }
 
-        private void AddEventsForNewRows(IEnumerable<TRow> addRows)
+        /// <inheritdoc/>
+        public void Clear()
         {
-            var addRowArray = addRows.ToArray();
-            rowEventHandlers.AddEventHandlers(addRowArray);
-            AddNotifyInnerItemPropertyChanged(addRowArray);
+            ValidateClear();
+            ClearInternal();
         }
 
-        private void RemoveEventsForRemovalRows(IEnumerable<TRow> removeRows)
+        #endregion
+
+        #region Validate
+
+        /// <inheritdoc/>
+        public void ValidateAddRow(TRowElementSettings settings)
+            => Validator?.InsertRow(("rowIndex", RowCount), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateAddRowRange(IEnumerable<TRowElementSettings> settings)
+            => Validator?.InsertRow(("rowIndex", RowCount), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateInsertRow(int rowIndex, TRowElementSettings settings)
+            => Validator?.InsertRow((nameof(rowIndex), rowIndex), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateInsertRowRange(int rowIndex, IEnumerable<TRowElementSettings> settings)
+            => Validator?.InsertRow((nameof(rowIndex), rowIndex), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateOverwriteRow(int rowIndex, IEnumerable<TRowElementSettings> settings)
+            => Validator?.OverwriteRow((nameof(rowIndex), rowIndex), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateRemoveRow(int rowIndex)
+            => Validator?.RemoveRow((nameof(rowIndex), rowIndex));
+
+        /// <inheritdoc/>
+        public void ValidateRemoveRowRange(int rowIndex, int count)
+            => Validator?.RemoveRow((nameof(rowIndex), rowIndex), (nameof(count), count));
+
+        /// <inheritdoc/>
+        public void ValidateAdjustRowLength(int length)
+            => Validator?.AdjustRowLength((nameof(length), length));
+
+        /// <inheritdoc/>
+        public void ValidateAddColumn(IEnumerable<TListElementSettings> settings)
+            => Validator?.InsertColumn(("columnIndex", ColumnCount), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateAddColumnRange(IEnumerable<IEnumerable<TListElementSettings>> settings)
+            => Validator?.InsertColumn(("columnIndex", ColumnCount), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateInsertColumn(int columnIndex, IEnumerable<TListElementSettings> settings)
+            => Validator?.InsertColumn((nameof(columnIndex), columnIndex), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateInsertColumnRange(int columnIndex, IEnumerable<IEnumerable<TListElementSettings>> settings)
+            => Validator?.InsertColumn((nameof(columnIndex), columnIndex), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateOverwriteColumn(int columnIndex, IEnumerable<IEnumerable<TListElementSettings>> settings)
+            => Validator?.OverwriteColumn((nameof(columnIndex), columnIndex), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateRemoveColumn(int columnIndex)
+            => Validator?.RemoveColumn((nameof(columnIndex), columnIndex));
+
+        /// <inheritdoc/>
+        public void ValidateRemoveColumnRange(int columnIndex, int count)
+            => Validator?.RemoveColumn((nameof(columnIndex), columnIndex), (nameof(count), count));
+
+        /// <inheritdoc/>
+        public void ValidateAdjustColumnLength(int length)
+            => Validator?.AdjustColumnLength((nameof(length), length));
+
+        /// <inheritdoc/>
+        public new void ValidateReset(IEnumerable<TRowElementSettings> settings)
+            => Validator?.Reset((nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateClear()
+            => Validator?.Clear();
+
+        #endregion
+
+        #region CLUD core
+
+        /// <inheritdoc/>
+        public TFixedRowElement AddRowInternal(TRowElementSettings settings)
+            => Items.Add(BuildRowFromSettings(RowCount, settings)).First();
+
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> AddRowRangeInternal(IEnumerable<TRowElementSettings> settings)
+            => Items.Add(settings.Select((s, i) => BuildRowFromSettings(RowCount + i, s)).ToArray())
+                .Cast<TFixedRowElement>();
+
+        /// <inheritdoc/>
+        public TFixedRowElement InsertRowInternal(int rowIndex, TRowElementSettings settings)
+            => Items.Insert(rowIndex, BuildRowFromSettings(RowCount, settings)).First();
+
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> InsertRowRangeInternal(
+            int rowIndex,
+            IEnumerable<TRowElementSettings> settings
+        )
+            => Items.Insert(rowIndex, settings.Select((s, i) => BuildRowFromSettings(rowIndex + i, s)).ToArray())
+                .Cast<TFixedRowElement>();
+
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> OverwriteRowInternal(
+            int rowIndex,
+            IEnumerable<TRowElementSettings> settings
+        )
+            => Items.Overwrite(rowIndex, settings.Select((s, i) => BuildRowFromSettings(rowIndex + i, s)).ToArray())
+                .Cast<TFixedRowElement>();
+
+        /// <inheritdoc/>
+        public TFixedRowElement RemoveRowInternal(int rowIndex)
+            => Items.Remove(rowIndex, 1).First();
+
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> RemoveRowRangeInternal(int rowIndex, int count)
+            => Items.Remove(rowIndex, count).Cast<TFixedRowElement>();
+
+        /// <inheritdoc/>
+        public IEnumerable<TFixedRowElement> AdjustRowLengthInternal(int length)
+            => Items.Adjust(length).Cast<TFixedRowElement>();
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableListElement> AddColumnInternal(IEnumerable<TListElementSettings> settings)
         {
-            var removeRowArray = removeRows.ToArray();
-            rowEventHandlers.RemoveEventHandlers(removeRowArray);
-            RemoveNotifyInnerItemPropertyChanged(removeRowArray);
+            var result = new List<TEditableListElement>();
+            var settingsArray = settings.ToArray();
+
+            for (var i = 0; i < RowCount; i++)
+            {
+                var element = ((dynamic)Items[i]).AddInternal(settingsArray[i]);
+                result.Add(element);
+            }
+
+            OnItemsChanged();
+
+            return result;
         }
 
-        private void AddNotifyInnerItemPropertyChanged(IEnumerable<TRow> rows)
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> AddColumnRangeInternal(
+            IEnumerable<IEnumerable<TListElementSettings>> settings
+        )
         {
-            rows.ForEach(
-                row => { row.PropertyChanged += NotifyInnerItemPropertyChanged; }
+            var settingsArray = settings.ToTransposedArray();
+            if (settingsArray.Length == 0)
+            {
+                return Array.Empty<IEnumerable<TEditableListElement>>();
+            }
+
+            var result = new List<IEnumerable<TEditableListElement>>();
+
+            for (var i = 0; i < RowCount; i++)
+            {
+                var elements = ((dynamic)Items[i]).AddRangeInternal(settingsArray[i]);
+                result.Add(elements);
+            }
+
+            OnItemsChanged();
+
+            return result.ToTransposedArray();
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableListElement> InsertColumnInternal(
+            int columnIndex,
+            IEnumerable<TListElementSettings> settings
+        )
+        {
+            var result = new List<TEditableListElement>();
+            var settingsArray = settings.ToArray();
+
+            for (var i = 0; i < RowCount; i++)
+            {
+                var element = ((dynamic)Items[i]).InsertInternal(columnIndex, settingsArray[i]);
+                result.Add(element);
+            }
+
+            OnItemsChanged();
+
+            return result;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> InsertColumnRangeInternal(
+            int columnIndex,
+            IEnumerable<IEnumerable<TListElementSettings>> settings
+        )
+        {
+            var settingsArray = settings.ToTransposedArray();
+            if (settingsArray.Length == 0)
+            {
+                return Array.Empty<IEnumerable<TEditableListElement>>();
+            }
+
+            var result = new List<IEnumerable<TEditableListElement>>();
+
+            for (var i = 0; i < RowCount; i++)
+            {
+                var elements = ((dynamic)Items[i]).InsertRangeInternal(columnIndex, settingsArray[i]);
+                result.Add(elements);
+            }
+
+            OnItemsChanged();
+
+            return result.ToTransposedArray();
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> OverwriteColumnInternal(
+            int columnIndex,
+            IEnumerable<IEnumerable<TListElementSettings>> settings
+        )
+        {
+            var settingsArray = settings.ToTransposedArray();
+            if (settingsArray.Length == 0)
+            {
+                return Array.Empty<IEnumerable<TEditableListElement>>();
+            }
+
+            var result = new List<IEnumerable<TEditableListElement>>();
+
+            for (var i = 0; i < RowCount; i++)
+            {
+                var elements = ((dynamic)Items[i]).OverwriteInternal(columnIndex, settingsArray[i]);
+                result.Add(elements);
+            }
+
+            OnItemsChanged();
+
+            return result.ToTransposedArray();
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableListElement> RemoveColumnInternal(int columnIndex)
+        {
+            var result = new List<TEditableListElement>();
+
+            for (var i = 0; i < RowCount; i++)
+            {
+                var element = ((dynamic)Items[i]).RemoveInternal(columnIndex);
+                result.Add(element);
+            }
+
+            OnItemsChanged();
+
+            return result;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> RemoveColumnRangeInternal(int columnIndex, int count)
+        {
+            if (count == 0)
+            {
+                return Array.Empty<IEnumerable<TEditableListElement>>();
+            }
+
+            var result = new List<IEnumerable<TEditableListElement>>();
+
+            for (var i = 0; i < RowCount; i++)
+            {
+                var elements = ((dynamic)Items[i]).RemoveRangeInternal(columnIndex, count);
+                result.Add(elements);
+            }
+
+            OnItemsChanged();
+
+            return result.ToTransposedArray();
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEnumerable<TEditableListElement>> AdjustColumnLengthInternal(int length)
+        {
+            if (ColumnCount == length)
+            {
+                return Array.Empty<IEnumerable<TEditableListElement>>();
+            }
+
+            var result = new List<IEnumerable<TEditableListElement>>();
+
+            for (var i = 0; i < RowCount; i++)
+            {
+                var elements = ((dynamic)Items[i]).AdjustLengthInternal(length);
+                result.Add(elements);
+            }
+
+            OnItemsChanged();
+
+            return result.ToTransposedArray();
+        }
+
+        /// <inheritdoc/>
+        public void ClearInternal()
+        {
+            var beforeColumnCount = ColumnCount;
+            Items.Reset(
+                MinRowCapacity.Iterate(rowIndex => BuildRowFromSettings(
+                            rowIndex,
+                            BuildRowSettingsFromRowIndex(rowIndex, MinColumnCapacity)
+                        )
+                    )
+                    .ToArray()
             );
-        }
-
-        private void RemoveNotifyInnerItemPropertyChanged(IEnumerable<TRow> rows)
-        {
-            rows.ForEach(
-                row => { row.PropertyChanged -= NotifyInnerItemPropertyChanged; }
-            );
-        }
-
-        private void StartReserveInnerListNotifiedPropertyChangedEvents()
-        {
-            notifyPropertyChangedActionReserver.StartReserve();
-        }
-
-        private void ReleaseReservedInnerListNotifiedPropertyChangedEvents()
-        {
-            notifyPropertyChangedActionReserver.Release();
-            notifyPropertyChangedActionReserver.FinishReserve();
-        }
-
-        private void NotifyInnerItemPropertyChanged(object sender, PropertyChangedEventArgs args)
-        {
-            if (args.PropertyName.Equals(nameof(IExtendedList<TItem>.Count)))
+            if (ColumnCount != beforeColumnCount)
             {
-                notifyPropertyChangedActionReserver.Notify(nameof(ColumnCount));
-                notifyPropertyChangedActionReserver.Notify(nameof(AllCount));
-            }
-            else
-            {
-                notifyPropertyChangedActionReserver.Notify(ListConstant.IndexerName);
+                OnColumnSizeChanged();
             }
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Class
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #endregion
 
-        private class InnerListNotifyPropertyChangeActionReserver
-        {
-            private bool reserving = false;
-            private readonly List<string> notifiedPropertyNames;
+        #endregion
 
-            private readonly Action<string> actionNotifyPropertyChange;
-
-            public InnerListNotifyPropertyChangeActionReserver(Action<string> actionNotifyPropertyChange)
-            {
-                this.actionNotifyPropertyChange = actionNotifyPropertyChange;
-                notifiedPropertyNames = new List<string>();
-            }
-
-            public void Notify(string propertyName)
-            {
-                if (!reserving)
-                {
-                    actionNotifyPropertyChange(propertyName);
-                    return;
-                }
-
-                // 重複しないものだけを溜め込んでおく
-                if (notifiedPropertyNames.Contains(propertyName)) return;
-
-                notifiedPropertyNames.Add(propertyName);
-            }
-
-            public void StartReserve()
-            {
-                reserving = true;
-            }
-
-            public void Release()
-            {
-                notifiedPropertyNames.ForEach(actionNotifyPropertyChange);
-                notifiedPropertyNames.Clear();
-            }
-
-            public void FinishReserve()
-            {
-                reserving = false;
-            }
-        }
+        #endregion
     }
 }

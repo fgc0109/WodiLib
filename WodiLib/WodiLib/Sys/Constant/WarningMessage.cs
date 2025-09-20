@@ -25,8 +25,8 @@ namespace WodiLib.Sys
         /// <returns>メッセージ</returns>
         public static string OutOfRange(string itemName, IntOrStr min, IntOrStr max, int setValue)
         {
-            return $"{itemName}は{min.ToValueString()}～{max.ToValueString()}の範囲外で設定されているため、" +
-                   $"ウディタ上での動作が保証されません。(設定値：{setValue})";
+            return $"{itemName}は{min.ToValueString()}～{max.ToValueString()}の範囲外で設定されているため、"
+                   + $"ウディタ上での動作が保証されません。(設定値：{setValue})";
         }
 
         /// <summary>
@@ -37,8 +37,7 @@ namespace WodiLib.Sys
         /// <returns>メッセージ</returns>
         public static string CannotSetValue(string itemName, object setValue)
         {
-            return $"{itemName}にウディタ上では設定できない値が設定されました。" +
-                   $"ウディタ上での動作は保証されません。(設定値：{setValue})";
+            return $"{itemName}にウディタ上では設定できない値が設定されました。" + $"ウディタ上での動作は保証されません。(設定値：{setValue})";
         }
 
         /// <summary>

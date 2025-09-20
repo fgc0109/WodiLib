@@ -6,6 +6,8 @@
 // see LICENSE file
 // ========================================
 
+using System;
+
 namespace WodiLib.Sys
 {
     /// <inheritdoc/>
@@ -15,19 +17,17 @@ namespace WodiLib.Sys
     public class PropertyAccessException : PropertyException
     {
         /// <inheritdoc/>
-        /// <summary>
-        ///     コンストラクタ
-        /// </summary>
         public PropertyAccessException()
         {
         }
 
         /// <inheritdoc/>
-        /// <summary>
-        ///     コンストラクタ
-        /// </summary>
-        /// <param name="message">エラーメッセージ</param>
-        public PropertyAccessException(string message) : base(message)
+        public PropertyAccessException(string? message) : base(message)
+        {
+        }
+
+        /// <inheritdoc/>
+        public PropertyAccessException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
     }

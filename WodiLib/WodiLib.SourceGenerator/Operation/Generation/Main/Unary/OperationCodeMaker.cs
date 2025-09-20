@@ -59,7 +59,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Unary
             };
 
             return new SourceFormatTargetBlock(
-                $"/// {Tag.Summary($"{operation} 演算子")}",
+                $"/// {Tag.Summary($"{DocumentCommentHelper.EscapeOperatorMark(operation)} 演算子")}",
                 $"/// {Tag.Param("src", "対象")}",
                 $"/// {Tag.Returns("演算結果")}",
                 $"public static {TargetClassName} operator {operation}({TargetClassName} src)",

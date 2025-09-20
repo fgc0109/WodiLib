@@ -34,7 +34,8 @@ namespace WodiLib.Sys
         {
             if (makeDefaultItemFunc is null)
                 throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(makeDefaultItemFunc)));
+                    ErrorMessage.NotNull(nameof(makeDefaultItemFunc))
+                );
 
             var count = target.Count;
 
@@ -51,8 +52,10 @@ namespace WodiLib.Sys
                 {
                     var addItem = makeDefaultItemFunc(i);
                     var idx = i;
-                    ThrowHelper.ValidateArgumentNotExecute(addItem is null,
-                        () => $"{nameof(makeDefaultItemFunc)}({idx})の結果がnullのため、");
+                    ThrowHelper.ValidateArgumentNotExecute(
+                        addItem is null,
+                        () => $"{nameof(makeDefaultItemFunc)}({idx})の結果がnullのため、"
+                    );
 
                     addItemList.Add(addItem);
                 }

@@ -11,7 +11,7 @@ namespace WodiLib.Test.Sys
         public static void ToIntTest(bool target, int answer)
         {
             var result = target.ToInt();
-            Assert.AreEqual(result, answer);
+            Assert.AreEqual(answer, result);
         }
 
         [TestCase(true, "1")]
@@ -19,7 +19,7 @@ namespace WodiLib.Test.Sys
         public static void ToIntString(bool target, string answer)
         {
             var result = target.ToIntString();
-            Assert.AreEqual(result, answer);
+            Assert.AreEqual(answer, result);
         }
     }
 }

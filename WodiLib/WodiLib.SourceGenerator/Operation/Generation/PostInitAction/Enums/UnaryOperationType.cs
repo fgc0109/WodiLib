@@ -28,7 +28,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Enums
         public static readonly EnumMember Increase = ("Increase", "インクリメント", FlagValue_Increase);
         public static readonly EnumMember Decrease = ("Decrease", "デクリメント", FlagValue_Decrease);
 
-        public static readonly EnumMember Xcrease = ("Xcrease", "インクリメント & デクリメント",
+        public static readonly EnumMember Xcrease = ("Xcrease", "インクリメント &amp; デクリメント",
             FlagValue_Increase + FlagValue_Decrease);
 
         public static readonly EnumMember Complement = ("Complement", "補完", FlagValue_Complement);

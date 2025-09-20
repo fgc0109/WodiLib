@@ -69,6 +69,7 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
                         Accessibility = targetClass.DeclaredAccessibility,
                         IsAbstract = targetClass.IsAbstract,
                         IsStatic = targetClass.IsStatic,
+                        BaseType = targetClass.BaseType,
                     };
                     outer.Logger?.AppendLine($"TypeDefinition: {definitionInfo}");
                     outer.TypeDefinitionDict[targetFullName] = definitionInfo;

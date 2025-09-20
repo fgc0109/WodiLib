@@ -84,7 +84,7 @@ namespace WodiLib.SourceGenerator.Test.ValueObject.SingleValues
         public static void EqualsSameInstanceTest()
         {
             var instance = new SimpleIntValueObject(LimitMaxValue);
-            Assert.IsTrue(instance.Equals(instance));
+            Assert.AreEqual(instance, instance);
         }
 
         [TestCase(LimitMaxValue, true)]
@@ -206,7 +206,7 @@ namespace WodiLib.SourceGenerator.Test.ValueObject.SingleValues
             Simple,
             ValueLimited,
             MaxValueLimited,
-            MinValueLimited
+            MinValueLimited,
         }
 
         [IntValueObject]
@@ -278,10 +278,12 @@ namespace WodiLib.SourceGenerator.Test.ValueObject.SingleValues
     {
     }
 
-    [IntValueObject(Operations = IntegralNumericOperation.And
-                                 | IntegralNumericOperation.Or
-                                 | IntegralNumericOperation.Xor
-                                 | IntegralNumericOperation.Complement)]
+    [IntValueObject(
+        Operations = IntegralNumericOperation.And
+                     | IntegralNumericOperation.Or
+                     | IntegralNumericOperation.Xor
+                     | IntegralNumericOperation.Complement
+    )]
     public partial class BoolOperatableIntValueObject
     {
     }
@@ -323,7 +325,7 @@ namespace WodiLib.SourceGenerator.Test.ValueObject.SingleValues
     {
     }
 
-    [ExtendIntValueObjectAttribute(SafetyMinValue = -900)]
+    [ExtendIntValueObject(SafetyMinValue = -900)]
     public partial class ExtendIntValueObject
     {
     }
@@ -333,7 +335,7 @@ namespace WodiLib.SourceGenerator.Test.ValueObject.SingleValues
         [DefaultValue(9998)] public override int MaxValue { get; init; }
     }
 
-    [ExtendIntValueObjectAttribute(SafetyMinValue = -225)]
+    [ExtendIntValueObject(SafetyMinValue = -225)]
     public partial class MoreExtendIntValueObject : ExtendIntValueObject
     {
     }
@@ -346,7 +348,7 @@ namespace TestNameSpace
         [DefaultValue(-20)] public override int MinValue { get; init; }
     }
 
-    [ExExtendIntValueObjectAttribute(SafetyMinValue = -900)]
+    [ExExtendIntValueObject(SafetyMinValue = -900)]
     public partial class ExExtendIntValueObject
     {
     }

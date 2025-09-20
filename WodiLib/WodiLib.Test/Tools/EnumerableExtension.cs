@@ -20,8 +20,8 @@ namespace WodiLib.Test.Tools
     internal static class EnumerableExtension
     {
         /// <summary>
-        /// 要素を編集した新たなリストを生成する。
-        /// 元のリストには変更を加えない。
+        ///     要素を編集した新たなリストを生成する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="item">編集する要素</param>
@@ -32,8 +32,8 @@ namespace WodiLib.Test.Tools
             => target.Setted(index, new[] { item });
 
         /// <summary>
-        /// 要素を編集した新たなリストを生成する。
-        /// 元のリストには変更を加えない。
+        ///     要素を編集した新たなリストを生成する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="items">編集する要素</param>
@@ -48,8 +48,8 @@ namespace WodiLib.Test.Tools
         }
 
         /// <summary>
-        /// 要素を追加した新たなリストを生成する。
-        /// 元のリストには変更を加えない。
+        ///     要素を追加した新たなリストを生成する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="item">追加する要素</param>
@@ -59,8 +59,8 @@ namespace WodiLib.Test.Tools
             => target.Added(new[] { item });
 
         /// <summary>
-        /// 要素を追加した新たなリストを生成する。
-        /// 元のリストには変更を加えない。
+        ///     要素を追加した新たなリストを生成する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="items">追加する要素</param>
@@ -74,8 +74,8 @@ namespace WodiLib.Test.Tools
         }
 
         /// <summary>
-        /// 要素を挿入した新たなリストを生成する。
-        /// 元のリストには変更を加えない。
+        ///     要素を挿入した新たなリストを生成する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="index">挿入インデックス</param>
@@ -86,8 +86,8 @@ namespace WodiLib.Test.Tools
             => target.Inserted(index, new[] { item });
 
         /// <summary>
-        /// 要素を挿入した新たなリストを生成する。
-        /// 元のリストには変更を加えない。
+        ///     要素を挿入した新たなリストを生成する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="index">挿入インデックス</param>
@@ -102,8 +102,8 @@ namespace WodiLib.Test.Tools
         }
 
         /// <summary>
-        /// 要素を上書きした新たなリストを生成する。
-        /// 元のリストには変更を加えない。
+        ///     要素を上書きした新たなリストを生成する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="index">上書き開始インデックス</param>
@@ -112,14 +112,14 @@ namespace WodiLib.Test.Tools
         /// <returns>要素を上書きした新たなリストインスタンス</returns>
         public static IList<T> Overwritten<T>(this IEnumerable<T> target, int index, IEnumerable<T> items)
         {
-            var customList = new SimpleList<T>(default!, target);
+            var customList = new SimpleList<T>(null!, target);
             customList.Overwrite(index, items.ToArray());
             return customList.ToList();
         }
-        
+
         /// <summary>
-        /// 要素を移動した新たなリストを生成する。
-        /// 元のリストには変更を加えない。
+        ///     要素を移動した新たなリストを生成する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="oldIndex">移動前インデックス</param>
@@ -129,14 +129,14 @@ namespace WodiLib.Test.Tools
         /// <returns>要素を移動した新たなリストインスタンス</returns>
         public static IList<T> Moved<T>(this IEnumerable<T> target, int oldIndex, int newIndex, int count = 1)
         {
-            var result = new SimpleList<T>(default!, target);
+            var result = new SimpleList<T>(null!, target);
             result.Move(oldIndex, newIndex, count);
             return result.ToList();
         }
 
         /// <summary>
-        /// 要素を除去した新たなリストを生成する。
-        /// 元のリストには変更を加えない。
+        ///     要素を除去した新たなリストを生成する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="index">除去開始インデックス</param>
@@ -151,8 +151,8 @@ namespace WodiLib.Test.Tools
         }
 
         /// <summary>
-        /// 要素を指定した個数に合わせた新たなリストを生成する。
-        /// 元のリストには変更を加えない。
+        ///     要素を指定した個数に合わせた新たなリストを生成する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="length">調整要素数</param>
@@ -164,9 +164,9 @@ namespace WodiLib.Test.Tools
                 .AdjustedIfLong(length);
 
         /// <summary>
-        /// 要素を指定した個数に合わせた新たなリストを生成する。
-        /// 元リストの要素数が規定数に足りない場合のみ要素を充足する。
-        /// 元のリストには変更を加えない。
+        ///     要素を指定した個数に合わせた新たなリストを生成する。
+        ///     元リストの要素数が規定数に足りない場合のみ要素を充足する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="length">調整要素数</param>
@@ -185,16 +185,16 @@ namespace WodiLib.Test.Tools
 
             var startIndex = result.Count;
 
-            var addItems = addLength.Range().Select(i => factory(startIndex + i));
+            var addItems = addLength.Iterate(i => factory(startIndex + i));
             result.AddRange(addItems);
 
             return result;
         }
 
         /// <summary>
-        /// 要素を指定した個数に合わせた新たなリストを生成する。
-        /// 元リストの要素数が規定数を超える場合のみ要素を除去する。
-        /// 元のリストには変更を加えない。
+        ///     要素を指定した個数に合わせた新たなリストを生成する。
+        ///     元リストの要素数が規定数を超える場合のみ要素を除去する。
+        ///     元のリストには変更を加えない。
         /// </summary>
         /// <param name="target">ソースとなるリスト</param>
         /// <param name="length">調整要素数</param>
@@ -218,11 +218,70 @@ namespace WodiLib.Test.Tools
         }
 
         /// <summary>
-        /// <see cref="Enumerable.All{TSource}"/> 要素インデックス付与バージョン.
+        ///     <see cref="Enumerable.All{TSource}"/> 要素インデックス付与バージョン.
         /// </summary>
         public static bool All<TSource>(this IEnumerable<TSource> source, Func<TSource, int, bool> predicate)
         {
             return !source.Where((t, i) => !predicate(t, i)).Any();
+        }
+
+        /// <summary>
+        ///     2つの列挙子を比較する。
+        /// </summary>
+        /// <param name="source">比較元</param>
+        /// <param name="others">比較対象</param>
+        /// <param name="predicate">比較処理</param>
+        /// <typeparam name="TSource">比較元型</typeparam>
+        /// <typeparam name="TOther">比較対象型</typeparam>
+        /// <returns>
+        ///     要素数が一致し、
+        ///     全ての要素が <paramref name="predicate"/> で <see langword="true"/> を返す場合 <see langword="true"/>。
+        /// </returns>
+        public static bool SequenceEqual<TSource>(
+            this IEnumerable<TSource> source,
+            IEnumerable<TSource>? others,
+            Func<TSource, TSource, bool> predicate
+        )
+        {
+            if (others is null)
+            {
+                return false;
+            }
+
+            var comparer = new SequenceEqualEqualityHelper<TSource>(predicate);
+
+            return Enumerable.SequenceEqual(source, others, comparer);
+        }
+
+        /// <summary>
+        ///     <see cref="SequenceEqual{T}"/> で使用する比較処理を保持するクラス
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        private class SequenceEqualEqualityHelper<T> : IEqualityComparer<T>
+        {
+            private readonly Func<T, T, bool> predicate;
+
+            public SequenceEqualEqualityHelper(Func<T, T, bool> predicate)
+            {
+                this.predicate = predicate;
+            }
+
+            public bool Equals(T? x, T? y)
+            {
+                if (x is null && y is null)
+                {
+                    return true;
+                }
+
+                if (x is null || y is null)
+                {
+                    return false;
+                }
+
+                return predicate(x, y);
+            }
+
+            public int GetHashCode(T obj) => obj?.GetHashCode() ?? 0;
         }
     }
 }

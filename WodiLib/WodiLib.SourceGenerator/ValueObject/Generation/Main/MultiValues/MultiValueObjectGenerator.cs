@@ -89,19 +89,17 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.MultiValues
             var symbol = workState.CurrentSymbol;
 
             var properties = symbol?.GetMembers()
-                                 .Where(
-                                     member => member.Kind == SymbolKind.Property
-                                               && member.DeclaredAccessibility == Accessibility.Public
+                                 .Where(member => member.Kind == SymbolKind.Property
+                                                  && member.DeclaredAccessibility == Accessibility.Public
                                  )
                                  .Cast<IPropertySymbol>()
                                  .ToList()
                              ?? new List<IPropertySymbol>();
 
             var initMethods = symbol?.GetMembers()
-                                  .Where(
-                                      member => member.Kind == SymbolKind.Method
-                                                && member.DeclaredAccessibility == Accessibility.Public
-                                                && ((member as IMethodSymbol)?.IsInitOnly ?? false)
+                                  .Where(member => member.Kind == SymbolKind.Method
+                                                   && member.DeclaredAccessibility == Accessibility.Public
+                                                   && ((member as IMethodSymbol)?.IsInitOnly ?? false)
                                   )
                               ?? new List<ISymbol>();
             var initPropertiesNames = initMethods.Select(method => method.Name.Substring(4) /* "set_" を除去 */)
@@ -124,18 +122,16 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.MultiValues
             var propertyArray = properties.ToArray();
 
             var typeName = workState.PropertyValues.TargetSymbol?.Name ?? "";
-            var argsDocComments = propertyArray.Select(
-                prop =>
-                    $"/// {Tag.Param(prop.Name.ToLowerFirstChar(), Tag.See.Cref(prop.Name))}"
+            var argsDocComments = propertyArray.Select(prop =>
+                $"/// {Tag.Param(prop.Name.ToLowerFirstChar(), Tag.See.Cref(prop.Name))}"
             );
             var argsCode = string.Join(
                 ",",
                 propertyArray.Select(prop => $"{prop.Type} {prop.Name.ToLowerFirstChar()}")
             );
             var validateNullArgCodes = propertyArray.Where(prop => prop.Type.TypeKind == TypeKind.Class)
-                .Select(
-                    prop =>
-                        $"{__}if ({prop.Name.ToLowerFirstChar()} is null) throw new System.ArgumentNullException(nameof({prop.Name.ToLowerFirstChar()}));"
+                .Select(prop =>
+                    $"{__}if ({prop.Name.ToLowerFirstChar()} is null) throw new System.ArgumentNullException(nameof({prop.Name.ToLowerFirstChar()}));"
                 );
             var propertySetCodes = propertyArray.Select(prop => $"{__}{prop.Name} = {prop.Name.ToLowerFirstChar()};");
 

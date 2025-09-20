@@ -14,7 +14,8 @@ namespace WodiLib.Sys
     ///     ウディタ仕様の数値
     /// </summary>
     [CommonIntValueObject(
-        MaxValue = 2000000000, MinValue = -2000000000,
+        MaxValue = 2000000000,
+        MinValue = -2000000000,
         Operations = IntegralNumericOperation.All
     )]
     internal partial class WoditorInt

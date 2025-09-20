@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Commons;
+using WodiLib.Sys.Cmn;
 
 namespace WodiLib.Test.Tools
 {
@@ -9,7 +11,7 @@ namespace WodiLib.Test.Tools
         public static readonly string KeyNameForProjectTest = "forProjectTest";
 
         /// <summary>
-        /// デバッグ用Loggerのセットを行う
+        ///     デバッグ用Loggerのセットを行う
         /// </summary>
         public static void SetupLoggerForDebug()
         {
@@ -26,7 +28,7 @@ namespace WodiLib.Test.Tools
         }
 
         /// <summary>
-        /// Project テスト用のロガーインスタンスを生成する。
+        ///     Project テスト用のロガーインスタンスを生成する。
         /// </summary>
         /// <returns></returns>
         public static void SetupLoggerForProjectTest()
@@ -41,8 +43,15 @@ namespace WodiLib.Test.Tools
             Logger.SetLogHandler(logHandler);
         }
 
+        public static WodiLibLogHandlerContainer SetupWodiLibLogHandler(string keyName)
+        {
+            var handlerContainer = new WodiLibLogHandlerContainer();
+            WodiLibLogger.SetLogHandler(handlerContainer.Handler, keyName);
+            return handlerContainer;
+        }
+
         /// <summary>
-        /// エラー情報を出力する。
+        ///     エラー情報を出力する。
         /// </summary>
         /// <param name="ex">例外</param>
         private static void ExceptionAction(Exception ex)
@@ -50,6 +59,49 @@ namespace WodiLib.Test.Tools
             if (ex == null) throw new ArgumentNullException(nameof(ex));
 
             Console.WriteLine(ex.Message + Environment.NewLine + ex.StackTrace);
+        }
+
+        public class WodiLibLogHandlerContainer
+        {
+            public WodiLibLogHandler Handler;
+
+            public IReadOnlyList<string> ErrorLogs => errorLogs;
+            public IReadOnlyList<string> WarningLogs => warningLogs;
+            public IReadOnlyList<string> InfoLogs => infoLogs;
+            public IReadOnlyList<string> DebugLogs => debugLogs;
+
+            private readonly List<string> errorLogs = new();
+            private readonly List<string> warningLogs = new();
+            private readonly List<string> infoLogs = new();
+            private readonly List<string> debugLogs = new();
+
+            public WodiLibLogHandlerContainer()
+            {
+                Handler = new WodiLibLogHandler(
+                    errorAction: makeHandleAction(errorLogs),
+                    warningAction: makeHandleAction(warningLogs),
+                    infoAction: makeHandleAction(infoLogs),
+                    debugAction: makeHandleAction(debugLogs)
+                );
+            }
+
+            private Action<string?> makeHandleAction(List<string> logs)
+                => new(msg =>
+                    {
+                        if (msg is not null)
+                        {
+                            logs.Add(msg);
+                        }
+                    }
+                );
+
+            public void ClearAllLogs()
+            {
+                errorLogs.Clear();
+                warningLogs.Clear();
+                infoLogs.Clear();
+                debugLogs.Clear();
+            }
         }
     }
 }

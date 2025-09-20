@@ -9,7 +9,7 @@ namespace WodiLib.Test.Sys
     [TestFixture]
     public class IntOrStrTest
     {
-        private static Logger logger = default!;
+        private static Logger logger = null!;
 
         [SetUp]
         public static void Setup()
@@ -20,17 +20,20 @@ namespace WodiLib.Test.Sys
 
         private static readonly object[] CreateInstanceTestCaseSource =
         {
-            new object[] {10, "Test", IntOrStrType.Int},
-            new object[] {10, "Test", IntOrStrType.Str},
-            new object[] {10, "Test", IntOrStrType.IntAndStr},
-            new object[] {10, "Test", IntOrStrType.None},
+            new object[] { 10, "Test", IntOrStrType.Int },
+            new object[] { 10, "Test", IntOrStrType.Str },
+            new object[] { 10, "Test", IntOrStrType.IntAndStr },
+            new object[] { 10, "Test", IntOrStrType.None },
         };
 
         [TestCaseSource(nameof(CreateInstanceTestCaseSource))]
-        public static void CreateInstanceTest(int intValue, string stringValue,
-            IntOrStrType type)
+        public static void CreateInstanceTest(
+            int intValue,
+            string stringValue,
+            IntOrStrType type
+        )
         {
-            IntOrStr instance = null;
+            IntOrStr? instance = null;
             var errorOccured = false;
 
             try
@@ -62,19 +65,19 @@ namespace WodiLib.Test.Sys
             // エラーが発生しないこと
             Assert.IsFalse(errorOccured);
             // 種別が一致すること
-            Assert.AreEqual(instance.InstanceIntOrStrType, type);
+            Assert.AreEqual(type, instance!.InstanceIntOrStrType);
         }
 
         private static readonly object[] MergeTestCaseSource =
         {
-            new object[] {IntOrStrType.Int, true, IntOrStrType.Int},
-            new object[] {IntOrStrType.Int, false, IntOrStrType.IntAndStr},
-            new object[] {IntOrStrType.Str, true, IntOrStrType.IntAndStr},
-            new object[] {IntOrStrType.Str, false, IntOrStrType.Str},
-            new object[] {IntOrStrType.IntAndStr, true, IntOrStrType.IntAndStr},
-            new object[] {IntOrStrType.IntAndStr, false, IntOrStrType.IntAndStr},
-            new object[] {IntOrStrType.None, true, IntOrStrType.Int},
-            new object[] {IntOrStrType.None, false, IntOrStrType.Str},
+            new object[] { IntOrStrType.Int, true, IntOrStrType.Int },
+            new object[] { IntOrStrType.Int, false, IntOrStrType.IntAndStr },
+            new object[] { IntOrStrType.Str, true, IntOrStrType.IntAndStr },
+            new object[] { IntOrStrType.Str, false, IntOrStrType.Str },
+            new object[] { IntOrStrType.IntAndStr, true, IntOrStrType.IntAndStr },
+            new object[] { IntOrStrType.IntAndStr, false, IntOrStrType.IntAndStr },
+            new object[] { IntOrStrType.None, true, IntOrStrType.Int },
+            new object[] { IntOrStrType.None, false, IntOrStrType.Str },
         };
 
         [TestCaseSource(nameof(MergeTestCaseSource))]
@@ -98,33 +101,28 @@ namespace WodiLib.Test.Sys
                 instance = new IntOrStr();
             }
 
-            if (isMergeInt)
-            {
-                instance.Merge(20);
-            }
-            else
-            {
-                instance.Merge("30");
-            }
+            var mergedInstance = isMergeInt
+                ? instance.Merged(20)
+                : instance.Merged("30");
 
             // 種別が一致すること
-            Assert.AreEqual(instance.InstanceIntOrStrType, resultType);
+            Assert.AreEqual(resultType, mergedInstance.InstanceIntOrStrType);
         }
 
         private static readonly object[] MergeTest2CaseSource =
         {
-            new object[] {IntOrStrType.Int, (IntOrStr) 1000, IntOrStrType.Int},
-            new object[] {IntOrStrType.Int, (IntOrStr) "abc", IntOrStrType.IntAndStr},
-            new object[] {IntOrStrType.Int, (IntOrStr) (1000, "abc"), IntOrStrType.IntAndStr},
-            new object[] {IntOrStrType.Str, (IntOrStr) 1000, IntOrStrType.IntAndStr},
-            new object[] {IntOrStrType.Str, (IntOrStr) "abc", IntOrStrType.Str},
-            new object[] {IntOrStrType.Str, (IntOrStr) (1000, "abc"), IntOrStrType.IntAndStr},
-            new object[] {IntOrStrType.IntAndStr, (IntOrStr) 1000, IntOrStrType.IntAndStr},
-            new object[] {IntOrStrType.IntAndStr, (IntOrStr) "abc", IntOrStrType.IntAndStr},
-            new object[] {IntOrStrType.IntAndStr, (IntOrStr) (1000, "abc"), IntOrStrType.IntAndStr},
-            new object[] {IntOrStrType.None, (IntOrStr) 1000, IntOrStrType.Int},
-            new object[] {IntOrStrType.None, (IntOrStr) "abc", IntOrStrType.Str},
-            new object[] {IntOrStrType.None, (IntOrStr) (1000, "abc"), IntOrStrType.IntAndStr},
+            new object[] { IntOrStrType.Int, (IntOrStr)1000, IntOrStrType.Int },
+            new object[] { IntOrStrType.Int, (IntOrStr)"abc", IntOrStrType.IntAndStr },
+            new object[] { IntOrStrType.Int, (IntOrStr)(1000, "abc"), IntOrStrType.IntAndStr },
+            new object[] { IntOrStrType.Str, (IntOrStr)1000, IntOrStrType.IntAndStr },
+            new object[] { IntOrStrType.Str, (IntOrStr)"abc", IntOrStrType.Str },
+            new object[] { IntOrStrType.Str, (IntOrStr)(1000, "abc"), IntOrStrType.IntAndStr },
+            new object[] { IntOrStrType.IntAndStr, (IntOrStr)1000, IntOrStrType.IntAndStr },
+            new object[] { IntOrStrType.IntAndStr, (IntOrStr)"abc", IntOrStrType.IntAndStr },
+            new object[] { IntOrStrType.IntAndStr, (IntOrStr)(1000, "abc"), IntOrStrType.IntAndStr },
+            new object[] { IntOrStrType.None, (IntOrStr)1000, IntOrStrType.Int },
+            new object[] { IntOrStrType.None, (IntOrStr)"abc", IntOrStrType.Str },
+            new object[] { IntOrStrType.None, (IntOrStr)(1000, "abc"), IntOrStrType.IntAndStr },
         };
 
         [TestCaseSource(nameof(MergeTest2CaseSource))]
@@ -148,18 +146,18 @@ namespace WodiLib.Test.Sys
                 instance = new IntOrStr();
             }
 
-            instance.Merge(mergeValue);
+            var merged = instance.Merged(mergeValue);
 
             // 種別が一致すること
-            Assert.AreEqual(instance.InstanceIntOrStrType, resultType);
+            Assert.AreEqual(resultType, merged.InstanceIntOrStrType);
         }
 
         private static readonly object[] ToIntTestCaseSource =
         {
-            new object[] {IntOrStrType.Int, false},
-            new object[] {IntOrStrType.Str, true},
-            new object[] {IntOrStrType.IntAndStr, false},
-            new object[] {IntOrStrType.None, true},
+            new object[] { IntOrStrType.Int, false },
+            new object[] { IntOrStrType.Str, true },
+            new object[] { IntOrStrType.IntAndStr, false },
+            new object[] { IntOrStrType.None, true },
         };
 
         [TestCaseSource(nameof(ToIntTestCaseSource))]
@@ -185,7 +183,7 @@ namespace WodiLib.Test.Sys
             }
 
             // HasInt が正しいこと
-            Assert.AreEqual(instance.HasInt, !isError);
+            Assert.AreEqual(!isError, instance.HasInt);
 
             var toResult = 0;
             var errorOccured = false;
@@ -200,7 +198,7 @@ namespace WodiLib.Test.Sys
             }
 
             // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+            Assert.AreEqual(isError, errorOccured);
 
             if (!errorOccured)
             {
@@ -211,10 +209,10 @@ namespace WodiLib.Test.Sys
 
         private static readonly object[] ToStrTestCaseSource =
         {
-            new object[] {IntOrStrType.Int, true},
-            new object[] {IntOrStrType.Str, false},
-            new object[] {IntOrStrType.IntAndStr, false},
-            new object[] {IntOrStrType.None, true},
+            new object[] { IntOrStrType.Int, true },
+            new object[] { IntOrStrType.Str, false },
+            new object[] { IntOrStrType.IntAndStr, false },
+            new object[] { IntOrStrType.None, true },
         };
 
         [TestCaseSource(nameof(ToStrTestCaseSource))]
@@ -240,7 +238,7 @@ namespace WodiLib.Test.Sys
             }
 
             // HasStr が正しいこと
-            Assert.AreEqual(instance.HasStr, !isError);
+            Assert.AreEqual(!isError, instance.HasStr);
 
             var toResult = "";
             var errorOccured = false;
@@ -255,21 +253,21 @@ namespace WodiLib.Test.Sys
             }
 
             // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+            Assert.AreEqual(isError, errorOccured);
 
             if (!errorOccured)
             {
                 // セットした値が正しいこと
-                Assert.AreEqual(toResult, src);
+                Assert.AreEqual(src, toResult);
             }
         }
 
         private static readonly object[] IsOneSideValueTestCaseSource =
         {
-            new object[] {IntOrStrType.Int, true},
-            new object[] {IntOrStrType.Str, true},
-            new object[] {IntOrStrType.IntAndStr, false},
-            new object[] {IntOrStrType.None, false},
+            new object[] { IntOrStrType.Int, true },
+            new object[] { IntOrStrType.Str, true },
+            new object[] { IntOrStrType.IntAndStr, false },
+            new object[] { IntOrStrType.None, false },
         };
 
         [TestCaseSource(nameof(IsOneSideValueTestCaseSource))]
@@ -294,15 +292,15 @@ namespace WodiLib.Test.Sys
             }
 
             // IsOneSideValue の結果が正しいこと
-            Assert.AreEqual(instance.IsOneSideValue, result);
+            Assert.AreEqual(result, instance.IsOneSideValue);
         }
 
         [Test]
         public static void ImplicitFromIntTest()
         {
             var errorOccured = false;
-            IntOrStr instance = null;
-            var src = 10;
+            IntOrStr instance = null!;
+            const int src = 10;
             try
             {
                 instance = src;
@@ -316,14 +314,14 @@ namespace WodiLib.Test.Sys
             // エラーが起こらないこと
             Assert.False(errorOccured);
             // 値が一致すること
-            Assert.AreEqual(instance.ToInt(), src);
+            Assert.AreEqual(src, instance.ToInt());
         }
 
         [Test]
         public static void ImplicitFromStringTest()
         {
             var errorOccured = false;
-            IntOrStr instance = null;
+            IntOrStr instance = null!;
             var src = "test";
             try
             {
@@ -338,14 +336,14 @@ namespace WodiLib.Test.Sys
             // エラーが起こらないこと
             Assert.False(errorOccured);
             // 値が一致すること
-            Assert.AreEqual(instance.ToStr(), src);
+            Assert.AreEqual(src, instance.ToStr());
         }
 
         [Test]
         public static void ImplicitFromTuple()
         {
             var errorOccured = false;
-            IntOrStr instance = null;
+            IntOrStr instance = null!;
             var src = new Tuple<int, string>(10, "test");
             try
             {
@@ -360,15 +358,15 @@ namespace WodiLib.Test.Sys
             // エラーが起こらないこと
             Assert.False(errorOccured);
             // 値が一致すること
-            Assert.AreEqual(instance.ToInt(), src.Item1);
-            Assert.AreEqual(instance.ToStr(), src.Item2);
+            Assert.AreEqual(src.Item1, instance.ToInt());
+            Assert.AreEqual(src.Item2, instance.ToStr());
         }
 
         [Test]
         public static void ImplicitFromValueTuple()
         {
             var errorOccured = false;
-            IntOrStr instance = null;
+            IntOrStr instance = null!;
             var src = (10, "test");
             try
             {
@@ -383,8 +381,8 @@ namespace WodiLib.Test.Sys
             // エラーが起こらないこと
             Assert.False(errorOccured);
             // 値が一致すること
-            Assert.AreEqual(instance.ToInt(), src.Item1);
-            Assert.AreEqual(instance.ToStr(), src.Item2);
+            Assert.AreEqual(src.Item1, instance.ToInt());
+            Assert.AreEqual(src.Item2, instance.ToStr());
         }
     }
 }

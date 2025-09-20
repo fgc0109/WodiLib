@@ -100,7 +100,7 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Binary
             };
 
             return new SourceFormatTargetBlock(
-                $"/// {Tag.Summary($"{operation} 演算子")}",
+                $"/// {Tag.Summary($"{DocumentCommentHelper.EscapeOperatorMark(operation)} 演算子")}",
                 $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
                 $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
                 $"/// {Tag.Returns("演算結果")}",

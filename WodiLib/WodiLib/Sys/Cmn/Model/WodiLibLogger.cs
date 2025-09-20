@@ -122,8 +122,11 @@ namespace WodiLib.Sys.Cmn
         {
             if (!ConfigContainer.HasCreateMethod<WodiLibLogger>(keyName))
             {
-                ConfigContainer.Register(() => new WodiLibLogger(WodiLibLogHandler.Default),
-                    WodiLibContainer.Lifetime.Container, keyName);
+                ConfigContainer.Register(
+                    () => new WodiLibLogger(WodiLibLogHandler.Default),
+                    WodiLibContainer.Lifetime.Container,
+                    keyName
+                );
             }
         }
 

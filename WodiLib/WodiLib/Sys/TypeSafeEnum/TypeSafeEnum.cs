@@ -20,7 +20,9 @@ namespace WodiLib.Sys
     /// <typeparam name="T">対象クラス</typeparam>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public abstract class TypeSafeEnum<T>
-        : IEquatable<T>, IEquatable<TypeSafeEnum<T>> where T : TypeSafeEnum<T>
+        : IEquatable<T>,
+            IEquatable<TypeSafeEnum<T>>
+        where T : TypeSafeEnum<T>
     {
         /// <summary>列挙子管理</summary>
         private static readonly EnumItemsManager EnumItems = new();

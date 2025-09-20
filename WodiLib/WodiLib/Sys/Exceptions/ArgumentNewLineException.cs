@@ -19,7 +19,16 @@ namespace WodiLib.Sys
         ///     コンストラクタ
         /// </summary>
         /// <param name="message">エラーメッセージ</param>
-        public ArgumentNewLineException(string message) : base(message)
+        public ArgumentNewLineException(string? message) : base(message)
+        {
+        }
+
+        /// <summary>
+        ///     コンストラクタ
+        /// </summary>
+        /// <param name="message">エラーメッセージ</param>
+        /// <param name="innerException">内包するエラー</param>
+        public ArgumentNewLineException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
     }

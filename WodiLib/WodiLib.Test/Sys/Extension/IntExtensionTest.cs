@@ -11,7 +11,7 @@ namespace WodiLib.Test.Sys
     [TestFixture]
     public class IntExtensionTest
     {
-        private static Logger logger = default!;
+        private static Logger logger = null!;
 
         [SetUp]
         public static void Setup()
@@ -26,9 +26,9 @@ namespace WodiLib.Test.Sys
         [TestCase(10, 10, 10, true)]
         [TestCase(10, 10, 11, true)]
         [TestCase(10, 11, 11, false)]
-        public static void IsBetweenTest(int target, int min, int max, bool actual)
+        public static void IsBetweenTest(int target, int min, int max, bool expected)
         {
-            var expected = target.IsBetween(min, max);
+            var actual = target.IsBetween(min, max);
 
             // 意図した結果であること
             Assert.AreEqual(expected, actual);
@@ -40,41 +40,41 @@ namespace WodiLib.Test.Sys
             {
                 new byte[]
                 {
-                    0x03, 0x00, 0x00, 0x00
+                    0x03, 0x00, 0x00, 0x00,
                 },
-                Endian.Little, 0, 3
+                Endian.Little, 0, 3,
             },
             new object[]
             {
                 new byte[]
                 {
-                    0x00, 0x00, 0x00, 0x03
+                    0x00, 0x00, 0x00, 0x03,
                 },
-                Endian.Big, 0, 3
+                Endian.Big, 0, 3,
             },
             new object[]
             {
                 new byte[]
                 {
-                    0x03
+                    0x03,
                 },
-                Endian.Little, 0, 3
+                Endian.Little, 0, 3,
             },
             new object[]
             {
                 new byte[]
                 {
-                    0x00, 0x00, 0x00, 0x10
+                    0x00, 0x00, 0x00, 0x10,
                 },
-                Endian.Little, 3, 16
-            }
+                Endian.Little, 3, 16,
+            },
         };
 
         [TestCaseSource(nameof(ToInt32TestCaseSource))]
-        public static void ToInt32Test(byte[] value, Endian endian, long offset, int result)
+        public static void ToInt32Test(byte[] value, Endian endian, long offset, int expected)
         {
-            var i = value.ToInt32(endian, offset);
-            Assert.AreEqual(i, result);
+            var actual = value.ToInt32(endian, offset);
+            Assert.AreEqual(expected, actual);
         }
 
 
@@ -83,23 +83,23 @@ namespace WodiLib.Test.Sys
             new object[]
             {
                 new byte[] { },
-                Endian.Little, 0
+                Endian.Little, 0,
             },
             new object[]
             {
                 new byte[] { },
-                Endian.Big, 0
+                Endian.Big, 0,
             },
             new object[]
             {
                 new byte[] { 0x03, 0x00, 0x00, 0x00 },
-                Endian.Little, 4
+                Endian.Little, 4,
             },
             new object[]
             {
                 new byte[] { 0x03, 0x00, 0x00, 0x00 },
-                Endian.Little, 5
-            }
+                Endian.Little, 5,
+            },
         };
 
         [TestCaseSource(nameof(ToInt32ErrorTestCaseSource))]
@@ -123,10 +123,10 @@ namespace WodiLib.Test.Sys
         [TestCase(0x01, 1)]
         [TestCase(0x12, 18)]
         [TestCase(0xFF, 255)]
-        public static void ToInt32OneByteTest(byte value, int result)
+        public static void ToInt32OneByteTest(byte value, int expected)
         {
-            var i = value.ToInt32();
-            Assert.AreEqual(i, result);
+            var actual = value.ToInt32();
+            Assert.AreEqual(expected, actual);
         }
 
 
@@ -135,27 +135,27 @@ namespace WodiLib.Test.Sys
             new object[]
             {
                 0, Endian.Little,
-                new byte[] { 0x00, 0x00, 0x00, 0x00 }
+                new byte[] { 0x00, 0x00, 0x00, 0x00 },
             },
             new object[]
             {
                 4, Endian.Little,
-                new byte[] { 0x04, 0x00, 0x00, 0x00 }
+                new byte[] { 0x04, 0x00, 0x00, 0x00 },
             },
             new object[]
             {
                 4, Endian.Big,
-                new byte[] { 0x00, 0x00, 0x00, 0x04 }
-            }
+                new byte[] { 0x00, 0x00, 0x00, 0x04 },
+            },
         };
 
         [TestCaseSource(nameof(ToBytesTestCaseSource))]
-        public static void ToBytesTest(int value, Endian endian, byte[] result)
+        public static void ToBytesTest(int value, Endian endian, byte[] expected)
         {
-            var bytes = value.ToBytes(endian);
+            var actual = value.ToBytes(endian);
             for (var i = 0; i < 4; i++)
             {
-                Assert.AreEqual(bytes[i], result[i]);
+                Assert.AreEqual(expected[i], actual[i]);
             }
         }
 
@@ -206,31 +206,31 @@ namespace WodiLib.Test.Sys
         [TestCase(123456, 6, 0, true, null)]
         [TestCase(123456, 6, 1, true, null)]
         [TestCase(123456, 6, 2, true, null)]
-        public static void SubIntTest(int value, int beginColumn, int length, bool isError, int answer)
+        public static void SubIntTest(int value, int beginColumn, int length, bool isError, int expected)
         {
             var errorOccured = false;
-            var result = 0;
+            var actual = 0;
             try
             {
-                result = value.SubInt(beginColumn, length);
+                actual = value.SubInt(beginColumn, length);
             }
             catch
             {
                 errorOccured = true;
             }
 
-            Assert.AreEqual(errorOccured, isError);
+            Assert.AreEqual(isError, errorOccured);
 
             if (errorOccured) return;
 
-            Assert.AreEqual(result, answer);
+            Assert.AreEqual(expected, actual);
         }
 
         [Test]
         public static void RangeTest()
         {
             var errorOccured = false;
-            IEnumerable<int> result = default!;
+            IEnumerable<int> result = null!;
             try
             {
                 result = 5.Range();
@@ -256,7 +256,7 @@ namespace WodiLib.Test.Sys
         public static void IterateTest()
         {
             var errorOccured = false;
-            IEnumerable<string> result = default!;
+            IEnumerable<string> result = null!;
             try
             {
                 result = 5.Iterate(i => $"{(i + 2) * 100}");

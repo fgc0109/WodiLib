@@ -6,6 +6,7 @@
 // see LICENSE file
 // ========================================
 
+using System;
 using System.ComponentModel;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -45,20 +46,35 @@ namespace WodiLib.SourceGenerator.Core.Extensions
         /// <returns>属性プロパティが指定されていた場合、その値。指定されていない場合、<see langword="null"/></returns>
         private static T? GetPropertyInitializedValue<T>(this AttributeData src, string propertyName)
         {
-            var findResult = src.NamedArguments.FirstOrDefault(arg => arg.Key.Equals(propertyName));
-            if (findResult.Key is null)
+            var map = "";
+            try
             {
-                return default;
-            }
+                var findResult = src.NamedArguments.FirstOrDefault(arg => arg.Key.Equals(propertyName));
+                if (findResult.Key is null)
+                {
+                    return default;
+                }
 
-            if (typeof(T) == typeof(string[]))
+                if (typeof(T) == typeof(Type))
+                {
+                    map +=
+                        $"2, {typeof(T)}, {findResult.Value.Value}, {findResult.Value.Value!.GetType()}, {((INamedTypeSymbol)findResult.Value.Value).TypeArguments.Length}";
+                }
+
+                if (typeof(T) == typeof(string[]))
+                {
+                    // throw new NotImplementedException();
+                    return (T?)(object)findResult.Value.Values.Select(v => (string?)v.Value).ToArray();
+                }
+
+                return typeof(T).IsArray
+                    ? (T?)(object)findResult.Value.Values.Select(v => v.Value).ToArray()
+                    : (T?)findResult.Value.Value;
+            }
+            catch (Exception e)
             {
-                return (T?)(object)findResult.Value.Values.Select(v => (string?)v.Value).ToArray();
+                throw new Exception($"err: ${map}", e);
             }
-
-            return typeof(T).IsArray
-                ? (T?)(object)findResult.Value.Values.Select(v => v.Value).ToArray()
-                : (T?)findResult.Value.Value;
         }
 
         /// <summary>
@@ -74,12 +90,11 @@ namespace WodiLib.SourceGenerator.Core.Extensions
                 ?.GetMembers()
                 .FirstOrDefault(member => member.Name.Equals(propertyName))
                 ?.GetAttributes()
-                .FirstOrDefault(
-                    attr =>
-                        attr.AttributeClass
-                            ?.FullName()
-                            .Equals(typeof(DefaultValueAttribute).FullName)
-                        ?? false
+                .FirstOrDefault(attr =>
+                    attr.AttributeClass
+                        ?.FullName()
+                        .Equals(typeof(DefaultValueAttribute).FullName)
+                    ?? false
                 )
                 ?.ConstructorArguments[0]
                 .Value;

@@ -111,9 +111,8 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
                     SourceTextFormatter.ReduceMany(
                             IndentSpace,
                             Properties()
-                                .Select(
-                                    prop =>
-                                        prop.ToSourceFormatTargets()
+                                .Select(prop =>
+                                    prop.ToSourceFormatTargets()
                                 )
                                 .ToArray()
                         )
@@ -159,9 +158,8 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
                     prop => prop.Name,
                     prop =>
                     {
-                        var defaultValueForAttr = attrProperties.FirstOrDefault(
-                                attrProp
-                                    => attrProp.Name.Equals(prop.Name)
+                        var defaultValueForAttr = attrProperties.FirstOrDefault(attrProp
+                                => attrProp.Name.Equals(prop.Name)
                             )
                             ?.GetDefaultValue();
                         if (defaultValueForAttr.HasValue)

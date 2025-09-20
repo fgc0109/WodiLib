@@ -23,6 +23,10 @@ namespace WodiLib.Sys
         ///     どちらも <see langword="null"/> ではなかった場合、
         ///     <ul>
         ///         <li>
+        ///             <typeparamref name="T"/> が <see cref="IEqualityComparable{T}"/> を実装していれば
+        ///             <see cref="IEqualityComparable{T}.ItemEquals(T?)"/> による比較を行う
+        ///         </li>
+        ///         <li>
         ///             <typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していれば
         ///             <see cref="IEqualityComparable.ItemEquals"/> による比較を行う
         ///         </li>

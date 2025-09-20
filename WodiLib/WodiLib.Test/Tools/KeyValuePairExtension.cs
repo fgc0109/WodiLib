@@ -3,12 +3,12 @@ using System.Collections.Generic;
 namespace WodiLib.Test.Tools
 {
     /// <summary>
-    /// KeyValuePair拡張メソッド
+    ///     KeyValuePair拡張メソッド
     /// </summary>
     internal static class KeyValuePairExtension
     {
         /// <summary>
-        /// nullかどうかを返す。
+        ///     nullかどうかを返す。
         /// </summary>
         /// <param name="src">対象</param>
         /// <typeparam name="TKey">Key</typeparam>

@@ -7,13 +7,12 @@
 // ========================================
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace WodiLib.Sys
 {
     /// <summary>
-    /// 名前をつけた値
+    ///     名前をつけた値
     /// </summary>
     /// <typeparam name="T">値型</typeparam>
     [CommonMultiValueObject]
@@ -27,7 +26,7 @@ namespace WodiLib.Sys
         public T Value { get; }
 
         /// <summary>
-        /// 自身を <see cref="TOther"/> 型の名前付き値オブジェクトに変換する。
+        ///     自身を <see paramref="TOther"/> 型の名前付き値オブジェクトに変換する。
         /// </summary>
         /// <typeparam name="TOther">変換後の値型</typeparam>
         /// <returns></returns>
@@ -43,7 +42,7 @@ namespace WodiLib.Sys
         }
 
         /// <summary>
-        /// (string, <typeparamref name="T"/>) タプルからの暗黙的型変換
+        ///     (string, <typeparamref name="T"/>) タプルからの暗黙的型変換
         /// </summary>
         /// <param name="tuple">変換元</param>
         /// <returns>変換結果</returns>

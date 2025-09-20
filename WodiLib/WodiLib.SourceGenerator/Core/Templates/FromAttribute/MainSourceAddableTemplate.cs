@@ -183,7 +183,8 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
                 var nameSpace = workState.Namespace;
 
                 return SourceTextFormatter.Format(
-                    new SourceFormatTarget[]
+                    GenerateTImportUsingSource(workState),
+                    new[]
                     {
                         $"namespace {nameSpace}",
                         $"{{",
@@ -192,7 +193,7 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
                         SourceConstants.IndentSpace,
                         GenerateBodyWithPartialOuter(workState)
                     ),
-                    new SourceFormatTarget[]
+                    new[]
                     {
                         $"}}",
                     }
@@ -314,6 +315,15 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
         /// <returns>ソースコード文字列情報</returns>
         private SourceFormatTargetBlock GenerateTypeDefinitionSource(WorkState workState, string indentSpaces)
             => SourceTextFormatter.Format(indentSpaces, GenerateTypeDefinitionSource(workState));
+
+        /// <summary>
+        ///     using 部分のソースコード出力
+        /// </summary>
+        /// <param name="workState">ワーク状態</param>
+        /// <returns>ソースコード文字列情報</returns>
+        private protected virtual SourceFormatTargetBlock GenerateTImportUsingSource(
+            WorkState workState
+        ) => SourceFormatTargetBlock.Empty;
 
         /// <summary>
         ///     タイプ定義宣言部のソースコード出力

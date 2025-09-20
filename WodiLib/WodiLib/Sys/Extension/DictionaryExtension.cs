@@ -25,8 +25,11 @@ namespace WodiLib.Sys
         /// <typeparam name="TKey">キー型</typeparam>
         /// <typeparam name="TValue">値型</typeparam>
         /// <returns></returns>
-        public static TValue GetOrCreate<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key,
-            Func<TValue> defaultValueFactory)
+        public static TValue GetOrCreate<TKey, TValue>(
+            this IDictionary<TKey, TValue> self,
+            TKey key,
+            Func<TValue> defaultValueFactory
+        )
             where TValue : class
         {
             if (self.ContainsKey(key))

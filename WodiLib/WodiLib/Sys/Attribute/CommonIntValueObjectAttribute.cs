@@ -19,30 +19,11 @@ namespace WodiLib.Sys
     internal class CommonIntValueObjectAttribute : IntValueObjectAttribute
     {
         /// <inheritdoc/>
-        [DefaultValueAttribute(CastType.Implicit)]
+        [DefaultValue(CastType.Implicit)]
         public override CastType CastType { get; init; } = default!;
 
         /// <inheritdoc/>
-        [DefaultValueAttribute(true)]
-        public override bool IsComparable { get; init; } = default!;
-
-        // /// <inheritdoc/>
-        // [DefaultValueAttribute(
-        //     IntegralNumericOperation.IncreaseAndDecreasable
-        //     | IntegralNumericOperation.Compare
-        // )]
-        // public override IntegralNumericOperation Operations { get; init; } = default!;
-        //
-        // /// <inheritdoc/>
-        // [DefaultValueAttribute(new[]{typeof(int)})]
-        // public override Type[]? AddAndSubtractTypes { get; init; } = default!;
-        //
-        // /// <inheritdoc/>
-        // [DefaultValueAttribute(new[]{typeof(int)})]
-        // public override Type[]? MultipleAndDivideOtherTypes { get; init; } = default!;
-        //
-        // /// <inheritdoc/>
-        // [DefaultValueAttribute(new[] { typeof(int) })]
-        // public override Type[]? CompareOtherTypes { get; init; } = default!;
+        [DefaultValue(true)]
+        public override bool IsComparable { get; init; } = false;
     }
 }

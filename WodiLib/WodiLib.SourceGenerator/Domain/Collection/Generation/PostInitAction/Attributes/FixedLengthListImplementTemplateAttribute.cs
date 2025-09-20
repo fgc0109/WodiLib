@@ -26,7 +26,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
 
         /// <inheritdoc/>
         public override string Summary
-            => "テンプレートを用いた <see cref=\"WodiLib.Sys.Collections.FixedLengthList{T,TImpl}\"/> 実装クラス生成情報";
+            => "テンプレートを用いた容量固定リスト実装クラス生成情報";
 
         public override bool AllowMultiple => false;
 
@@ -35,24 +35,33 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             Name = nameof(Description),
             Type = "string",
             Summary = "クラス説明",
-            DefaultValue = ""
+            DefaultValue = "",
         };
 
-        public static readonly PropertyInfo InterfaceItemType = new()
+        public static readonly PropertyInfo ElementType = new()
         {
-            Name = nameof(InterfaceItemType),
-            Type = typeof(Type).FullName,
-            Summary = "リスト要素内包型",
-            DefaultValue = null
+            Name = nameof(ElementType),
+            Type = typeof(Type).FullName!,
+            Summary = "リスト要素型（編集可能）",
+            DefaultValue = null,
         };
 
-        public static readonly PropertyInfo ReadOnlyInterfaceItemType = new()
+        public static readonly PropertyInfo ReadOnlyElementType = new()
         {
-            Name = nameof(ReadOnlyInterfaceItemType),
-            Type = typeof(Type).FullName,
-            Summary = "読み取り専用リスト要素内包型",
-            Remarks = "null の場合 InterfaceItemType と同じ",
-            DefaultValue = null
+            Name = nameof(ReadOnlyElementType),
+            Type = typeof(Type).FullName!,
+            Summary = "リスト要素型（読取専用）",
+            Remarks = "null の場合 ElementType と同じ。",
+            DefaultValue = null,
+        };
+
+        public static readonly PropertyInfo SettingsType = new()
+        {
+            Name = nameof(SettingsType),
+            Type = typeof(Type).FullName!,
+            Summary = "リスト内包型の入力パラメータ型",
+            Remarks = "null の場合 ElementType と同じ。",
+            DefaultValue = null,
         };
 
         public static readonly PropertyInfo MaxCapacity = new()
@@ -62,7 +71,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             Summary = "最大容量",
             Remarks = "与えた値を ToString した結果をソースコードとして埋め込む。",
             DefaultValue = "int.MaxValue",
-            DefaultValueAsSourceCode = true
+            DefaultValueAsSourceCode = true,
         };
 
         public static readonly PropertyInfo MinCapacity = new()
@@ -71,16 +80,16 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             Type = $"object",
             Summary = "最小容量",
             Remarks = "与えた値を ToString した結果をソースコードとして埋め込む。",
-            DefaultValue = 0
+            DefaultValue = 0,
         };
 
-        public static readonly PropertyInfo IsAutoOverrideMakeDefaultItem = new()
+        public static readonly PropertyInfo BaseModelClass = new()
         {
-            Name = nameof(IsAutoOverrideMakeDefaultItem),
-            Type = "bool",
-            Summary = "MakeDefaultItem メソッド自動生成フラグ",
-            Remarks = "自動生成する場合、内部要素型の引数なしコンストラクタを利用する。",
-            DefaultValue = true
+            Name = nameof(BaseModelClass),
+            Type = typeof(Type).FullName!,
+            Summary = "読取専用クラスが継承するモデルクラス（デフォルトでは ModelBase を継承する）。",
+            Remarks = "\"NONE\" の場合何も継承しない。",
+            DefaultValue = "null",
         };
 
         /// <inheritdoc/>
@@ -92,11 +101,12 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             => new[]
             {
                 Description,
-                InterfaceItemType,
-                ReadOnlyInterfaceItemType,
+                ElementType,
+                ReadOnlyElementType,
+                SettingsType,
                 MaxCapacity,
                 MinCapacity,
-                IsAutoOverrideMakeDefaultItem
+                BaseModelClass,
             };
 
         private FixedLengthListImplementTemplateAttribute()

@@ -25,10 +25,9 @@ namespace WodiLib.SourceGenerator.Core.Extensions
         /// <typeparam name="T">コレクションの要素型</typeparam>
         /// <returns>条件を最初に満たす要素のインデックス。存在しない場合 -1。</returns>
         public static int IndexOf<T>(this IEnumerable<T> src, Func<T, bool> predicate)
-            => src.Select<T, int?>(
-                    (item, index) => predicate(item)
-                        ? index
-                        : null
+            => src.Select<T, int?>((item, index) => predicate(item)
+                    ? index
+                    : null
                 )
                 .FirstOrDefault(idx => idx is not null)
                 .GetValueOrDefault(-1);

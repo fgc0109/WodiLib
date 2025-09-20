@@ -64,7 +64,7 @@ namespace WodiLib.Sys
                 // コンテナが存在しないので、先にコンテナを作ってから
                 var newContainer = new Dictionary<Type, CreateInfo>
                 {
-                    { typeof(T), createInfo }
+                    { typeof(T), createInfo },
                 };
                 ContainerDic.Add(key, newContainer);
             }

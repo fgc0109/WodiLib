@@ -6,6 +6,8 @@
 // see LICENSE file
 // ========================================
 
+using System;
+
 namespace WodiLib.Sys
 {
     /// <inheritdoc/>
@@ -15,19 +17,17 @@ namespace WodiLib.Sys
     public class PropertyOutOfRangeException : PropertyException
     {
         /// <inheritdoc/>
-        /// <summary>
-        ///     コンストラクタ
-        /// </summary>
         public PropertyOutOfRangeException()
         {
         }
 
         /// <inheritdoc/>
-        /// <summary>
-        ///     コンストラクタ
-        /// </summary>
-        /// <param name="message">エラーメッセージ</param>
-        public PropertyOutOfRangeException(string message) : base(message)
+        public PropertyOutOfRangeException(string? message) : base(message)
+        {
+        }
+
+        /// <inheritdoc/>
+        public PropertyOutOfRangeException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
     }

@@ -15,6 +15,41 @@ namespace WodiLib.Sys
     internal static class TwoDimensionalArrayExtension
     {
         /// <summary>
+        ///     <see langword="null"/> 項目があるかどうか判定する。
+        /// </summary>
+        /// <param name="src">検証対象</param>
+        /// <typeparam name="TItem">要素型</typeparam>
+        /// <returns>一つでも <see langword="null"/> 項目がある場合<see langword="true"/></returns>
+        public static bool HasNullItem<TItem>(this IEnumerable<IEnumerable<TItem>> src)
+        {
+            return src.Any(inner => inner.HasNullItem());
+        }
+
+        /// <summary>
+        ///     <see cref="IEnumerable{T}"/> をインタフェースに持つ任意の型の列挙子を
+        ///     <see cref="IEnumerable{T}"/> 型の配列にキャストする。
+        /// </summary>
+        /// <param name="src">処理対象</param>
+        /// <typeparam name="TItem">要素型</typeparam>
+        /// <returns></returns>
+        public static IEnumerable<TItem>[] CastInnerEnumerableRow<TItem>(this IEnumerable<IEnumerable<TItem>> src)
+            => CastInnerEnumerableRow<TItem, IEnumerable<TItem>>(src);
+
+        /// <summary>
+        ///     <see cref="IEnumerable{T}"/> をインタフェースに持つ任意の型の列挙子を
+        ///     <see cref="IEnumerable{T}"/> 型の配列にキャストする。
+        /// </summary>
+        /// <param name="src">処理対象</param>
+        /// <typeparam name="TItem">要素型</typeparam>
+        /// <typeparam name="TSrc">行型</typeparam>
+        /// <returns></returns>
+        public static IEnumerable<TItem>[] CastInnerEnumerableRow<TItem, TSrc>(this IEnumerable<TSrc> src)
+            where TSrc : IEnumerable<TItem>
+        {
+            return src.Select(line => line.AsEnumerable()).ToArray();
+        }
+
+        /// <summary>
         ///     行列を入れ替えた二次元配列を返す。<br/>
         ///     【事前条件】<br/>
         ///     すべての行について要素数が一致すること
@@ -60,7 +95,9 @@ namespace WodiLib.Sys
         /// <param name="isTranspose">転置実施フラグ</param>
         /// <returns>処理後の二次元配列</returns>
         public static T[][] ToTransposedArrayIf<T>(this T[][] src, bool isTranspose)
-            => isTranspose ? src.ToTransposedArray() : src;
+            => isTranspose
+                ? src.ToTransposedArray()
+                : src;
 
         /// <summary>
         ///     行列を入れ替えた二次元配列を返す。<br/>
@@ -77,7 +114,7 @@ namespace WodiLib.Sys
         /// <param name="isTranspose">転置実施フラグ</param>
         /// <returns>処理後の二次元配列</returns>
         public static T[][] ToTransposedArrayIf<T>(this IEnumerable<IEnumerable<T>> src, bool isTranspose)
-            => src.ToTwoDimensionalArray().ToTransposedArrayIf(isTranspose);
+            => src.To2DArray().ToTransposedArrayIf(isTranspose);
 
         /// <summary>
         ///     内側配列の長さを取得する。<br/>
@@ -88,7 +125,7 @@ namespace WodiLib.Sys
         /// <returns>内側配列の長さ</returns>
         public static int GetInnerArrayLength<T>(this IEnumerable<IEnumerable<T>> src)
         {
-            var twoDimArray = src.ToTwoDimensionalArray();
+            var twoDimArray = src.To2DArray();
             if (twoDimArray.Length == 0) return 0;
             return twoDimArray[0].Length;
         }
@@ -99,7 +136,20 @@ namespace WodiLib.Sys
         /// <param name="src">対象</param>
         /// <typeparam name="T">対象シーケンスの内包型</typeparam>
         /// <returns>二次元配列</returns>
-        internal static T[][] ToTwoDimensionalArray<T>(this IEnumerable<IEnumerable<T>> src)
+        internal static T[][] To2DArray<T>(this IEnumerable<IEnumerable<T>> src)
+        {
+            return src.Select(line => line.ToArray()).ToArray();
+        }
+
+        /// <summary>
+        ///     二重シーケンスを二次元配列に変換する。
+        /// </summary>
+        /// <param name="src">対象</param>
+        /// <typeparam name="TRow">対象シーケンスの行型</typeparam>
+        /// <typeparam name="TElem">対象シーケンスの内包型</typeparam>
+        /// <returns>二次元配列</returns>
+        internal static TElem[][] To2DArray<TRow, TElem>(this IEnumerable<TRow> src)
+            where TRow : IEnumerable<TElem>
         {
             return src.Select(line => line.ToArray()).ToArray();
         }

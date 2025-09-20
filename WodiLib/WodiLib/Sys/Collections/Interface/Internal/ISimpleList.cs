@@ -19,13 +19,12 @@ namespace WodiLib.Sys.Collections
         INotifyCollectionChanged,
         IList<T>
     {
-        DelegateMakeListDefaultItem<T> MakeDefaultItem { get; }
-
         /// <summary>
         ///     GetRange メソッドの処理本体
         /// </summary>
         /// <param name="index">インデックス</param>
         /// <param name="count">要素数</param>
+        /// <returns>指定した範囲の要素</returns>
         IEnumerable<T> Get(int index, int count);
 
         /// <summary>
@@ -33,27 +32,31 @@ namespace WodiLib.Sys.Collections
         /// </summary>
         /// <param name="index">更新開始インデックス</param>
         /// <param name="items">更新要素</param>
-        void Set(int index, params T[] items);
+        /// <returns>セットした要素</returns>
+        IEnumerable<T> Set(int index, params T[] items);
 
         /// <summary>
         ///     AddRange メソッドの処理本体
         /// </summary>
         /// <param name="items">挿入要素</param>
-        void Add(params T[] items);
+        /// <returns>追加した要素</returns>
+        IEnumerable<T> Add(params T[] items);
 
         /// <summary>
         ///     InsertRange メソッドの処理本体
         /// </summary>
         /// <param name="index">挿入先インデックス</param>
         /// <param name="items">挿入要素</param>
-        void Insert(int index, params T[] items);
+        /// <returns>追加した要素</returns>
+        IEnumerable<T> Insert(int index, params T[] items);
 
         /// <summary>
         ///     Overwrite メソッドの処理本体
         /// </summary>
         /// <param name="index">上書き開始インデックス</param>
         /// <param name="items">上書き要素</param>
-        void Overwrite(int index, params T[] items);
+        /// <returns>上書きした要素</returns>
+        IEnumerable<T> Overwrite(int index, params T[] items);
 
         /// <summary>
         ///     MoveRange メソッドの処理本体
@@ -75,30 +78,46 @@ namespace WodiLib.Sys.Collections
         /// </summary>
         /// <param name="index">除去開始インデックス</param>
         /// <param name="count">除去する要素数</param>
-        void Remove(int index, int count);
+        /// <returns>削除した要素</returns>
+        IEnumerable<T> Remove(int index, int count);
 
         /// <summary>
         ///     AdjustLength メソッドの処理本体
         /// </summary>
         /// <param name="length">要素数</param>
-        void Adjust(int length);
+        /// <returns>追加または削除した要素</returns>
+        IEnumerable<T> Adjust(int length);
 
         /// <summary>
         ///     AdjustLengthIfLong メソッドの処理本体
         /// </summary>
         /// <param name="length">要素数</param>
-        void AdjustIfLong(int length);
+        /// <returns>削除した要素</returns>
+        IEnumerable<T> AdjustIfLong(int length);
 
         /// <summary>
         ///     AdjustLengthIfShort メソッドの処理本体
         /// </summary>
         /// <param name="length">要素数</param>
-        void AdjustIfShort(int length);
+        /// <returns>追加した要素</returns>
+        IEnumerable<T> AdjustIfShort(int length);
 
         /// <summary>
         ///     Reset メソッドの処理本体
         /// </summary>
         /// <param name="items">初期化要素</param>
-        void Reset(params T[] items);
+        /// <returns>初期化要素</returns>
+        IEnumerable<T> Reset(params T[] items);
+
+        /// <summary>
+        ///     Reset メソッドの処理本体
+        /// </summary>
+        /// <remarks>
+        ///     各要素の初期化子は
+        ///     あらかじめ指定された初期化処理によって作成する。
+        /// </remarks>
+        /// <param name="length">初期化要素数</param>
+        /// <returns>初期化要素</returns>
+        IEnumerable<T> Reset(int length);
     }
 }

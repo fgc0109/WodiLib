@@ -47,19 +47,19 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
         public class ConstantInfo
         {
             /// <summary>定数名</summary>
-            public string Name { get; init; } = default!;
+            public string Name { get; init; } = null!;
 
             /// <summary>Summary</summary>
-            public string Summary { get; init; } = default!;
+            public string Summary { get; init; } = null!;
 
             /// <summary>定数名</summary>
-            public string? Remarks { get; init; } = default!;
+            public string? Remarks { get; init; } = null!;
 
             /// <summary>型</summary>
-            public string Type { get; init; } = default!;
+            public string Type { get; init; } = null!;
 
             /// <summary>値</summary>
-            public string Value { get; init; } = default!;
+            public string Value { get; init; } = null!;
 
             /// <summary>"new"修飾子付与フラグ</summary>
             public bool HasNewModifier { get; init; }

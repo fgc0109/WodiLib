@@ -76,7 +76,7 @@ namespace WodiLib.SourceGenerator.Test.ValueObject.SingleValues
                 ObjectType.HttpScheme => new HttpSchemeStringValueObject(initValue),
                 ObjectType.SJis => new SJisStringValueObject(initValue),
                 ObjectType.Utf8 => new Utf8StringValueObject(initValue),
-                _ => null
+                _ => null,
             };
         }
 
@@ -209,10 +209,10 @@ namespace WodiLib.SourceGenerator.Test.ValueObject.SingleValues
             var testValue = "Cast String Value";
 
             var instance = (ExplicitCastableStringValueObject)testValue;
-            Assert.IsTrue(instance.RawValue.Equals(testValue));
+            Assert.AreEqual(testValue, instance.RawValue);
 
             var castedString = (string)instance;
-            Assert.IsTrue(castedString.Equals(testValue));
+            Assert.AreEqual(testValue, castedString);
         }
 
         [Test]
@@ -222,10 +222,10 @@ namespace WodiLib.SourceGenerator.Test.ValueObject.SingleValues
             var testValue = "Cast String Value";
 
             ImplicitCastableStringValueObject instance = testValue;
-            Assert.IsTrue(instance.RawValue.Equals(testValue));
+            Assert.AreEqual(testValue, instance.RawValue);
 
             string castedString = instance;
-            Assert.IsTrue(castedString.Equals(testValue));
+            Assert.AreEqual(testValue, castedString);
         }
     }
 
@@ -311,7 +311,7 @@ namespace WodiLib.SourceGenerator.Test.ValueObject.SingleValues
         AToG,
         HttpScheme,
         SJis,
-        Utf8
+        Utf8,
     }
 
     #endregion

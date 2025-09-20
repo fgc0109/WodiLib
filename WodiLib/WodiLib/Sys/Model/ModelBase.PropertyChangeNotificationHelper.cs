@@ -1,27 +1,30 @@
 // ========================================
 // Project Name : WodiLib
-// File Name    : ModelBase.PropertyChangeNotificationHelper.cs
+// File Name    : ModelBase.ChainPropertyChangeNotificationHelper.cs
 //
 // MIT License Copyright(c) 2019 kameske
 // see LICENSE file
 // ========================================
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
 namespace WodiLib.Sys
 {
-    public abstract partial class ModelBase<TChild>
+    public abstract partial class ModelBase
     {
         /// <summary>
-        ///     <see cref="ModelBase{TChild}"/> のプロパティ変更通知Helperクラス
+        ///     <see cref="ModelBase"/> のプロパティ変更通知Helperクラス
         /// </summary>
         protected static class PropertyChangeNotificationHelper
         {
             // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-            //     Protected Delegate
-            // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+            #region Delegate
+
+            #region public
 
             /// <summary>
             ///     <see cref="INotifyPropertyChanged"/> が通知したプロパティ名を
@@ -46,9 +49,71 @@ namespace WodiLib.Sys
             /// <param name="propertyName">通知プロパティ名</param>
             public delegate string[]? MapNotifyPropertyName(object sender, string propertyName);
 
+            /// <summary>
+            ///     プロパティ変更通知デリゲート
+            /// </summary>
+            public delegate void NotifyPropertyChanged(string propertyName);
+
+            #endregion
+
+            #endregion
+
             // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-            //     Private Static Method
-            // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+            #region Static Methods
+
+            #region internal
+
+            /// <summary>
+            ///     処理前後のプロパティの値を比較し、変化していればプロパティ変更通知を行うテンプレート処理。
+            /// </summary>
+            /// <param name="properties"></param>
+            /// <param name="action"></param>
+            /// <param name="notifier"></param>
+            internal static void ProcessWithOtherPropertyChangeNotification(
+                IEnumerable<WatchPropertyInfo> properties,
+                Action action,
+                NotifyPropertyChanged notifier
+            )
+            {
+                // 変更前の値を取得
+                var valuesHolder = new Dictionary<string, object>();
+
+                var propertiesArray = properties.ToArray();
+
+                foreach (var (key, getter) in propertiesArray)
+                {
+                    var value = getter.Invoke();
+
+                    valuesHolder[key] = value;
+                }
+
+                // 処理
+                action.Invoke();
+
+                // 変更があれば通知
+
+                foreach (var (key, getter) in propertiesArray)
+                {
+                    try
+                    {
+                        var value = getter.Invoke();
+
+                        var beforeValue = valuesHolder[key];
+                        var isEquals = EqualsHelper.NullableEquals(beforeValue, value);
+
+                        if (!isEquals)
+                        {
+                            notifier.Invoke(key);
+                        }
+                    }
+                    catch
+                    {
+                        // プロパティ取得でエラーが発生した場合は抑制する
+                        //      プロパティ変更通知は起きない
+                    }
+                }
+            }
 
             /// <summary>
             ///     通知許可リストから <see cref="PropertyChangedEventArgs"/> を取得する。
@@ -115,12 +180,15 @@ namespace WodiLib.Sys
 
                 var notifyNames = GetPropertyNames(sender, propName, mapNotifyPropertyName);
 
-                return notifyNames?.Select(
-                    notifyName => notifyName.Equals(propName)
-                        ? origArgs
-                        : PropertyChangedEventArgsCache.GetInstance(notifyName)
+                return notifyNames?.Select(notifyName => notifyName.Equals(propName)
+                    ? origArgs
+                    : PropertyChangedEventArgsCache.GetInstance(notifyName)
                 );
             }
+
+            #endregion
+
+            #region private
 
             /// <summary>
             ///     伝播元が通知したプロパティ名をこれから通知するプロパティ名に変換する。
@@ -181,6 +249,29 @@ namespace WodiLib.Sys
 
                 return mapNotifyPropertyName(sender, propertyName);
             }
+
+            #endregion
+
+            #endregion
+
+            // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+            #region Classes
+
+            #region internal
+
+            internal record WatchPropertyInfo(
+                string Key,
+                Func<object> getter
+            )
+            {
+                public static implicit operator WatchPropertyInfo((string, Func<object>) src)
+                    => new(src.Item1, src.Item2);
+            }
+
+            #endregion
+
+            #endregion
         }
     }
 }

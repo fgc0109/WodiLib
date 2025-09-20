@@ -7,170 +7,301 @@
 // ========================================
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
+using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace WodiLib.Sys.Collections
 {
     /// <summary>
-    ///     WodiLib 独自リスト
+    ///     容量制限のあるListクラス
     /// </summary>
     /// <remarks>
-    ///     WodiLib内で使用する各種リストの処理転送先となるクラス。
-    ///     <typeparamref name="T"/> が変更通知を行うクラスだった場合、
-    ///     通知を受け取ると自身の "Items[]" プロパティ変更通知を行う。
+    ///     <para>
+    ///         <see cref="ObservableCollection{T}"/> をベースに、容量制限を設けた機能。
+    ///         <see cref="ObservableCollection{T}"/> のCRUD各種処理に範囲指定バージョン（XXXRange メソッド）を追加している。
+    ///         それ以外にもいくつかメソッドを追加している。
+    ///     </para>
+    ///     <para>
+    ///         <typeparamref name="TReadOnlyElement"/> が変更通知を行うクラスだった場合、
+    ///         通知を受け取ると自身の "Items[]" プロパティ変更通知を行う。
+    ///     </para>
     /// </remarks>
-    /// <typeparam name="T">リスト内包クラス</typeparam>
-    internal class ExtendedList<T> : ModelBase<ExtendedList<T>>,
-        IExtendedList<T>
+    /// <typeparam name="TEditableElement">リスト要素型（編集可能）</typeparam>
+    /// <typeparam name="TReadOnlyElement">リスト要素型（読取専用）</typeparam>
+    /// <typeparam name="TElementSettings">リスト内包型の入力パラメータ型</typeparam>
+    internal class ExtendedList<TEditableElement, TReadOnlyElement, TElementSettings> :
+        FixedLengthList<TEditableElement, TReadOnlyElement, TElementSettings>,
+        IExtendedList<TEditableElement, TReadOnlyElement, TElementSettings>,
+        IEqualityComparable<ExtendedList<TEditableElement, TReadOnlyElement, TElementSettings>>
+        where TEditableElement : TReadOnlyElement, TElementSettings
+        where TReadOnlyElement : TElementSettings
+        where TElementSettings : notnull
     {
-        /*
-         * WodiLib 内部で使用する独自汎用リスト。
-         * リスト本体の機能は SimpleList<T> に委譲。
-         */
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Events
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Fields
 
-        public event NotifyCollectionChangedEventHandler? CollectionChanged;
+        private readonly int minCapacity;
+        private readonly int maxCapacity;
+
+        #endregion
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Public Properties
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        public T this[int index]
-        {
-            get
-            {
-                this.ValidateGet(index);
-                return this.GetCore(index);
-            }
-            set
-            {
-                this.ValidateSet(index, value);
-                this.SetCore(index, value);
-            }
-        }
+        #region Constructors
 
-        public int Count => Items.Count;
-
-        public Func<int, T> MakeDefaultItem { get; }
-
-        public IWodiLibListValidator<T>? Validator { get; }
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Private Properties
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>リスト本体</summary>
-        protected virtual ISimpleList<T> Items { get; }
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Constructors
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Required
 
         /// <summary>
         ///     コンストラクタ
         /// </summary>
-        /// <param name="makeListDefaultItem">デフォルト要素生成処理</param>
-        /// <param name="validator">検証処理実装</param>
-        /// <param name="initItems">初期要素</param>
-        public ExtendedList(
-            DelegateMakeListDefaultItem<T> makeListDefaultItem,
-            IWodiLibListValidator<T>? validator,
-            IEnumerable<T>? initItems = null
-        )
+        /// <param name="itemsImpl">リスト実装インスタンス</param>
+        /// <param name="minCapacity">容量最小値</param>
+        /// <param name="maxCapacity">容量最大値</param>
+        /// <param name="validator">各種引数検証バリデーター実装</param>
+        /// <param name="buildItemFromSettings">入力パラメータからリスト内部で保持するインスタンスを生成する処理</param>
+        internal ExtendedList(
+            SimpleList<TEditableElement> itemsImpl,
+            int minCapacity,
+            int maxCapacity,
+            IWodiLibListValidator<TElementSettings>? validator,
+            BuildItemFromSettingsDelegate buildItemFromSettings
+        ) : base(itemsImpl, validator, buildItemFromSettings)
         {
-            ThrowHelper.ValidateNotNull(makeListDefaultItem is null);
-
-            var initItemArray = initItems?.ToArray() ?? Array.Empty<T>();
-            Validator = validator;
-
-            Validator?.Constructor((nameof(initItems), initItemArray));
-
-            Items = new SimpleList<T>(makeListDefaultItem, initItemArray);
-            MakeDefaultItem = i => Items.MakeDefaultItem(i);
-
-            PropagatePropertyChangeEvent(Items);
-            PropagateCollectionChangeEvent();
+            this.maxCapacity = maxCapacity;
+            this.minCapacity = minCapacity;
         }
 
-        private void PropagateCollectionChangeEvent()
-        {
-            Items.CollectionChanged += (_, args) => { CollectionChanged?.Invoke(this, args); };
-        }
+        #endregion
 
-        /// <summary>
-        ///     ディープコピーコンストラクタ
-        /// </summary>
-        /// <param name="src">コピー元</param>
-        private ExtendedList(IExtendedList<T> src) : this(i => src.MakeDefaultItem(i), src.Validator, src)
-        {
-        }
+        #endregion
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Public Methods
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        public IEnumerator<T> GetEnumerator() => Items.GetEnumerator();
+        #region Methods
 
-        public IEnumerable<T> GetRangeCore(int index, int count) => Items.Get(index, count);
+        #region public
 
-        public void SetRangeCore(int index, IEnumerable<T> items) => Items.Set(index, items.ToArray());
-        public void InsertRangeCore(int index, IEnumerable<T> items) => Items.Insert(index, items.ToArray());
-        public void OverwriteCore(int index, IEnumerable<T> items) => Items.Overwrite(index, items.ToArray());
-        public void MoveRangeCore(int oldIndex, int newIndex, int count) => Items.Move(oldIndex, newIndex, count);
-        public void RemoveRangeCore(int index, int count) => Items.Remove(index, count);
-        public void AdjustLengthCore(int length) => Items.Adjust(length);
-        public void ResetCore(IEnumerable<T> items) => Items.Reset(items.ToArray());
-        public void ClearCore() => Items.Clear();
+        #region Capacity
 
-        public bool ItemEquals(IExtendedList<T>? other)
-            => ItemEquals((IEnumerable<T>?)other);
+        /// <inheritdoc/>
+        public int GetMaxCapacity() => maxCapacity;
 
-        public override bool ItemEquals(ExtendedList<T>? other)
-            => ItemEquals((IEnumerable<T>?)other);
+        /// <inheritdoc/>
+        public int GetMinCapacity() => minCapacity;
 
-        public bool ItemEquals(IEnumerable<T>? other)
+        #endregion
+
+        #region CRUD
+
+        /// <inheritdoc/>
+        public TEditableElement Add(TElementSettings settings)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-
-            var otherItemArray = other.ToArray();
-            return Count == otherItemArray.Length
-                   && this.Zip(otherItemArray)
-                       .All(
-                           zip => zip.Item1 is IEqualityComparable equalityComparable
-                               ? equalityComparable.ItemEquals(zip.Item2)
-                               : zip.Item1!.Equals(zip.Item2)
-                       );
+            ValidateAdd(settings);
+            return AddInternal(settings);
         }
 
-        public override bool ItemEquals(object? other)
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> AddRange(IEnumerable<TElementSettings> settings)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
+            var settingsArray = settings as TElementSettings[] ?? settings.ToArray();
+            ValidateAddRange(settingsArray);
+            return AddRangeInternal(settingsArray);
+        }
 
-            if (other is IEnumerable<T> enumerable)
+        /// <inheritdoc/>
+        public TEditableElement Insert(int index, TElementSettings settings)
+        {
+            ValidateInsert(index, settings);
+            return InsertInternal(index, settings);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> InsertRange(int index, IEnumerable<TElementSettings> settings)
+        {
+            var settingsArray = settings as TElementSettings[] ?? settings.ToArray();
+            ValidateInsertRange(index, settingsArray);
+            return InsertRangeInternal(index, settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> Overwrite(int index, IEnumerable<TElementSettings> settings)
+        {
+            var settingsArray = settings as TElementSettings[] ?? settings.ToArray();
+            ValidateOverwrite(index, settingsArray);
+            return OverwriteInternal(index, settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public TEditableElement Remove(int index)
+        {
+            ValidateRemove(index);
+            return RemoveInternal(index);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> RemoveRange(int index, int count)
+        {
+            ValidateRemoveRange(index, count);
+            return RemoveRangeInternal(index, count);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> AdjustLength(int length)
+        {
+            ValidateAdjustLength(length);
+            return AdjustLengthInternal(length);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> AdjustLengthIfShort(int length)
+        {
+            ValidateAdjustLength(length);
+            if (Count >= length)
             {
-                return ItemEquals(enumerable);
+                return Array.Empty<TEditableElement>();
             }
 
-            return Equals(other);
+            return AdjustLengthInternal(length);
         }
 
-        public override ExtendedList<T> DeepClone() => new(this);
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> AdjustLengthIfLong(int length)
+        {
+            ValidateAdjustLength(length);
+            if (Count <= length)
+            {
+                return Array.Empty<TEditableElement>();
+            }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Interface Implementation
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+            return AdjustLengthInternal(length);
+        }
 
-        #region GetEnumerator
+        /// <inheritdoc
+        ///     cref="IExtendedList{TEditableElement,TReadOnlyElement,TElementSettings}.Reset(System.Collections.Generic.IEnumerable{TElementSettings})"/>
+        public new IEnumerable<TEditableElement> Reset(IEnumerable<TElementSettings> settings)
+        {
+            var settingsArray = settings as TElementSettings[] ?? settings.ToArray();
+            ValidateReset(settingsArray);
+            return ResetInternal(settingsArray);
+        }
 
-        IEnumerator IEnumerable.GetEnumerator()
-            => GetEnumerator();
+        /// <inheritdoc/>
+        public void Clear()
+        {
+            ValidateClear();
+            ClearInternal();
+        }
+
+        #endregion
+
+        #region Validation
+
+        /// <inheritdoc/>
+        public void ValidateAdd(TElementSettings settings)
+            => Validator?.Insert(("index", Items.Count), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateAddRange(IEnumerable<TElementSettings> settings)
+            => Validator?.Insert(("index", Items.Count), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateInsert(int index, TElementSettings settings)
+            => Validator?.Insert((nameof(index), index), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateInsertRange(int index, IEnumerable<TElementSettings> settings)
+            => Validator?.Insert((nameof(index), index), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateOverwrite(int index, IEnumerable<TElementSettings> settings)
+            => Validator?.Overwrite((nameof(index), index), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateRemove(int index)
+            => Validator?.Remove((nameof(index), index));
+
+        /// <inheritdoc/>
+        public void ValidateRemoveRange(int index, int count)
+            => Validator?.Remove((nameof(index), index), (nameof(count), count));
+
+        /// <inheritdoc/>
+        public void ValidateAdjustLength(int length)
+            => Validator?.AdjustLength((nameof(length), length));
+
+        /// <inheritdoc cref="Reset"/>
+        public new void ValidateReset(IEnumerable<TElementSettings> settings)
+            => Validator?.Reset((nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateClear()
+            => Validator?.Clear();
+
+        #endregion
+
+        #region CRUD Core
+
+        /// <inheritdoc/>
+        public TEditableElement AddInternal(TElementSettings settings)
+            => Items.Add(BuildItemFromSettings(Items.Count, settings)).First();
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> AddRangeInternal(IEnumerable<TElementSettings> settings)
+            => Items.Add(
+                settings.Select((setting, i) => BuildItemFromSettings(Items.Count + i, setting)).ToArray()
+            );
+
+        /// <inheritdoc/>
+        public TEditableElement InsertInternal(int index, TElementSettings settings)
+            => Items.Insert(index, BuildItemFromSettings(index, settings)).First();
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> InsertRangeInternal(int index, IEnumerable<TElementSettings> settings)
+            => Items.Insert(
+                index,
+                settings.Select((setting, i) => BuildItemFromSettings(index + i, setting)).ToArray()
+            );
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> OverwriteInternal(int index, IEnumerable<TElementSettings> settings)
+            => Items.Overwrite(
+                index,
+                settings.Select((setting, i) => BuildItemFromSettings(index + i, setting)).ToArray()
+            );
+
+
+        /// <inheritdoc/>
+        public TEditableElement RemoveInternal(int index)
+        {
+            var removeItem = Items[index];
+            Items.RemoveAt(index);
+            return removeItem;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> RemoveRangeInternal(int index, int count)
+            => Items.Remove(index, count);
+
+        /// <inheritdoc/>
+        public IEnumerable<TEditableElement> AdjustLengthInternal(int length)
+            => Items.Adjust(length);
+
+        /// <inheritdoc cref="Reset"/>
+        public new IEnumerable<TEditableElement> ResetInternal(IEnumerable<TElementSettings> settings)
+            => Items.Reset(
+                settings.Select((setting, i) => BuildItemFromSettings(i, setting)).ToArray()
+            );
+
+        /// <inheritdoc/>
+        public void ClearInternal()
+            => Items.Reset(minCapacity);
+
+        #endregion
+
+        /// <inheritdoc/>
+        public bool ItemEquals(ExtendedList<TEditableElement, TReadOnlyElement, TElementSettings>? other)
+            => ItemEquals((ReadOnlyExtendedList<TEditableElement, TReadOnlyElement, TElementSettings>?)other);
+
+        #endregion
 
         #endregion
     }

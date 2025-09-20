@@ -176,7 +176,7 @@ namespace WodiLib.Sys
         }
 
         /// <summary>
-        /// 0から自身の値までのすべての値の列挙子を返す。
+        ///     0から自身の値までのすべての値の列挙子を返す。
         /// </summary>
         /// <param name="val">末尾数値</param>
         /// <returns>0 ～ <paramref name="val"/> までのすべての数値を列挙した列挙子</returns>
@@ -186,7 +186,7 @@ namespace WodiLib.Sys
         }
 
         /// <summary>
-        /// 指定した数値だけ繰り返し処理を行って要素を取得する。
+        ///     指定した数値だけ繰り返し処理を行って要素を取得する。
         /// </summary>
         /// <param name="n">繰り返し回数</param>
         /// <param name="factory">要素生成処理</param>
@@ -194,5 +194,14 @@ namespace WodiLib.Sys
         /// <returns>結果</returns>
         public static IEnumerable<TResult> Iterate<TResult>(this int n, Func<int, TResult> factory)
             => n.Range().Select(factory);
+
+        /// <summary>
+        ///     指定した数値だけ繰り返し処理を行う。
+        /// </summary>
+        /// <param name="n">繰り返し回数</param>
+        /// <param name="action">実施する処理</param>
+        /// <returns>結果</returns>
+        public static void Times(this int n, Action<int> action)
+            => n.Range().ForEach(action);
     }
 }

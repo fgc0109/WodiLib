@@ -63,9 +63,8 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
         private List<SourceFormatTarget> BlockImpl { get; }
 
         public SourceFormatTargetBlock(params string[] targets) : this(
-            targets.Select(
-                s =>
-                    new SourceFormatTarget(s)
+            targets.Select(s =>
+                new SourceFormatTarget(s)
             )
         )
         {

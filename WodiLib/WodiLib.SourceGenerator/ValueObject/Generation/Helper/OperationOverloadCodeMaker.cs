@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
+using WodiLib.SourceGenerator.Operation.Generation.Main;
 
 namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
 {
@@ -127,12 +128,11 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
         )
             => canOperate
                 ? SourceFormatTargetBlock.Merge(
-                        otherFullNames.Select(
-                                name => name.Equals(TargetClassFullName)
-                                    ? BinaryOperatorNewInstanceBySameClass(ope, true)
-                                        .TrimLastEmptyLine()
-                                    : BinaryOperatorNewInstanceByOtherClass(ope, new[] { name }, true)
-                                        .TrimLastEmptyLine()
+                        otherFullNames.Select(name => name.Equals(TargetClassFullName)
+                                ? BinaryOperatorNewInstanceBySameClass(ope, true)
+                                    .TrimLastEmptyLine()
+                                : BinaryOperatorNewInstanceByOtherClass(ope, new[] { name }, true)
+                                    .TrimLastEmptyLine()
                             )
                             .ToArray()
                     )
@@ -173,16 +173,15 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
         )
             => canOperate
                 ? SourceFormatTargetBlock.Merge(
-                        rightClassTypes.Select(
-                                rightClassType =>
-                                    new SourceFormatTargetBlock(
-                                        $"/// {Tag.Summary($"{ope} 演算子")}",
-                                        $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
-                                        $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
-                                        $"/// {Tag.Returns("演算結果")}",
-                                        $"{OperatorPrefix()} {ope}{DoubleArgParam(rightClassType)} => "
-                                        + $"new {TargetClassName} (checked(({RawValueType})({BinaryOperatorLeftArgName}.{RawValuePropertyName} {ope} ({RawValueType}){BinaryOperatorRightArgName})));"
-                                    )
+                        rightClassTypes.Select(rightClassType =>
+                                new SourceFormatTargetBlock(
+                                    $"/// {Tag.Summary($"{DocumentCommentHelper.EscapeOperatorMark(ope)} 演算子")}",
+                                    $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
+                                    $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
+                                    $"/// {Tag.Returns("演算結果")}",
+                                    $"{OperatorPrefix()} {ope}{DoubleArgParam(rightClassType)} => "
+                                    + $"new {TargetClassName} (checked(({RawValueType})({BinaryOperatorLeftArgName}.{RawValuePropertyName} {ope} ({RawValueType}){BinaryOperatorRightArgName})));"
+                                )
                             )
                             .ToArray()
                     )
@@ -204,13 +203,12 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
         )
             => canOperate
                 ? SourceFormatTargetBlock.Merge(
-                        otherFullNames.Select(
-                                otherFullName =>
-                                    otherFullName.Equals(TargetClassFullName)
-                                        ? BinaryOperatorBoolBySameClass(ope, true)
-                                            .TrimLastEmptyLine()
-                                        : BinaryOperatorBoolByOtherClass(ope, otherFullName, true)
-                                            .TrimLastEmptyLine()
+                        otherFullNames.Select(otherFullName =>
+                                otherFullName.Equals(TargetClassFullName)
+                                    ? BinaryOperatorBoolBySameClass(ope, true)
+                                        .TrimLastEmptyLine()
+                                    : BinaryOperatorBoolByOtherClass(ope, otherFullName, true)
+                                        .TrimLastEmptyLine()
                             )
                             .ToArray()
                     )
@@ -228,7 +226,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
             => canOperate
                 ? new[]
                 {
-                    $"/// {Tag.Summary($"{ope} 演算子")}",
+                    $"/// {Tag.Summary($"{DocumentCommentHelper.EscapeOperatorMark(ope)} 演算子")}",
                     $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
                     $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
                     $"/// {Tag.Returns("演算結果")}",
@@ -254,13 +252,13 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
             => canOperate
                 ? new[]
                 {
-                    $"/// {Tag.Summary($"{ope} 演算子")}",
+                    $"/// {Tag.Summary($"{DocumentCommentHelper.EscapeOperatorMark(ope)} 演算子")}",
                     $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
                     $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
                     $"/// {Tag.Returns("演算結果")}",
                     $"{OperatorPrefix("bool")} {ope}{DoubleArgParam(rightClassType)} => "
                     + $"{BinaryOperatorLeftArgName}.{RawValuePropertyName} {ope} ({RawValueType}){BinaryOperatorRightArgName};",
-                    $"/// {Tag.Summary($"{ope} 演算子")}",
+                    $"/// {Tag.Summary($"{DocumentCommentHelper.EscapeOperatorMark(ope)} 演算子")}",
                     $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
                     $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
                     $"/// {Tag.Returns("演算結果")}",

@@ -6,6 +6,8 @@
 // see LICENSE file
 // ========================================
 
+using System;
+
 namespace WodiLib.Sys
 {
     /// <inheritdoc/>
@@ -15,19 +17,17 @@ namespace WodiLib.Sys
     public class PropertyNullException : PropertyException
     {
         /// <inheritdoc/>
-        /// <summary>
-        ///     コンストラクタ
-        /// </summary>
         public PropertyNullException()
         {
         }
 
         /// <inheritdoc/>
-        /// <summary>
-        ///     コンストラクタ
-        /// </summary>
-        /// <param name="message">エラーメッセージ</param>
-        public PropertyNullException(string message) : base(message)
+        public PropertyNullException(string? message) : base(message)
+        {
+        }
+
+        /// <inheritdoc/>
+        public PropertyNullException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
     }

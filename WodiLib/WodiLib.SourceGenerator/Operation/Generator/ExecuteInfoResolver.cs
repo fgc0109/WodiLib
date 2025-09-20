@@ -24,18 +24,16 @@ namespace WodiLib.SourceGenerator.Operation
             public bool IsRootAttribute(INamedTypeSymbol targetAttribute)
             {
                 return ExecuteInfoRegister.MakeExecuteGenerateInfoList()
-                    .Any(
-                        info
-                            => targetAttribute.IsSame(info.TargetAttribute.TypeFullName)
+                    .Any(info
+                        => targetAttribute.IsSame(info.TargetAttribute.TypeFullName)
                     );
             }
 
             public IMainSourceAddable? Resolve(INamedTypeSymbol targetAttribute)
             {
                 return ExecuteInfoRegister.MakeExecuteGenerateInfoList()
-                    .FirstOrDefault(
-                        info
-                            => targetAttribute.IsSameOrExtended(info.TargetAttribute.TypeFullName)
+                    .FirstOrDefault(info
+                        => targetAttribute.IsSameOrExtended(info.TargetAttribute.TypeFullName)
                     );
             }
         }

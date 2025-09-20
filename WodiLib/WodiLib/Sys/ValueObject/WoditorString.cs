@@ -36,7 +36,7 @@ namespace WodiLib.Sys
             {
                 new Tuple<string, string>("\n", "<\\n>"),
                 new Tuple<string, string>("\r\n", "<\\n>"),
-                new Tuple<string, string>("\"", "<dqrt>")
+                new Tuple<string, string>("\"", "<dqrt>"),
             };
 
         /// <summary>文字列</summary>

@@ -19,11 +19,11 @@ namespace WodiLib.Sys
     internal class CommonByteValueObjectAttribute : ByteValueObjectAttribute
     {
         /// <inheritdoc/>
-        [DefaultValueAttribute(CastType.Implicit)]
+        [DefaultValue(CastType.Implicit)]
         public override CastType CastType { get; init; } = default!;
 
         /// <inheritdoc/>
-        [DefaultValueAttribute(true)]
-        public override bool IsComparable { get; init; } = default!;
+        [DefaultValue(true)]
+        public override bool IsComparable { get; init; } = false;
     }
 }

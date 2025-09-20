@@ -89,5 +89,18 @@ namespace WodiLib.SourceGenerator.Core.Extensions
         /// <returns>処理結果</returns>
         public static string ReplaceAngleBracketsToUnderscore(this string src)
             => src.Replace("<", "_").Replace(">", "_");
+
+        /// <summary>
+        ///     先頭の文字を小文字にする。
+        /// </summary>
+        /// <param name="value">対象文字列</param>
+        /// <returns>先頭の文字を小文字にした文字列</returns>
+        public static string ToLowerFirstChar(string value)
+        {
+            if (value.Length <= 0)
+                return string.Empty;
+
+            return char.ToLower(value[0]) + value.Substring(1);
+        }
     }
 }

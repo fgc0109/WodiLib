@@ -48,7 +48,7 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
             /// <summary>
             ///     <see cref="MainSourceAddableTemplate.AddSource"/>処理Current情報
             /// </summary>
-            private CurrentInfo Current { get; set; } = default!;
+            private CurrentInfo Current { get; set; } = null!;
 
             /// <summary>
             ///     現在注目しているクラスの先祖クラスが同じ属性プロパティを付与されている場合の、そのプロパティ値

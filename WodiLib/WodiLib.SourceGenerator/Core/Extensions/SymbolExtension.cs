@@ -41,9 +41,8 @@ namespace WodiLib.SourceGenerator.Core.Extensions
         /// <returns>属性が付与されている場合、属性情報。付与されていない場合、<see langword="null"/>。</returns>
         public static AttributeData? FirstOrDefaultAttribute(this ISymbol symbol, string targetAttributeFullName)
             => symbol.GetAttributes()
-                .FirstOrDefault(
-                    attr =>
-                        attr.AttributeClass?.FullName().Equals(targetAttributeFullName) ?? false
+                .FirstOrDefault(attr =>
+                    attr.AttributeClass?.FullName().Equals(targetAttributeFullName) ?? false
                 );
 
         /// <summary>
@@ -57,8 +56,7 @@ namespace WodiLib.SourceGenerator.Core.Extensions
             string targetAttributeFullName
         )
             => symbol.GetAttributes()
-                .Where(
-                    attr =>
+                .Where(attr =>
                     {
                         var selfAttrClass = attr.AttributeClass;
                         if (selfAttrClass is null)

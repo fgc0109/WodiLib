@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Linq;
 
 namespace WodiLib.Sys.Collections
@@ -20,119 +19,146 @@ namespace WodiLib.Sys.Collections
     ///     基本的なメソッドを定義したクラス。
     /// </summary>
     internal class SimpleList<T> : ObservableCollection<T>,
-        ISimpleList<T>
+        ISimpleList<T>,
+        IDeepCloneable<SimpleList<T>>
     {
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Public Properties
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        public DelegateMakeListDefaultItem<T> MakeDefaultItem { get; }
+        #region Constructors
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Constructors
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Required
 
-        internal SimpleList(DelegateMakeListDefaultItem<T> makeDefaultItem, IEnumerable<T>? initValues = null) : base(
+        internal SimpleList(SimpleListValueBuilder<T> valueBuilder, IEnumerable<T>? initValues = null) : base(
             initValues ?? Array.Empty<T>()
         )
         {
-            MakeDefaultItem = makeDefaultItem;
-            initValues?.ForEach(PostInItem);
+            ThrowHelper.ValidateArgumentNotNull(valueBuilder is null, nameof(valueBuilder));
+
+            ValueBuilder = valueBuilder;
         }
 
+        #endregion
+
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Public Methods
+
+        #region Properties
+
+        #region private
+
+        private SimpleListValueBuilder<T> ValueBuilder { get; }
+
+        #endregion
+
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Methods
+
+        #region public
 
         /// <inheritdoc/>
         public IEnumerable<T> Get(int index, int count)
-            => Items.Skip(index).Take(count);
-
-        /// <inheritdoc/>
-        public void Set(int index, params T[] items)
         {
-            switch (items.Length)
-            {
-                case 0:
-                    return;
-                case 1:
-                    SetItem(index, items[0]);
-                    return;
-            }
-
-            CheckReentrancy();
-            items.ForEach(
-                (item, offset) => { Items[index + offset] = item; }
-            );
-
-            OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(ListConstant.IndexerName));
-            OnCollectionReset();
+            return Items.Skip(index).Take(count);
         }
 
         /// <inheritdoc/>
-        public void Add(params T[] items)
-            => Insert(Count, items);
-
-        /// <inheritdoc/>
-        public void Insert(int index, params T[] items)
+        public IEnumerable<T> Set(int index, params T[] items)
         {
             switch (items.Length)
             {
                 case 0:
-                    return;
+                    return items;
                 case 1:
-                    InsertItem(index, items[0]);
-                    return;
+                    SetItem(index, items[0]);
+                    return items;
             }
 
             CheckReentrancy();
-            items.ForEach(
-                (item, offset) => { Items.Insert(index + offset, item); }
-            );
+            items.ForEach((item, offset) => { Items[index + offset] = item; });
+
+            OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(ListConstant.IndexerName));
+            OnCollectionReset();
+
+            return items;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<T> Add(params T[] items)
+        {
+            Insert(Count, items);
+            return items;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<T> Insert(int index, params T[] items)
+        {
+            switch (items.Length)
+            {
+                case 0:
+                    return items;
+                case 1:
+                    InsertItem(index, items[0]);
+                    return items;
+            }
+
+            CheckReentrancy();
+            items.ForEach((item, offset) => { Items.Insert(index + offset, item); });
 
             OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(nameof(Count)));
             OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(ListConstant.IndexerName));
             OnCollectionReset();
+
+            return items;
         }
 
         /// <inheritdoc/>
-        public void Overwrite(int index, params T[] items)
+        public IEnumerable<T> Overwrite(int index, params T[] items)
         {
             switch (items.Length)
             {
                 case 0:
-                    return;
+                    return items;
                 case 1 when index < Count:
                     SetItem(index, items[0]);
-                    return;
+                    return items;
                 case 1 when index == Count:
                     InsertItem(index, items[0]);
-                    return;
+                    return items;
             }
 
             var overwriteParam = OverwriteParam<T>.Factory.Create(Items, index, items);
 
             CheckReentrancy();
 
-            overwriteParam.ReplaceNewItems.ForEach(
-                (item, offset) => { Items[index + offset] = item; }
+            overwriteParam.ReplaceNewItems.ForEach((item, offset) => { Items[index + offset] = item; }
             );
-            overwriteParam.InsertItems.ForEach(
-                item => { Items.Add(item); }
+            overwriteParam.InsertItems.ForEach(item => { Items.Add(item); }
             );
 
             if (overwriteParam.InsertItems.Length > 0)
-            {
                 OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(nameof(Count)));
-            }
 
             OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(ListConstant.IndexerName));
             OnCollectionReset();
+            return items;
         }
+
+        /// <inheritdoc/>
+        public new void Move(int oldIndex, int newIndex)
+            => Move(oldIndex, newIndex, 1);
 
         /// <inheritdoc/>
         public void Move(int oldIndex, int newIndex, int count)
         {
+            if (oldIndex == newIndex)
+            {
+                return;
+            }
+
             switch (count)
             {
                 case 0:
@@ -146,11 +172,9 @@ namespace WodiLib.Sys.Collections
 
             var movedItems = Get(oldIndex, count).ToList();
             count.Range()
-                .ForEach(
-                    _ => { Items.RemoveAt(oldIndex); }
+                .ForEach(_ => { Items.RemoveAt(oldIndex); }
                 );
-            movedItems.ForEach(
-                (moveItem, offset) => { Items.Insert(newIndex + offset, moveItem); }
+            movedItems.ForEach((moveItem, offset) => { Items.Insert(newIndex + offset, moveItem); }
             );
 
             OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(ListConstant.IndexerName));
@@ -158,76 +182,95 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <inheritdoc/>
-        public void Remove(int index, int count)
+        public IEnumerable<T> Remove(int index, int count)
         {
             switch (count)
             {
                 case 0:
-                    return;
+                    return Array.Empty<T>();
                 case 1:
+                    var removeItem = Items[index];
                     RemoveItem(index);
-                    return;
+                    return new[] { removeItem };
             }
 
+            var removeItems = Get(index, count).ToArray();
+
             count.Range()
-                .ForEach(
-                    _ => { Items.RemoveAt(index); }
+                .ForEach(_ => { Items.RemoveAt(index); }
                 );
 
 
             OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(nameof(Count)));
             OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(ListConstant.IndexerName));
             OnCollectionReset();
+
+            return removeItems;
         }
 
         /// <inheritdoc/>
-        public void Adjust(int length)
+        public IEnumerable<T> Adjust(int length)
         {
-            if (Count == length) return;
+            if (Count == length) return Array.Empty<T>();
             if (Count > length)
             {
-                AdjustIfLong(length);
+                return AdjustIfLong(length);
             }
 
             // Count < length
-            AdjustIfShort(length);
+            return AdjustIfShort(length);
         }
 
         /// <inheritdoc/>
-        public void AdjustIfLong(int length)
+        public IEnumerable<T> AdjustIfLong(int length)
         {
-            if (Count <= length) return;
-            Remove(length, Count - length);
+            if (Count <= length) return Array.Empty<T>();
+            return Remove(length, Count - length);
         }
 
         /// <inheritdoc/>
-        public void AdjustIfShort(int length)
+        public IEnumerable<T> AdjustIfShort(int length)
         {
-            if (Count >= length) return;
+            if (Count >= length) return Array.Empty<T>();
 
-            var addItems = (length - Count).Range().Select(i => MakeDefaultItem(Count + i));
-            Add(addItems.ToArray());
+            var addItems = (length - Count).Iterate(i => ValueBuilder.Build(this, Count + i));
+            return Add(addItems.ToArray());
         }
 
         /// <inheritdoc/>
-        public void Reset(params T[] items)
+        public IEnumerable<T> Reset(params T[] items)
         {
             CheckReentrancy();
 
             var isCountChange = Count != items.Length;
 
             Items.Clear();
-            items.ForEach(
-                item => { Items.Add(item); }
-            );
+            items.ForEach(item => { Items.Add(item); });
 
-            if (isCountChange)
-            {
-                OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(nameof(Count)));
-            }
+            if (isCountChange) OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(nameof(Count)));
 
             OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(ListConstant.IndexerName));
             OnCollectionReset();
+
+            return items;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<T> Reset(int length)
+        {
+            CheckReentrancy();
+
+            var isCountChange = Count != length;
+
+            Items.Clear();
+            length.Times(i => Items.Add(ValueBuilder.Build(this, i)));
+
+            if (isCountChange) OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(nameof(Count)));
+
+            OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(ListConstant.IndexerName));
+            OnCollectionReset();
+
+            return Items;
         }
 
         /// <inheritdoc/>
@@ -236,104 +279,51 @@ namespace WodiLib.Sys.Collections
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            return this.SequenceEqual(other);
+            return this.SequenceEqual(other, EqualityComparerFactory.Create<T>());
         }
 
         /// <inheritdoc/>
         public bool ItemEquals(object? other)
         {
-            if (other is SimpleList<T> castedSimpleList)
-            {
-                return ItemEquals(castedSimpleList);
-            }
+            if (other is SimpleList<T> castedSimpleList) return ItemEquals(castedSimpleList);
 
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            if (other is IEnumerable<T> castedEnumerable)
-            {
-                return this.SequenceEqual(castedEnumerable);
-            }
+            if (other is IEnumerable<T> castedEnumerable) return this.SequenceEqual(castedEnumerable);
 
             return Equals(other);
         }
 
         /// <inheritdoc/>
-        public ISimpleList<T> DeepClone()
+        public SimpleList<T> DeepClone()
         {
-            var result = new SimpleList<T>(MakeDefaultItem, this);
+            var result = new SimpleList<T>(ValueBuilder, this);
             return result;
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Interface Implements
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #endregion
 
-        object IDeepCloneable.DeepClone()
-        {
-            return DeepClone();
-        }
+        #region Interface Implementations
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Protected Methods
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region IDeepCloneable
 
-        protected override void SetItem(int index, T item)
-        {
-            var oldItem = Items[index];
-            PreOutItem(oldItem);
+        object IDeepCloneable.DeepClone() => DeepClone();
+        ISimpleList<T> IDeepCloneable<ISimpleList<T>>.DeepClone() => DeepClone();
 
-            base.SetItem(index, item);
-            PostInItem(item);
-        }
+        #endregion
 
-        protected override void InsertItem(int index, T item)
-        {
-            base.InsertItem(index, item);
-            PostInItem(item);
-        }
+        #endregion
 
-        protected override void RemoveItem(int index)
-        {
-            PreOutItem(Items[index]);
-            base.RemoveItem(index);
-        }
-
-        protected override void ClearItems()
-        {
-            Items.ForEach(PreOutItem);
-            base.ClearItems();
-        }
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //      Private Methods
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        private void PostInItem(T item)
-        {
-            if (item is INotifyPropertyChanged notifyPropertyChanged)
-            {
-                notifyPropertyChanged.PropertyChanged += NotifyInnerItemPropertyChanged;
-            }
-        }
-
-        private void PreOutItem(T item)
-        {
-            if (item is INotifyPropertyChanged notifyPropertyChanged)
-            {
-                notifyPropertyChanged.PropertyChanged -= NotifyInnerItemPropertyChanged;
-            }
-        }
+        #region private
 
         private void OnCollectionReset()
         {
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
 
-        private void NotifyInnerItemPropertyChanged(object sender, PropertyChangedEventArgs args)
-        {
-            var notifyArgs = PropertyChangedEventArgsCache.GetInstance(ListConstant.IndexerName);
-            OnPropertyChanged(notifyArgs);
-        }
+        #endregion
+
+        #endregion
     }
 }

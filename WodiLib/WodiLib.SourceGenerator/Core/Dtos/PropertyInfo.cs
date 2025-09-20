@@ -23,13 +23,13 @@ namespace WodiLib.SourceGenerator.Core.Dtos
         private static readonly Regex RegexTypeIsString = new("^[Ss]tring\\??");
 
         /// <summary>プロパティ名</summary>
-        public string Name { get; init; } = default!;
+        public string Name { get; init; } = null!;
 
         /// <summary>プロパティタイプ</summary>
-        public string Type { get; init; } = default!;
+        public string Type { get; init; } = null!;
 
         /// <summary>ドキュメントコメント：Summary</summary>
-        public string Summary { get; init; } = default!;
+        public string Summary { get; init; } = null!;
 
         /// <summary>ドキュメントコメント：Remarks</summary>
         public string? Remarks { get; init; }

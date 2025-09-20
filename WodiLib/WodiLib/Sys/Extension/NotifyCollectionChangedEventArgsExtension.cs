@@ -29,12 +29,14 @@ namespace WodiLib.Sys
         /// <param name="resetAction">Resetイベントである場合に実行するアクション</param>
         /// <typeparam name="T"></typeparam>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public static void ExecuteByAction<T>(this NotifyCollectionChangedEventArgs e,
+        public static void ExecuteByAction<T>(
+            this NotifyCollectionChangedEventArgs e,
             ReplaceAction<T>? replaceAction = null,
             AddAction<T>? addAction = null,
             MoveAction<T>? moveAction = null,
             RemoveAction<T>? removeAction = null,
-            ResetAction? resetAction = null)
+            ResetAction? resetAction = null
+        )
         {
             switch (e.Action)
             {

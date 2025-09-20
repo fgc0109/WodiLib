@@ -16,7 +16,6 @@ namespace WodiLib.Sys
     /// </summary>
     public class PropertyException : Exception
     {
-        /// <inheritdoc/>
         /// <summary>
         ///     コンストラクタ
         /// </summary>
@@ -24,12 +23,20 @@ namespace WodiLib.Sys
         {
         }
 
-        /// <inheritdoc/>
         /// <summary>
         ///     コンストラクタ
         /// </summary>
         /// <param name="message">エラーメッセージ</param>
-        public PropertyException(string message) : base(message)
+        public PropertyException(string? message) : base(message)
+        {
+        }
+
+        /// <summary>
+        ///     コンストラクタ
+        /// </summary>
+        /// <param name="message">エラーメッセージ</param>
+        /// <param name="innerException">内包するエラー</param>
+        public PropertyException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
     }

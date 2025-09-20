@@ -18,15 +18,15 @@ namespace WodiLib.Sys
     internal class FilePathStringObjectValueAttribute : CommonOneLineStringValueObjectAttribute
     {
         /// <inheritdoc/>
-        [DefaultValueAttribute(260)]
-        public override int MaxLength { get; init; } = default!;
+        [DefaultValue(260)]
+        public override int MaxLength { get; init; } = 0!;
 
         /// <inheritdoc/>
-        [DefaultValueAttribute(true)]
-        public override bool IsAllowEmpty { get; init; } = default!;
+        [DefaultValue(true)]
+        public override bool IsAllowEmpty { get; init; } = false;
 
         /// <inheritdoc/>
-        [DefaultValueAttribute(RegexOptions.IgnoreCase)]
+        [DefaultValue(RegexOptions.IgnoreCase)]
         public override RegexOptions PatternOption { get; init; } = default!;
     }
 }

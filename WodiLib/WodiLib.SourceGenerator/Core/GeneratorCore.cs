@@ -37,8 +37,7 @@ namespace WodiLib.SourceGenerator.Core
         public void Initialize(GeneratorInitializationContext context)
         {
             var cnt = 0;
-            context.RegisterForPostInitialization(
-                i =>
+            context.RegisterForPostInitialization(i =>
                 {
                     var logger = @delegate.CreateLogger();
                     foreach (var info in @delegate.GetPostInitializationRegisterInfoList(logger))
@@ -70,9 +69,8 @@ namespace WodiLib.SourceGenerator.Core
             }
             catch (Exception ex)
             {
-                context.RegisterForPostInitialization(
-                    i =>
-                        i.AddSource("CreateSyntaxWorkerError.log", $"{ex.Message}{Environment.NewLine}{ex.Message}")
+                context.RegisterForPostInitialization(i =>
+                    i.AddSource("CreateSyntaxWorkerError.log", $"{ex.Message}{Environment.NewLine}{ex.Message}")
                 );
                 Console.WriteLine(ex.Message);
             }

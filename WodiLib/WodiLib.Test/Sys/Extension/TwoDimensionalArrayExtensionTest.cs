@@ -10,7 +10,7 @@ namespace WodiLib.Test.Sys
     [TestFixture]
     public class TwoDimensionalArrayExtensionTest
     {
-        private static Logger logger = default!;
+        private static Logger logger = null!;
 
         [SetUp]
         public static void Setup()
@@ -21,13 +21,13 @@ namespace WodiLib.Test.Sys
 
         private static readonly object[] ToTransposedArrayTestCaseSource =
         {
-            new object[] {(int[][]) Array.Empty<int[]>(),},
-            new object[] {(int[][]) new[] {Array.Empty<int>()},},
-            new object[] {(int[][]) new[] {Array.Empty<int>(), Array.Empty<int>()},},
-            new object[] {new[] {new[] {1, 2, 3}},},
-            new object[] {new[] {new[] {1}, new[] {2}},},
-            new object[] {new[] {new[] {1, 2, 3, 4}, new[] {11, 12, 13, 14}},},
-            new object[] {new[] {new[] {1, 2}, new[] {11, 12}, new[] {21, 22}, new[] {31, 32}}},
+            new object[] { (int[][])Array.Empty<int[]>() },
+            new object[] { (int[][])new[] { Array.Empty<int>() } },
+            new object[] { (int[][])new[] { Array.Empty<int>(), Array.Empty<int>() } },
+            new object[] { new[] { new[] { 1, 2, 3 } } },
+            new object[] { new[] { new[] { 1 }, new[] { 2 } } },
+            new object[] { new[] { new[] { 1, 2, 3, 4 }, new[] { 11, 12, 13, 14 } } },
+            new object[] { new[] { new[] { 1, 2 }, new[] { 11, 12 }, new[] { 21, 22 }, new[] { 31, 32 } } },
         };
 
         [TestCaseSource(nameof(ToTransposedArrayTestCaseSource))]
@@ -40,10 +40,10 @@ namespace WodiLib.Test.Sys
                     .ForEach(row => Assert.AreEqual(target[0].Length, target[row].Length));
             }
 
-            // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+            // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-            var getRowCount = (Func<int[][], int>) (items => items.Length);
-            var getColumnCount = (Func<int[][], int>) (items =>
+            var getRowCount = (Func<int[][], int>)(items => items.Length);
+            var getColumnCount = (Func<int[][], int>)(items =>
             {
                 if (getRowCount(items) == 0) return 0;
                 return items[0].Length;
@@ -55,7 +55,7 @@ namespace WodiLib.Test.Sys
 
             logger.Debug($"target: {target}\nresult: {result}");
 
-            // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+            // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
             var targetRowCount = getRowCount(target);
             var targetColumnCount = getColumnCount(target);
@@ -64,10 +64,8 @@ namespace WodiLib.Test.Sys
             Assert.AreEqual(targetRowCount, getRowCount(targetClone));
             if (targetRowCount > 0)
             {
-                Enumerable.Range(0, targetRowCount).ForEach(row =>
-                {
-                    Assert.IsTrue(target[row].SequenceEqual(targetClone[row]));
-                });
+                Enumerable.Range(0, targetRowCount)
+                    .ForEach(row => { CustomAssert.AreSequenceEquals(targetClone[row], target[row]); });
             }
 
             // 転置行列の行数および列数が正しいこと
@@ -90,16 +88,22 @@ namespace WodiLib.Test.Sys
             // 転置行列のすべての行について列数が一致すること
             if (resultRowCount > 1)
             {
-                Enumerable.Range(1, resultRowCount - 1).ForEach(row =>
-                    Assert.AreEqual(resultColumnCount, result[row].Length));
+                Enumerable.Range(1, resultRowCount - 1)
+                    .ForEach(row =>
+                        Assert.AreEqual(resultColumnCount, result[row].Length)
+                    );
             }
 
             // 各要素が正しく編集されていること
-            Enumerable.Range(0, resultRowCount).ForEach(resultRow =>
-            {
-                Enumerable.Range(0, resultColumnCount).ForEach(resultColumn =>
-                    Assert.AreEqual(target[resultColumn][resultRow], result[resultRow][resultColumn]));
-            });
+            Enumerable.Range(0, resultRowCount)
+                .ForEach(resultRow =>
+                    {
+                        Enumerable.Range(0, resultColumnCount)
+                            .ForEach(resultColumn =>
+                                Assert.AreEqual(target[resultColumn][resultRow], result[resultRow][resultColumn])
+                            );
+                    }
+                );
         }
     }
 }

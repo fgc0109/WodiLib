@@ -56,7 +56,7 @@ namespace WodiLib.Sys
         /// <typeparam name="T">比較対象型</typeparam>
         /// <param name="funcCompare">比較処理</param>
         /// <returns>比較処理実装クラスインスタンス</returns>
-        public static IEqualityComparer<T> Create<T>(Func<T, T, bool> funcCompare)
+        public static IEqualityComparer<T> Create<T>(Func<T, T, bool>? funcCompare = null)
         {
             return new AnonymousComparer<T>(funcCompare);
         }
@@ -175,6 +175,11 @@ namespace WodiLib.Sys
 
             public override bool Equals(T x, T y)
             {
+                if (ReferenceEquals(x, y))
+                {
+                    return true;
+                }
+
                 if (FuncCompare is not null)
                 {
                     return FuncCompare(x, y);
@@ -192,7 +197,7 @@ namespace WodiLib.Sys
 
                 if (x is IEqualityComparable comparableX)
                 {
-                    return comparableX.ItemEquals(x);
+                    return comparableX.ItemEquals(y);
                 }
 
                 return x!.Equals(y);

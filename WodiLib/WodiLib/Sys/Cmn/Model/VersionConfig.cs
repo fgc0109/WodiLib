@@ -16,7 +16,7 @@ namespace WodiLib.Sys.Cmn
     public class VersionConfig : IVersionConfig
     {
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Constant
+        //     Constants
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace WodiLib.Sys.Cmn
         /// <remarks>
         ///     キー名の変更は <see cref="ChangeTargetKey"/> メソッドで行う。
         /// </remarks>
-        public static string TargetKeyName { get; private set; } = default!;
+        public static string TargetKeyName { get; private set; } = null!;
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Public Property

@@ -17,7 +17,7 @@ namespace WodiLib.SourceGenerator.Core.Dtos
     internal class TypeDefinitionInfo
     {
         /// <summary>型名（フル）</summary>
-        public string TypeFullName { get; init; } = default!;
+        public string TypeFullName { get; init; } = null!;
 
         /// <summary>型タイプ</summary>
         public ObjectType ObjectType { get; init; }
@@ -33,6 +33,9 @@ namespace WodiLib.SourceGenerator.Core.Dtos
 
         /// <summary>Sealedフラグ</summary>
         public bool IsSealed { get; init; }
+
+        /// <summary>親クラス</summary>
+        public INamedTypeSymbol? BaseType { get; init; }
 
         /// <summary>クラスフラグ</summary>
         public bool IsClass => ObjectType.Equals(ObjectType.Class);

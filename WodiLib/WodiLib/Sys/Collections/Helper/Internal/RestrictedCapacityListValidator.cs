@@ -7,41 +7,48 @@
 // ========================================
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace WodiLib.Sys.Collections
 {
     /// <summary>
-    ///     リスト編集メソッドの引数汎用検証処理実施クラス
+    ///     容量制限ありリスト編集メソッドの引数汎用検証処理実施クラス
     /// </summary>
-    internal sealed class RestrictedCapacityListValidator<T> : WodiLibListValidatorTemplate<T>
+    /// <typeparam name="TElementSettings">リスト内包型の入力パラメータ型</typeparam>
+    internal class RestrictedCapacityListValidator<TElementSettings> : StandardListValidator<TElementSettings>
     {
-        protected override IWodiLibListValidator<T>? BaseValidator { get; }
+        public delegate int GetMaxCapacityDelegate();
+
+        public delegate int GetMinCapacityDelegate();
 
         private static string ListItemsName => "要素数";
 
-        public RestrictedCapacityListValidator(IRestrictedCapacityList<T> target) : base(new TargetAdapter(target))
+        protected GetMaxCapacityDelegate MaxCapacityGetter { get; }
+        protected GetMinCapacityDelegate MinCapacityGetter { get; }
+
+        public RestrictedCapacityListValidator(
+            GetCountDelegate countGetter,
+            GetMaxCapacityDelegate maxCapacityGetter,
+            GetMinCapacityDelegate minCapacityGetter
+        ) : base(countGetter)
         {
-            BaseValidator = new CommonListValidator<T>(target);
+            MaxCapacityGetter = maxCapacityGetter;
+            MinCapacityGetter = minCapacityGetter;
         }
 
-        public RestrictedCapacityListValidator(IEnumerable target, int minCapacity, int maxCapacity) : base(
-            new TargetAdapter(target, minCapacity, maxCapacity)
-        )
+        public override void Constructor(NamedValue<IEnumerable<TElementSettings>> initItems)
         {
-            BaseValidator = new CommonListValidator<T>(target, minCapacity, maxCapacity);
-        }
+            base.Constructor(initItems);
 
-        public override void Constructor(NamedValue<IEnumerable<T>> initItems)
-        {
+            var maxCapacity = MaxCapacityGetter.Invoke();
+            var minCapacity = MinCapacityGetter.Invoke();
 #if DEBUG
             try
             {
-                RestrictedListValidationHelper.CapacityConfig(
-                    ($"{Target.GetType().FullName}.{nameof(Target.GetMinCapacity)}", Target.GetMinCapacity()),
-                    ($"{Target.GetType().FullName}.{nameof(Target.GetMaxCapacity)}", Target.GetMaxCapacity())
+                RestrictedCapacityListValidationHelper.CapacityConfig(
+                    ($"GetMinCapacity", minCapacity),
+                    ($"GetMaxCapacity", maxCapacity)
                 );
             }
             catch (Exception ex)
@@ -50,61 +57,72 @@ namespace WodiLib.Sys.Collections
             }
 #endif
 
-            BaseValidator?.Constructor(initItems);
-            RestrictedListValidationHelper.ArgumentItemsCount(
+            RestrictedCapacityListValidationHelper.ArgumentItemsCount(
                 initItems.Value.Count(),
-                Target.GetMinCapacity(),
-                Target.GetMaxCapacity()
+                minCapacity,
+                maxCapacity
             );
         }
 
-        public override void Insert(NamedValue<int> index, NamedValue<IEnumerable<T>> items)
+        public override void Insert(NamedValue<int> index, NamedValue<IEnumerable<TElementSettings>> items)
         {
-            BaseValidator?.Insert(index, items);
-            RestrictedListValidationHelper.ItemMaxCount(
-                Target.GetCount() + items.Value.Count(),
-                Target.GetMaxCapacity()
+            base.Insert(index, items);
+
+            RestrictedCapacityListValidationHelper.ItemMaxCount(
+                CountGetter.Invoke() + items.Value.Count(),
+                MaxCapacityGetter.Invoke()
             );
         }
 
-        public override void Overwrite(NamedValue<int> index, NamedValue<IEnumerable<T>> items)
+        public override void Overwrite(NamedValue<int> index, NamedValue<IEnumerable<TElementSettings>> items)
         {
-            BaseValidator?.Overwrite(index, items);
-            RestrictedListValidationHelper.OverwrittenCount(
+            base.Overwrite(index, items);
+
+            RestrictedCapacityListValidationHelper.OverwrittenCount(
                 index.Value,
                 items.Value.Count(),
-                Target.GetCount(),
-                Target.GetMaxCapacity()
+                CountGetter.Invoke(),
+                MaxCapacityGetter.Invoke()
             );
         }
 
         public override void Remove(NamedValue<int> index, NamedValue<int> count)
         {
-            BaseValidator?.Remove(index, count);
-            RestrictedListValidationHelper.ItemMinCount(
-                (ListItemsName, Target.GetCount() - count.Value),
-                Target.GetMinCapacity()
+            base.Remove(index, count);
+
+            RestrictedCapacityListValidationHelper.ItemMinCount(
+                (ListItemsName, CountGetter.Invoke() - count.Value),
+                MinCapacityGetter.Invoke()
             );
         }
 
         public override void AdjustLength(NamedValue<int> length)
         {
-            BaseValidator?.AdjustLength(length);
-            RestrictedListValidationHelper.ArgumentItemsCount(
-                length.Value,
-                Target.GetMinCapacity(),
-                Target.GetMaxCapacity(),
-                length.Name
+            var min = MinCapacityGetter.Invoke();
+            ThrowHelper.ValidateArgumentValueGreaterOrEqual(
+                length.Value < min,
+                length.Name,
+                min,
+                length.Value
+            );
+
+            var max = MaxCapacityGetter.Invoke();
+            ThrowHelper.ValidateArgumentValueLessOrEqual(
+                length.Value > max,
+                length.Name,
+                max,
+                length.Value
             );
         }
 
-        public override void Reset(NamedValue<IEnumerable<T>> items)
+        public override void Reset(NamedValue<IEnumerable<TElementSettings>> items, bool canChangeSize = true)
         {
-            BaseValidator?.Reset(items);
-            RestrictedListValidationHelper.ArgumentItemsCount(
+            base.Reset(items, canChangeSize);
+
+            RestrictedCapacityListValidationHelper.ArgumentItemsCount(
                 items.Value.Count(),
-                Target.GetMinCapacity(),
-                Target.GetMaxCapacity(),
+                MinCapacityGetter.Invoke(),
+                MaxCapacityGetter.Invoke(),
                 items.Name
             );
         }

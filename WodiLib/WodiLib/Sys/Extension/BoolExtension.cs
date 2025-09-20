@@ -17,7 +17,9 @@ namespace WodiLib.Sys
         /// <returns>trueの場合1、falseの場合0</returns>
         public static int ToInt(this bool src)
         {
-            return src ? 1 : 0;
+            return src
+                ? 1
+                : 0;
         }
 
         /// <summary>

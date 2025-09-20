@@ -13,7 +13,7 @@ using System.Linq;
 namespace WodiLib.Sys.Collections
 {
     /// <summary>
-    ///     <see cref="IExtendedList{T}.OverwriteCore"/> の実行パラメータ
+    ///     <see cref="ExtendedList{TEditableElement,TReadOnlyElement,TElementSettings}.OverwriteInternal"/> の実行パラメータ
     /// </summary>
     internal record OverwriteParam<T>
     {
@@ -25,8 +25,13 @@ namespace WodiLib.Sys.Collections
 
         public string[] NotifyProperties { get; }
 
-        private OverwriteParam(T[] replaceOldItems, T[] replaceNewItems, int insertStartIndex, T[] insertItems,
-            string[] notifyProperties)
+        private OverwriteParam(
+            T[] replaceOldItems,
+            T[] replaceNewItems,
+            int insertStartIndex,
+            T[] insertItems,
+            string[] notifyProperties
+        )
         {
             ReplaceOldItems = replaceOldItems;
             ReplaceNewItems = replaceNewItems;
@@ -36,7 +41,7 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <summary>
-        ///     <see cref="IExtendedList{T}.OverwriteCore"/> の実行パラメータFactoryクラス
+        ///     <see cref="ExtendedList{TEditableElement,TReadOnlyElement,TElementSettings}.OverwriteInternal"/> の実行パラメータFactoryクラス
         /// </summary>
         public static class Factory
         {
@@ -65,8 +70,13 @@ namespace WodiLib.Sys.Collections
 
                 notifyProperties.Add(ListConstant.IndexerName);
 
-                return new OverwriteParam<T>(replaceOldItems, replaceItems, insertStartIndex, insertItems,
-                    notifyProperties.ToArray());
+                return new OverwriteParam<T>(
+                    replaceOldItems,
+                    replaceItems,
+                    insertStartIndex,
+                    insertItems,
+                    notifyProperties.ToArray()
+                );
             }
         }
     }

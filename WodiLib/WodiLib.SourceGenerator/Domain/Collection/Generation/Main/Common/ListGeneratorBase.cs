@@ -1,0 +1,342 @@
+// ========================================
+// Project Name : WodiLib.SourceGenerator
+// File Name    : ListGeneratorBase.cs
+//
+// MIT License Copyright(c) 2019 kameske
+// see LICENSE file
+// ========================================
+
+using System;
+using System.Linq;
+using System.Text.RegularExpressions;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using WodiLib.SourceGenerator.Core.Extensions;
+using WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize;
+using WodiLib.SourceGenerator.Core.SourceBuilder;
+using WodiLib.SourceGenerator.Core.Templates.FromAttribute;
+using WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.Attributes;
+
+namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
+{
+    internal abstract partial class ListGeneratorBase : MainSourceAddableTemplate
+    {
+        private protected abstract bool IsRestrictedCapacityList { get; }
+
+        public override InitializeAttributeSourceAddable TargetAttribute =>
+            IsRestrictedCapacityList
+                ? RestrictedCapacityListImplementTemplateAttribute.Instance
+                : FixedLengthListImplementTemplateAttribute.Instance;
+
+        private protected override SourceFormatTargetBlock GenerateTImportUsingSource(WorkState workState)
+        {
+            return new[]
+            {
+                "using System;", // 例外のため
+                "using System.Collections;", // IEnumerable のため
+                "using System.Collections.Generic;", // IEnumerable<T> などのため
+                "using System.Collections.Specialized;", // INotifyCollectionChanged のため
+                "using System.Linq;", // IEnumerable<T> 拡張メソッド使用のため
+                "using WodiLib.Sys;", // EqualityComparerFactory 使用のため
+                "using WodiLib.Sys.Collections;", // ExtendedList 使用のため
+            };
+        }
+
+        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(WorkState workState)
+        {
+            try
+            {
+                var propertyValues = workState.PropertyValues;
+                var typeDefinitionInfo = workState.CurrentTypeDefinitionInfo;
+
+                var currentSymbol = workState.CurrentSymbol;
+                if (currentSymbol is null)
+                {
+                    return "";
+                }
+
+                var modelInfo = BuildClassInformation(
+                    workState,
+                    workState.CurrentSymbol!,
+                    restrictedCapacityListClassName: workState.Name.Replace("ReadOnly", ""),
+                    description: propertyValues[RestrictedCapacityListImplementTemplateAttribute.Description.Name]!,
+                    isAbstract: typeDefinitionInfo.IsAbstract,
+                    accessibility: AccessibilityConverter.ConvertSourceText(typeDefinitionInfo.Accessibility),
+                    maxCapacity: propertyValues[RestrictedCapacityListImplementTemplateAttribute.MaxCapacity.Name]!,
+                    minCapacity: propertyValues[RestrictedCapacityListImplementTemplateAttribute.MinCapacity.Name]!,
+                    elementType: propertyValues[RestrictedCapacityListImplementTemplateAttribute.ElementType.Name]!,
+                    readOnlyElementType:
+                    propertyValues[RestrictedCapacityListImplementTemplateAttribute.ReadOnlyElementType.Name]
+                    ?? propertyValues[RestrictedCapacityListImplementTemplateAttribute.ElementType.Name]!,
+                    settingsType:
+                    propertyValues[RestrictedCapacityListImplementTemplateAttribute.SettingsType.Name]
+                    ?? propertyValues[RestrictedCapacityListImplementTemplateAttribute.ElementType.Name]!,
+                    baseModelClass: GetBaseModelClassName(
+                        propertyValues[RestrictedCapacityListImplementTemplateAttribute.BaseModelClass.Name]
+                    )
+                );
+                modelInfo.Members.Initialize(
+                    currentSymbol,
+                    modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword,
+                    modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword,
+                    modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword,
+                    modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword
+                );
+
+                return SourceTextFormatter.Format(
+                    "",
+                    // 設定インタフェース
+                    BuildSettingsInterfaceSource(modelInfo),
+                    SourceFormatTargetBlock.Empty,
+                    // 設定DTO
+                    BuildSettingsDtoSource(modelInfo),
+                    SourceFormatTargetBlock.Empty,
+                    // リストクラス
+                    SourceTextFormatter.If(
+                        IsRestrictedCapacityList,
+                        "",
+                        BuildRestrictedClassSource(modelInfo),
+                        SourceFormatTargetBlock.Empty
+                    ),
+                    // 容量固定リストクラス
+                    BuildFixedLengthClassSource(modelInfo),
+                    SourceFormatTargetBlock.Empty,
+                    // 読取専用リストクラス
+                    BuildReadOnlyClassSource(modelInfo)
+                );
+            }
+            catch (Exception e)
+            {
+                return e.ToString();
+            }
+        }
+
+        private static string? GetBaseModelClassName(string? originalValue)
+        {
+            if (originalValue is null)
+            {
+                return null;
+            }
+
+            if (originalValue.IndexOf('<') == -1)
+            {
+                // 総称型を使わない場合
+                //      名前空間を除去
+                return originalValue.Split('.').Last();
+            }
+
+            // 総称型を使う場合
+            //      クラス名部分と総称型部分に分割
+            //      クラス名部分は名前空間を除去
+            //      総称型部分はそのまま
+            var regex = new Regex("^([^<]*)(<.+)?");
+            var matchGroups = regex.Matches(originalValue)[0].Groups;
+            return $"{matchGroups[1].Value.Split('.').Last()}{matchGroups[2].Value}";
+        }
+
+        private ModelInformation BuildClassInformation(
+            WorkState workState,
+            INamedTypeSymbol currentSymbol,
+            string restrictedCapacityListClassName,
+            string description,
+            string accessibility,
+            bool isAbstract,
+            string maxCapacity,
+            string minCapacity,
+            string elementType,
+            string readOnlyElementType,
+            string settingsType,
+            string? baseModelClass
+        )
+        {
+            var baseModelClassNoGeneric = baseModelClass?.Split('<')[0];
+
+            var isExtendClass = baseModelClass is not null;
+
+            var restrictedCapacityListClassNameWithoutInOutKeyword =
+                restrictedCapacityListClassName.Replace("out ", "").Replace("in ", "");
+            var fixedLengthListClassName = !IsRestrictedCapacityList
+                ? restrictedCapacityListClassName
+                : $"Fixed{restrictedCapacityListClassName}";
+            var fixedLengthListClassNameWithoutInOutKeyword =
+                fixedLengthListClassName.Replace("out ", "").Replace("in ", "");
+            var readOnlyListClassName = $"ReadOnly{restrictedCapacityListClassName}";
+            var readOnlyListClassNameWithoutInOutKeyword = readOnlyListClassName.Replace("out ", "").Replace("in ", "");
+
+            var dtoNameBase = $"{restrictedCapacityListClassName.Split('<')[0]}Settings";
+
+            var settingsInterfaceName = $"I{dtoNameBase}";
+            var settingsInterfaceNameWithoutIOKeyword = settingsInterfaceName.Replace("out ", "").Replace("in ", "");
+
+            var settingsDtoName = dtoNameBase;
+
+            var baseSettingsParameterTypes = workState.CurrentSymbol?.BaseType is not null
+                                             && workState.CurrentSymbol.BaseType.FullName()
+                                                 .StartsWith("WodiLib.Sys.BaseModel")
+                ? null
+                : workState.CurrentSymbol!.BaseType!.TypeParameters.Select(t =>
+                        {
+                            var keyword = t.Variance switch
+                            {
+                                VarianceKind.None => "",
+                                VarianceKind.In => "in ",
+                                VarianceKind.Out => "out ",
+                                _ => "",
+                            };
+
+                            return $"{keyword}{t.Name}";
+                        }
+                    )
+                    .ToArray();
+
+            var joinedBaseSettingsParameterTypes =
+                baseSettingsParameterTypes is not null
+                    ? string.Join(", ", baseSettingsParameterTypes)
+                    : null;
+            var markedBaseSettingsParameterTypes =
+                joinedBaseSettingsParameterTypes is not null
+                    ? $"<{joinedBaseSettingsParameterTypes}>"
+                    : "";
+
+            var extendsSettingsInterface =
+                $" : WodiLib.Sys.IEqualityComparable<{settingsInterfaceNameWithoutIOKeyword}>, IListSettings<{settingsType}>"
+                + (
+                    baseModelClassNoGeneric is not null
+                        ? $", I{baseModelClassNoGeneric}Settings{markedBaseSettingsParameterTypes}"
+                        : ""
+                );
+            var extendsSettingsDto = baseModelClassNoGeneric is not null
+                ? $"{baseModelClassNoGeneric}Settings{markedBaseSettingsParameterTypes}, {settingsInterfaceNameWithoutIOKeyword}"
+                : settingsInterfaceNameWithoutIOKeyword;
+
+            // クラス自身に実装されている設定インタフェースとのItemEqualsメソッドのコードを取得する。
+            // 設定DTOに同じ内容で実装する。
+            // ターゲットとなるItemEqualsメソッドが未実装の場合、NotImplementedException を投げるようにする
+            var settingsInterfaceCompareCode =
+                GetSettingsInterfaceItemEqualsMethodBody(currentSymbol, settingsInterfaceName);
+
+            return new ModelInformation(
+                !IsRestrictedCapacityList,
+                elementType,
+                readOnlyElementType,
+                settingsType,
+                description,
+                accessibility,
+                isExtendClass,
+                isAbstract,
+                maxCapacity,
+                minCapacity,
+                new SettingsInterfaceInformation(
+                    settingsInterfaceName,
+                    settingsInterfaceNameWithoutIOKeyword,
+                    extendsSettingsInterface
+                ),
+                new SettingsDtoInformation(
+                    settingsDtoName,
+                    extendsSettingsDto,
+                    settingsInterfaceCompareCode
+                ),
+                new RestrictedCapacityListInformation(
+                    restrictedCapacityListClassName,
+                    restrictedCapacityListClassNameWithoutInOutKeyword
+                ),
+                new FixedLengthListInformation(
+                    fixedLengthListClassName,
+                    fixedLengthListClassNameWithoutInOutKeyword
+                ),
+                new ReadOnlyListInformation(
+                    readOnlyListClassName,
+                    readOnlyListClassNameWithoutInOutKeyword
+                )
+            );
+        }
+
+        /// <summary>
+        ///     設定インタフェースと比較するItemEqualsメソッドの実装ソースコードを文字列として取得する。
+        ///     取得できない場合は <see cref="NotImplementedException"/> をスローするソースコードを返す。
+        /// </summary>
+        /// <param name="currentSymbol"></param>
+        /// <param name="settingsInterfaceName"></param>
+        /// <returns></returns>
+        private static string GetSettingsInterfaceItemEqualsMethodBody(
+            INamedTypeSymbol currentSymbol,
+            string settingsInterfaceName
+        )
+        {
+            var targetMethod = currentSymbol
+                .GetMembers()
+                .OfType<IMethodSymbol>()
+                .FirstOrDefault(m =>
+                    m.Name == "ItemEquals"
+                    && m.Parameters.Length == 1
+                    && m.Parameters[0].Type.ToString() == $"{settingsInterfaceName}?" // nullable
+                    && m.ReturnType.SpecialType == SpecialType.System_Boolean
+                );
+
+            var syntaxReference = targetMethod?.DeclaringSyntaxReferences.FirstOrDefault();
+            var syntaxNode = syntaxReference?.GetSyntax();
+
+            if (syntaxNode is MethodDeclarationSyntax methodNode)
+            {
+                return methodNode.ToString();
+            }
+
+            return @$"public bool ItemEquals({settingsInterfaceName}? other)
+        {{
+            throw new System.NotImplementedException();
+        }}";
+        }
+
+        private record ModelInformation(
+            bool IsFixed,
+            string ElementType,
+            string ReadOnlyElementType,
+            string ElementSettingsType,
+            string Description,
+            string Accessibility,
+            bool IsExtendClass,
+            bool IsAbstract,
+            string MaxCapacity,
+            string MinCapacity,
+            SettingsInterfaceInformation SettingsInterfaceInfo,
+            SettingsDtoInformation SettingsDtoInfo,
+            RestrictedCapacityListInformation RestrictedCapacityListInfo,
+            FixedLengthListInformation FixedLengthListInfo,
+            ReadOnlyListInformation ReadOnlyListInfo
+        )
+        {
+            public readonly string AbstractKeyword = IsAbstract
+                ? "abstract "
+                : "";
+
+            public ListMembers Members { get; } = new();
+        }
+
+        private record SettingsInterfaceInformation(
+            string SettingsInterfaceName,
+            string SettingsInterfaceNameWithoutIOKeyword,
+            string ExtendsSettingsInterface
+        );
+
+        private record SettingsDtoInformation(
+            string SettingsDtoName,
+            string ExtendsSettingsDto,
+            string SettingsInterfaceCompareCode
+        );
+
+        private record RestrictedCapacityListInformation(
+            string RestrictedCapacityListClassName,
+            string RestrictedCapacityListClassNameWithoutInOutKeyword
+        );
+
+        private record FixedLengthListInformation(
+            string FixedLengthListClassName,
+            string FixedLengthListClassNameWithoutInOutKeyword
+        );
+
+        private record ReadOnlyListInformation(
+            string ReadOnlyListClassName,
+            string ReadOnlyListClassNameWithoutInOutKeyword
+        );
+    }
+}

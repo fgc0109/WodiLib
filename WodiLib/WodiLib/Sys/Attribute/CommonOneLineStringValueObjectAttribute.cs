@@ -22,11 +22,11 @@ namespace WodiLib.Sys
     internal class CommonOneLineStringValueObjectAttribute : StringValueObjectAttribute
     {
         /// <inheritdoc/>
-        [DefaultValueAttribute(CastType.Implicit)]
+        [DefaultValue(CastType.Implicit)]
         public override CastType CastType { get; init; } = default!;
 
         /// <inheritdoc/>
-        [DefaultValueAttribute(false)]
-        public override bool IsAllowNewLine { get; init; } = default!;
+        [DefaultValue(false)]
+        public override bool IsAllowNewLine { get; init; } = false;
     }
 }

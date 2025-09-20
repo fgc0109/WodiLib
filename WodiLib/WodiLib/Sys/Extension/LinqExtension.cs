@@ -31,7 +31,8 @@ namespace WodiLib.Sys
         /// </exception>
         public static void ForEach<TSource>(
             this IEnumerable<TSource> source,
-            Action<TSource, int> action)
+            Action<TSource, int> action
+        )
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (action == null) throw new ArgumentNullException(nameof(action));
@@ -59,7 +60,8 @@ namespace WodiLib.Sys
         /// </exception>
         public static void ForEach<TSource>(
             this IEnumerable<TSource> source,
-            Action<TSource> action)
+            Action<TSource> action
+        )
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (action == null) throw new ArgumentNullException(nameof(action));
@@ -82,7 +84,8 @@ namespace WodiLib.Sys
         /// </exception>
         public static bool Any<TSource>(
             this IEnumerable<TSource> source,
-            Func<TSource, int, bool> predicate)
+            Func<TSource, int, bool> predicate
+        )
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (predicate == null) throw new ArgumentNullException(nameof(predicate));
@@ -105,8 +108,10 @@ namespace WodiLib.Sys
         /// <typeparam name="TFirst"><paramref name="src"/> の要素型</typeparam>
         /// <typeparam name="TSecond"><paramref name="other"/> の要素型</typeparam>
         /// <returns></returns>
-        public static IEnumerable<(TFirst, TSecond)> Zip<TFirst, TSecond>(this IEnumerable<TFirst> src,
-            IEnumerable<TSecond> other)
+        public static IEnumerable<(TFirst, TSecond)> Zip<TFirst, TSecond>(
+            this IEnumerable<TFirst> src,
+            IEnumerable<TSecond> other
+        )
         {
             return src.Zip<TFirst, TSecond, (TFirst, TSecond)>(other, (item1, item2) => (item1, item2));
         }
@@ -122,9 +127,13 @@ namespace WodiLib.Sys
         /// <typeparam name="TThird"><paramref name="third"/> の要素型</typeparam>
         /// <returns>ValueTupleシーケンス</returns>
         public static IEnumerable<(TFirst, TSecond, TThird)> Zip<TFirst, TSecond, TThird>(
-            this IEnumerable<TFirst> first, IEnumerable<TSecond> second, IEnumerable<TThird> third)
+            this IEnumerable<TFirst> first,
+            IEnumerable<TSecond> second,
+            IEnumerable<TThird> third
+        )
         {
-            return first.Zip(second).Zip(third)
+            return first.Zip(second)
+                .Zip(third)
                 .Select(zip => (zip.Item1.Item1, zip.Item1.Item2, zip.Item2));
         }
 
@@ -139,7 +148,8 @@ namespace WodiLib.Sys
         public static (IEnumerable<TFirst>, IEnumerable<TSecond>, IEnumerable<TThird>)
             SelectMulti<TFirst, TSecond, TThird>(this IEnumerable<(TFirst, TSecond, TThird)> src)
         {
-            return src.Aggregate((new List<TFirst>(), new List<TSecond>(), new List<TThird>()),
+            return src.Aggregate(
+                (new List<TFirst>(), new List<TSecond>(), new List<TThird>()),
                 (lists, item) =>
                 {
                     var (firsts, seconds, thirds) = lists;
@@ -149,7 +159,8 @@ namespace WodiLib.Sys
                     thirds.Add(third);
 
                     return lists;
-                });
+                }
+            );
         }
 
         /// <summary>

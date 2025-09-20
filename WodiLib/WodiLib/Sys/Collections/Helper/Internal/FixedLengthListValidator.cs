@@ -13,82 +13,78 @@ using System.Linq;
 namespace WodiLib.Sys.Collections
 {
     /// <summary>
-    ///     IFixedLengthList の基本検証処理実施クラス
+    ///     容量固定リスト編集メソッドの引数汎用検証処理実施クラス
     /// </summary>
-    /// <typeparam name="T">リスト要素入力型</typeparam>
-    internal class FixedLengthListValidator<T> : WodiLibListValidatorTemplate<T>
+    /// <typeparam name="TElementSettings">リスト内包型の入力パラメータ型</typeparam>
+    internal class FixedLengthListValidator<TElementSettings> : StandardListValidator<TElementSettings>
     {
-        protected override IWodiLibListValidator<T>? BaseValidator { get; }
+        public delegate int GetMaxCapacityDelegate();
 
-        private ICapacityGetter Capacity { get; }
+        public delegate int GetMinCapacityDelegate();
 
-        public FixedLengthListValidator(IFixedLengthList<T> target, int capacity) : base(
-            new TargetAdapter(target, capacity)
-        )
+        protected GetMaxCapacityDelegate MaxCapacityGetter { get; }
+        protected GetMinCapacityDelegate MinCapacityGetter { get; }
+
+        public FixedLengthListValidator(
+            GetCountDelegate countGetter,
+            GetMaxCapacityDelegate maxCapacityGetter,
+            GetMinCapacityDelegate minCapacityGetter
+        ) : base(countGetter)
         {
-            Capacity = new ICapacityGetter.ForStaticValue(capacity);
-            BaseValidator = new CommonListValidator<T>(target, capacity);
+            MaxCapacityGetter = maxCapacityGetter;
+            MinCapacityGetter = minCapacityGetter;
         }
 
-        public FixedLengthListValidator(IFixedLengthList<T> target, Func<int> capacityGetter) : base(
-            new TargetAdapter(target, capacityGetter)
-        )
+        public override void Constructor(NamedValue<IEnumerable<TElementSettings>> initItems)
         {
-            Capacity = new ICapacityGetter.ForGetter(capacityGetter);
-            BaseValidator = new CommonListValidator<T>(target, capacityGetter);
+            base.Constructor(initItems);
+
+            var maxCapacity = MaxCapacityGetter.Invoke();
+            var minCapacity = MinCapacityGetter.Invoke();
+#if DEBUG
+            try
+            {
+                RestrictedCapacityListValidationHelper.CapacityConfig(
+                    ($"GetMinCapacity", minCapacity),
+                    ($"GetMaxCapacity", maxCapacity)
+                );
+            }
+            catch (Exception ex)
+            {
+                throw new TypeInitializationException(GetType().Name, ex);
+            }
+#endif
+
+            RestrictedCapacityListValidationHelper.ArgumentItemsCount(
+                initItems.Value.Count(),
+                minCapacity,
+                maxCapacity
+            );
         }
 
-        public override void Constructor(NamedValue<IEnumerable<T>> initItems)
-        {
-            BaseValidator?.Constructor(initItems);
-            FixedLengthListValidationHelper.ItemCount(initItems.Value.Count(), Capacity.Get());
-        }
+        public override void Insert(NamedValue<int> index, NamedValue<IEnumerable<TElementSettings>> items)
+            => throw new InvalidOperationException();
 
-        public override void Reset(NamedValue<IEnumerable<T>> items)
-        {
-            BaseValidator?.Reset(items);
-            FixedLengthListValidationHelper.ItemCount(items.Value.Count(), Capacity.Get());
-        }
-
-        public override void Insert(NamedValue<int> index, NamedValue<IEnumerable<T>> items)
-            => throw new NotSupportedException();
-
-        public override void Overwrite(NamedValue<int> index, NamedValue<IEnumerable<T>> items)
-            => throw new NotSupportedException();
+        public override void Overwrite(NamedValue<int> index, NamedValue<IEnumerable<TElementSettings>> items)
+            => throw new InvalidOperationException();
 
         public override void Remove(NamedValue<int> index, NamedValue<int> count)
-            => throw new NotSupportedException();
+            => throw new InvalidOperationException();
 
         public override void AdjustLength(NamedValue<int> length)
-            => throw new NotSupportedException();
+            => throw new InvalidOperationException();
 
-        private interface ICapacityGetter
+        public override void Reset(NamedValue<IEnumerable<TElementSettings>> items, bool canChangeSize = true)
         {
-            public int Get();
-
-            public class ForStaticValue : ICapacityGetter
+            if (canChangeSize)
             {
-                private readonly int value;
-
-                public ForStaticValue(int capacity)
-                {
-                    value = capacity;
-                }
-
-                public int Get() => value;
+                throw new InvalidOperationException();
             }
 
-            public class ForGetter : ICapacityGetter
-            {
-                private readonly Func<int> getter;
-
-                public ForGetter(Func<int> getter)
-                {
-                    this.getter = getter;
-                }
-
-                public int Get() => getter.Invoke();
-            }
+            base.Reset(items, canChangeSize);
         }
+
+        public override void Clear()
+            => throw new InvalidOperationException();
     }
 }

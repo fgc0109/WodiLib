@@ -106,8 +106,7 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
                             IndentSpace,
                             ",",
                             Members()
-                                .Select(
-                                    member => new SourceFormatTargetBlock(
+                                .Select(member => new SourceFormatTargetBlock(
                                         $"/// <summary>{member.Summary}</summary>",
                                         ($"{member.MemberName} = {member.Value}", !IsFlags),
                                         ($"{member.MemberName} = 0x{member.Value:X}", IsFlags),

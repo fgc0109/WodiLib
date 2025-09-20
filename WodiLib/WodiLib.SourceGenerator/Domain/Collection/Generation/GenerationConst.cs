@@ -20,6 +20,9 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation
         {
             /// <summary>Attributes名前空間</summary>
             public static string Attributes => $"{RootNameSpace}.Attributes";
+
+            /// <summary>Enums名前空間</summary>
+            public static string Enums => $"{RootNameSpace}.Enums";
         }
     }
 }

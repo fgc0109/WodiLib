@@ -56,7 +56,7 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static void SubtractTest_AllOperationOverridden()
         {
             var calculatedItem = LeftItem - RightInt;
-            Assert.AreEqual((int)calculatedItem, LeftInt - RightInt);
+            Assert.AreEqual(LeftInt - RightInt, (int)calculatedItem);
         }
 
         [Test]
@@ -96,7 +96,7 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static void MultipleTest_AllOperationOverridden()
         {
             var calculatedItem = LeftItem * RightInt;
-            Assert.AreEqual((int)calculatedItem, LeftInt * RightInt);
+            Assert.AreEqual(LeftInt * RightInt, (int)calculatedItem);
         }
 
         [Test]
@@ -136,7 +136,7 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static void DivideTest_AllOperationOverridden()
         {
             var calculatedItem = LeftItem / RightInt;
-            Assert.AreEqual((int)calculatedItem, LeftInt / RightInt);
+            Assert.AreEqual(LeftInt / RightInt, (int)calculatedItem);
         }
 
         [Test]
@@ -176,7 +176,7 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static void ModTest_AllOperationOverridden()
         {
             var calculatedItem = LeftItem % RightInt;
-            Assert.AreEqual((int)calculatedItem, LeftInt % RightInt);
+            Assert.AreEqual(LeftInt % RightInt, (int)calculatedItem);
         }
 
         [Test]
@@ -194,7 +194,7 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static void AndTest_AllOperationOverridden()
         {
             var calculatedItem = LeftItem & RightInt;
-            Assert.AreEqual((int)calculatedItem, LeftInt & RightInt);
+            Assert.AreEqual(LeftInt & RightInt, (int)calculatedItem);
         }
 
         [Test]
@@ -212,7 +212,7 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static void OrTest_AllOperationOverridden()
         {
             var calculatedItem = LeftItem | RightInt;
-            Assert.AreEqual((int)calculatedItem, LeftInt | RightInt);
+            Assert.AreEqual(LeftInt | RightInt, (int)calculatedItem);
         }
 
         [Test]
@@ -230,7 +230,7 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static void XorTest_AllOperationOverridden()
         {
             var calculatedItem = LeftItem ^ RightInt;
-            Assert.AreEqual((int)calculatedItem, LeftInt ^ RightInt);
+            Assert.AreEqual(LeftInt ^ RightInt, (int)calculatedItem);
         }
 
         [Test]
@@ -253,7 +253,8 @@ namespace WodiLib.SourceGenerator.Test.Operation
             OtherTypes = new[] { typeof(int), typeof(byte), typeof(AllOperationOverrideObject) },
             OtherPosition = BinaryOperateOtherPosition.Right,
             ReturnType = typeof(AllOperationOverrideObject),
-            InnerCastType = typeof(int))]
+            InnerCastType = typeof(int)
+        )]
         public partial class AllOperationOverrideObject
         {
             private readonly int value;
@@ -268,11 +269,13 @@ namespace WodiLib.SourceGenerator.Test.Operation
         }
     }
 
-    [BinaryOperate(Operation = BinaryOperationType.Add,
+    [BinaryOperate(
+        Operation = BinaryOperationType.Add,
         OtherTypes = new[] { typeof(AddableObject) },
         OtherPosition = BinaryOperateOtherPosition.Right,
         ReturnType = typeof(AddableObject),
-        InnerCastType = typeof(int))]
+        InnerCastType = typeof(int)
+    )]
     public partial class AddableObject
     {
         private readonly int value;
@@ -286,11 +289,13 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static explicit operator AddableObject(int src) => new(src);
     }
 
-    [BinaryOperate(Operation = BinaryOperationType.Subtract,
+    [BinaryOperate(
+        Operation = BinaryOperationType.Subtract,
         OtherTypes = new[] { typeof(SubtractableObject) },
         OtherPosition = BinaryOperateOtherPosition.Right,
         ReturnType = typeof(SubtractableObject),
-        InnerCastType = typeof(int))]
+        InnerCastType = typeof(int)
+    )]
     public partial class SubtractableObject
     {
         private readonly int value;
@@ -304,11 +309,13 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static explicit operator SubtractableObject(int src) => new(src);
     }
 
-    [BinaryOperate(Operation = BinaryOperationType.AddAndSubtract,
+    [BinaryOperate(
+        Operation = BinaryOperationType.AddAndSubtract,
         OtherTypes = new[] { typeof(AddAndSubtractableObject) },
         OtherPosition = BinaryOperateOtherPosition.Right,
         ReturnType = typeof(AddAndSubtractableObject),
-        InnerCastType = typeof(int))]
+        InnerCastType = typeof(int)
+    )]
     public partial class AddAndSubtractableObject
     {
         private readonly int value;
@@ -322,11 +329,13 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static explicit operator AddAndSubtractableObject(int src) => new(src);
     }
 
-    [BinaryOperate(Operation = BinaryOperationType.Multiple,
+    [BinaryOperate(
+        Operation = BinaryOperationType.Multiple,
         OtherTypes = new[] { typeof(MultipliableObject) },
         OtherPosition = BinaryOperateOtherPosition.Right,
         ReturnType = typeof(MultipliableObject),
-        InnerCastType = typeof(int))]
+        InnerCastType = typeof(int)
+    )]
     public partial class MultipliableObject
     {
         private readonly int value;
@@ -340,11 +349,13 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static explicit operator MultipliableObject(int src) => new(src);
     }
 
-    [BinaryOperate(Operation = BinaryOperationType.Divide,
+    [BinaryOperate(
+        Operation = BinaryOperationType.Divide,
         OtherTypes = new[] { typeof(DividableObject) },
         OtherPosition = BinaryOperateOtherPosition.Right,
         ReturnType = typeof(DividableObject),
-        InnerCastType = typeof(int))]
+        InnerCastType = typeof(int)
+    )]
     public partial class DividableObject
     {
         private readonly int value;
@@ -358,11 +369,13 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static explicit operator DividableObject(int src) => new(src);
     }
 
-    [BinaryOperate(Operation = BinaryOperationType.MultipleAndDivide,
+    [BinaryOperate(
+        Operation = BinaryOperationType.MultipleAndDivide,
         OtherTypes = new[] { typeof(MultipleAndDividableObject) },
         OtherPosition = BinaryOperateOtherPosition.Right,
         ReturnType = typeof(MultipleAndDividableObject),
-        InnerCastType = typeof(int))]
+        InnerCastType = typeof(int)
+    )]
     public partial class MultipleAndDividableObject
     {
         private readonly int value;
@@ -376,11 +389,13 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static explicit operator MultipleAndDividableObject(int src) => new(src);
     }
 
-    [BinaryOperate(Operation = BinaryOperationType.FourArithmeticOperations,
+    [BinaryOperate(
+        Operation = BinaryOperationType.FourArithmeticOperations,
         OtherTypes = new[] { typeof(FourArithmeticOperationsOverriddenObject) },
         OtherPosition = BinaryOperateOtherPosition.Right,
         ReturnType = typeof(FourArithmeticOperationsOverriddenObject),
-        InnerCastType = typeof(int))]
+        InnerCastType = typeof(int)
+    )]
     public partial class FourArithmeticOperationsOverriddenObject
     {
         private readonly int value;
@@ -396,11 +411,13 @@ namespace WodiLib.SourceGenerator.Test.Operation
             new(src);
     }
 
-    [BinaryOperate(Operation = BinaryOperationType.Modulo,
+    [BinaryOperate(
+        Operation = BinaryOperationType.Modulo,
         OtherTypes = new[] { typeof(ModulableObject) },
         OtherPosition = BinaryOperateOtherPosition.Right,
         ReturnType = typeof(ModulableObject),
-        InnerCastType = typeof(int))]
+        InnerCastType = typeof(int)
+    )]
     public partial class ModulableObject
     {
         private readonly int value;
@@ -414,11 +431,13 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static explicit operator ModulableObject(int src) => new(src);
     }
 
-    [BinaryOperate(Operation = BinaryOperationType.And,
+    [BinaryOperate(
+        Operation = BinaryOperationType.And,
         OtherTypes = new[] { typeof(AndableObject) },
         OtherPosition = BinaryOperateOtherPosition.Right,
         ReturnType = typeof(AndableObject),
-        InnerCastType = typeof(int))]
+        InnerCastType = typeof(int)
+    )]
     public partial class AndableObject
     {
         private readonly int value;
@@ -432,11 +451,13 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static explicit operator AndableObject(int src) => new(src);
     }
 
-    [BinaryOperate(Operation = BinaryOperationType.Or,
+    [BinaryOperate(
+        Operation = BinaryOperationType.Or,
         OtherTypes = new[] { typeof(OrableObject) },
         OtherPosition = BinaryOperateOtherPosition.Right,
         ReturnType = typeof(OrableObject),
-        InnerCastType = typeof(int))]
+        InnerCastType = typeof(int)
+    )]
     public partial class OrableObject
     {
         private readonly int value;
@@ -450,11 +471,13 @@ namespace WodiLib.SourceGenerator.Test.Operation
         public static explicit operator OrableObject(int src) => new(src);
     }
 
-    [BinaryOperate(Operation = BinaryOperationType.Xor,
+    [BinaryOperate(
+        Operation = BinaryOperationType.Xor,
         OtherTypes = new[] { typeof(XorableObject) },
         OtherPosition = BinaryOperateOtherPosition.Right,
         ReturnType = typeof(XorableObject),
-        InnerCastType = typeof(int))]
+        InnerCastType = typeof(int)
+    )]
     public partial class XorableObject
     {
         private readonly int value;

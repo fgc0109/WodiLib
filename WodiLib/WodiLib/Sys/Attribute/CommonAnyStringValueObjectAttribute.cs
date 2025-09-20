@@ -22,7 +22,7 @@ namespace WodiLib.Sys
     internal class CommonAnyStringValueObjectAttribute : StringValueObjectAttribute
     {
         /// <inheritdoc/>
-        [DefaultValueAttribute(CastType.Implicit)]
+        [DefaultValue(CastType.Implicit)]
         public override CastType CastType { get; init; } = default!;
     }
 }

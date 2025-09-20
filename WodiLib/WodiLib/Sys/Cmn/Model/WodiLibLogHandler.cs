@@ -58,8 +58,12 @@ namespace WodiLib.Sys.Cmn
         /// <param name="warningAction">警告メッセージ処理</param>
         /// <param name="infoAction">情報メッセージ処理</param>
         /// <param name="debugAction">デバッグメッセージ処理</param>
-        public WodiLibLogHandler(Action<string?>? errorAction = null, Action<string?>? warningAction = null,
-            Action<string?>? infoAction = null, Action<string?>? debugAction = null)
+        public WodiLibLogHandler(
+            Action<string?>? errorAction = null,
+            Action<string?>? warningAction = null,
+            Action<string?>? infoAction = null,
+            Action<string?>? debugAction = null
+        )
         {
             ErrorAction = errorAction;
             WarningAction = warningAction;

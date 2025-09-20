@@ -16,15 +16,16 @@ namespace WodiLib.Test.Tools
     /// <summary>
     ///     モック用基底クラス
     /// </summary>
-    public abstract class MockBase<TChild> : IDeepCloneable
+    public abstract class MockBase<TChild> : IDeepCloneable,
+        IEqualityComparable<TChild>
         where TChild : class
     {
-        public IReadOnlyList<string> CalledMemberHistory => calledMemberHistory;
+        public IReadOnlyList<CalledMember> CalledMemberHistory => calledMemberHistory;
 
-        private readonly List<string> calledMemberHistory = new();
+        private readonly List<CalledMember> calledMemberHistory = new();
 
-        protected void AddCalledHistory(string methodName)
-            => calledMemberHistory.Add(methodName);
+        protected void AddCalledHistory(string methodName, params object[] args)
+            => calledMemberHistory.Add(new CalledMember(methodName, args));
 
         public void ClearCalledHistory()
             => calledMemberHistory.Clear();
@@ -64,5 +65,10 @@ namespace WodiLib.Test.Tools
         }
 
         object IDeepCloneable.DeepClone() => DeepClone();
+
+        public record CalledMember(
+            string MethodName,
+            object[] Args
+        );
     }
 }
