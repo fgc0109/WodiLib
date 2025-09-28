@@ -112,12 +112,12 @@ namespace WodiLib.Test.Tools
         [MutableConstructor]
         public ReadOnlyStubRestrictedCapacityList(
             int length
-        ) : this(BuildSimpleList(length))
+        ) : this(new StubRestrictedCapacityListSettings(length.Iterate(i => new StubModel(i.ToString())).ToArray()))
         {
         }
 
         public ReadOnlyStubRestrictedCapacityList(IStubRestrictedCapacityListSettings settings)
-            : this(BuildSimpleList(settings.Settings))
+            : this(settings, BuildSimpleList(settings.Settings))
         {
             tags = settings.Tags.ToList();
         }
@@ -164,14 +164,6 @@ namespace WodiLib.Test.Tools
         /*
          * 必要に応じて RequiredConstructor に渡す SimpleList を作成するメソッドを定義する。
          */
-        private protected static SimpleList<StubModel> BuildSimpleList(int length)
-        {
-            return new SimpleList<StubModel>(
-                ElementBuilder,
-                length.Iterate(BuildItemFromIndex)
-            );
-        }
-
         private protected static SimpleList<StubModel> BuildSimpleList(IEnumerable<IStubModelSettings> settings)
         {
             return new SimpleList<StubModel>(
@@ -200,6 +192,7 @@ namespace WodiLib.Test.Tools
          * クラス内に保持する ExtendedList のコンストラクタ引数として指定する。
          */
         private protected IWodiLibListValidator<IStubModelSettings> BuildValidator(
+            IStubRestrictedCapacityListSettings settings,
             SimpleList<StubModel> itemsImpl
         )
         {
@@ -227,13 +220,13 @@ namespace WodiLib.Test.Tools
     //     /// <summary>容量最小値</summary>
     //     public static int MinCapacity => 1;
     //
-    //     private protected ReadOnlyStubRestrictedCapacityList(SimpleList<WodiLib.Test.Tools.StubModel> itemsImpl)
+    //     private protected ReadOnlyStubRestrictedCapacityList(IStubRestrictedCapacityListSettings settings, SimpleList<WodiLib.Test.Tools.StubModel> itemsImpl)
     //     {
     //         Items = new ExtendedList<WodiLib.Test.Tools.StubModel, WodiLib.Test.Tools.ReadOnlyStubModel, IStubModelSettings>(
     //             itemsImpl,
     //             minCapacity: 10,
     //             maxCapacity: 1,
-    //             validator: BuildValidator(itemsImpl),
+    //             validator: BuildValidator(settings, itemsImpl),
     //             buildItemFromSettings: BuildItemFromSettings
     //         );
     //     }

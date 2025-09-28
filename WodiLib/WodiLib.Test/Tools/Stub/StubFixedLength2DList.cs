@@ -102,12 +102,14 @@ namespace WodiLib.Test.Tools
         public ReadOnlyStubFixedLength2DList(
             int xSize,
             int ySize
-        ) : this(BuildSimpleList(xSize, ySize))
+        ) : this(new StubFixedLength2DListSettings(
+            xSize.Iterate(x => BuildRowSettingsFromRowIndex(x, ySize)).ToArray()
+        ))
         {
         }
 
         public ReadOnlyStubFixedLength2DList(IStubFixedLength2DListSettings settings)
-            : this(BuildSimpleList(settings.Settings))
+            : this(settings, BuildSimpleList(settings.Settings))
         {
             tags = settings.Tags.ToList();
         }
@@ -188,6 +190,7 @@ namespace WodiLib.Test.Tools
 
         private protected IWodiLib2DListValidator<IStubFixedLengthListSettings, IStubModelSettings>
             BuildValidator(
+                IStubFixedLength2DListSettings settings,
                 SimpleList<StubFixedLengthList> itemsImpl
             )
         {

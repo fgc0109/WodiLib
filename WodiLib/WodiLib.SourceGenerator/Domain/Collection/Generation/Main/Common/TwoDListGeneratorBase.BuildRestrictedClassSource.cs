@@ -67,7 +67,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"{__}",
                 $"public {modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword}({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword} settings) : base(settings) {{ }}",
                 $"",
-                $"private protected {modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword}(SimpleList<{modelInfo.RowType}> itemsImpl) : base(itemsImpl) {{ }}",
+                $"private protected {modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword}({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword} settings, SimpleList<{modelInfo.RowType}> itemsImpl) : base(settings, itemsImpl) {{ }}",
                 $"",
                 modelInfo.Members.RestrictedListConstructors.SelectMany(p => p.ImplementationCode).ToArray()
             );

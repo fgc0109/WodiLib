@@ -90,7 +90,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"{__}",
                 $"public {modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword}({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword} settings) : base(settings) {{ }}",
                 $"",
-                $"private protected {modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword}(SimpleList<{modelInfo.ElementType}> itemsImpl) : base(itemsImpl) {{ }}",
+                $"private protected {modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword}({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword} settings, SimpleList<{modelInfo.ElementType}> itemsImpl) : base(settings, itemsImpl) {{ }}",
                 $"",
                 modelInfo.Members.FixedLengthListConstructors.SelectMany(p => p.ImplementationCode).ToArray()
             );

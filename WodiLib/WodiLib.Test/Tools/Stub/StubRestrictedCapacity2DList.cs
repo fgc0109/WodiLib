@@ -108,12 +108,14 @@ namespace WodiLib.Test.Tools
         public ReadOnlyStubRestrictedCapacity2DList(
             int xSize,
             int ySize
-        ) : this(BuildSimpleList(xSize, ySize))
+        ) : this(new StubRestrictedCapacity2DListSettings(
+            xSize.Iterate(x => BuildRowSettingsFromRowIndex(x, ySize)).ToArray()
+        ))
         {
         }
 
         public ReadOnlyStubRestrictedCapacity2DList(IStubRestrictedCapacity2DListSettings settings)
-            : this(BuildSimpleList(settings.Settings))
+            : this(settings, BuildSimpleList(settings.Settings))
         {
             tags = settings.Tags.ToList();
         }
@@ -140,14 +142,6 @@ namespace WodiLib.Test.Tools
             return other is not null
                    && Settings.SequenceEqual(other.Settings, (left, right) => left.ItemEquals(right))
                    && Tags.SequenceEqual(other.Tags);
-        }
-
-        private protected static SimpleList<StubRestrictedCapacityList> BuildSimpleList(int rowLength, int columnLength)
-        {
-            return new SimpleList<StubRestrictedCapacityList>(
-                RowBuilder,
-                rowLength.Iterate(rowIndex => BuildItemFromIndex(rowIndex, columnLength))
-            );
         }
 
         private protected static SimpleList<StubRestrictedCapacityList> BuildSimpleList(
@@ -194,6 +188,7 @@ namespace WodiLib.Test.Tools
 
         private protected IWodiLib2DListValidator<IStubRestrictedCapacityListSettings, IStubModelSettings>
             BuildValidator(
+                IStubRestrictedCapacity2DListSettings settings,
                 SimpleList<StubRestrictedCapacityList> itemsImpl
             )
         {
@@ -1337,7 +1332,7 @@ namespace WodiLib.Test.Tools
 
         private event NotifyCollectionChangedEventHandler? collectionChanged;
 
-        private protected ReadOnlyStubRestrictedCapacity2DList(SimpleList<StubRestrictedCapacityList> itemsImpl)
+        private protected ReadOnlyStubRestrictedCapacity2DList(IStubRestrictedCapacity2DListSettings settings, SimpleList<StubRestrictedCapacityList> itemsImpl)
         {
             Table =
                 new TwoDimensionalList<StubRestrictedCapacityList, FixedStubRestrictedCapacityList, WodiLib.Test.Tools.ReadOnlyStubRestrictedCapacityList, IStubRestrictedCapacityListSettings, WodiLib.Test.Tools.StubModel, WodiLib.Test.Tools.ReadOnlyStubModel, IStubModelSettings>(
@@ -1347,7 +1342,7 @@ namespace WodiLib.Test.Tools
                         BuildRowFromSettings,
                         BuildListElementFromSetting,
                         CompareElement,
-                        BuildValidator(itemsImpl)
+                        BuildValidator(setting,s itemsImpl)
                     )
                     {
                         MaxRowCapacity = MaxXCapacity,

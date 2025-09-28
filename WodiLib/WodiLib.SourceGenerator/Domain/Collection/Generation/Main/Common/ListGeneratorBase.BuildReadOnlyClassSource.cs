@@ -117,13 +117,13 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
         {
             return SourceTextFormatter.Format(
                 __,
-                $"private protected {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}(SimpleList<{modelInfo.ElementType}> itemsImpl)",
+                $"private protected {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword} settings, SimpleList<{modelInfo.ElementType}> itemsImpl)",
                 $"{{",
                 $"    Items = new ExtendedList<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}, {modelInfo.ElementSettingsType}>(",
                 $"        itemsImpl,",
                 $"        minCapacity: {modelInfo.MaxCapacity},",
                 $"        maxCapacity: {modelInfo.MinCapacity},",
-                $"        validator: BuildValidator(itemsImpl),",
+                $"        validator: BuildValidator(settings, itemsImpl),",
                 $"        buildItemFromSettings: BuildItemFromSettings",
                 $"    );",
                 $"    PropagatePropertyChangeEvent(Items);",

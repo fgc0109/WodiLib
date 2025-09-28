@@ -146,7 +146,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
         {
             return SourceTextFormatter.Format(
                 __,
-                $"private protected {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}(SimpleList<{modelInfo.RowType}> itemsImpl)",
+                $"private protected {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword} settings, SimpleList<{modelInfo.RowType}> itemsImpl)",
                 $"{{",
                 $"{__}Table =",
                 $"{__}{__}new TwoDimensionalList<{modelInfo.RowType}, {modelInfo.FixedLengthRowType}, {modelInfo.ReadOnlyRowType}, {modelInfo.RowSettingsType}, {modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}, {modelInfo.ElementSettingsType}>(",
@@ -156,7 +156,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"{__}{__}{__}{__}BuildRowFromSettings,",
                 $"{__}{__}{__}{__}BuildListElementFromSetting,",
                 $"{__}{__}{__}{__}CompareElement,",
-                $"{__}{__}{__}{__}BuildValidator(itemsImpl)",
+                $"{__}{__}{__}{__}BuildValidator(settings, itemsImpl)",
                 $"{__}{__}{__})",
                 $"{__}{__}{__}{{",
                 $"{__}{__}{__}{__}MaxRowCapacity = Max{modelInfo.RowPhysicalName}Capacity,",

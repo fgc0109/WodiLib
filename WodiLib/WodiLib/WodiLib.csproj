@@ -3,9 +3,9 @@
     <PropertyGroup>
         <Nullable>enable</Nullable>
         <PackageId>WodiLib</PackageId>
-        <PackageVersion>2.3.65534.38</PackageVersion>
+        <PackageVersion>2.3.65534.39</PackageVersion>
         <Copyright>Copyright 2019 kameske</Copyright>
-        <Version>2.3.65534.37</Version>
+        <Version>2.3.65534.39</Version>
         <PackageProjectUrl>https://github.com/kameske/WodiLib</PackageProjectUrl>
         <PackageLicenseUrl/>
         <RepositoryUrl>https://github.com/kameske/WodiLib.git</RepositoryUrl>
@@ -14,7 +14,7 @@
         <Authors>Kameske</Authors>
         <RootNamespace>WodiLib</RootNamespace>
         <Product>WodiLib</Product>
-        <AssemblyVersion>2.3.65534.38</AssemblyVersion>
+        <AssemblyVersion>2.3.65534.39</AssemblyVersion>
         <AssemblyName>WodiLib</AssemblyName>
         <LangVersion>9</LangVersion>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -46,19 +46,8 @@
         <Compile Remove="Map\**"/>
         <Compile Remove="Project\**"/>
         <Compile Remove="Cmn\VariableAddress\**"/>
-        <Compile Remove="Sys\Collections\Model\Internal\TwoDimensionalList.Config.cs"/>
-        <Compile Remove="Sys\Collections\Helper\Internal\CommonTwoDimensionalListValidator.cs"/>
-        <Compile Remove="Sys\Collections\Helper\Internal\RestrictedCapacityTwoDimensionalListValidationHelper.cs"/>
-        <Compile Remove="Sys\Collections\Helper\Internal\RestrictedCapacityTwoDimensionalListValidator.cs"/>
-        <Compile Remove="Sys\Collections\Helper\Internal\TwoDimensionalListValidationHelper.cs"/>
-        <Compile Remove="Sys\Collections\Helper\Internal\WodiLibTwoDimensionalListValidatorTemplate.cs"/>
-        <Compile Remove="Sys\Collections\Model\Internal\TwoDimensionalList2.cs"/>
         <Compile Remove="IO\**"/>
         <Compile Remove="Ini\**"/>
-        <Compile Remove="Sys\Collections\Model\Internal\RowEventHandlers.cs"/>
-        <Compile Remove="Sys\Collections\Interface\Internal\ITwoDimensionalListValidator.cs"/>
-        <Compile Remove="Sys\Collections\Interface\Internal\ITwoDimensionalList.cs"/>
-        <Compile Remove="Sys\Collections\Interface\Internal\IReadOnlyTwoDimensionalList.cs"/>
         <Compile Remove="Cmn\**" />
     </ItemGroup>
 
@@ -108,9 +97,5 @@
         <EmbeddedResource Remove="IO\**"/>
         <EmbeddedResource Remove="Ini\**"/>
         <EmbeddedResource Remove="Cmn\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Sys\Collections\ValueObject\" />
     </ItemGroup>
 </Project>

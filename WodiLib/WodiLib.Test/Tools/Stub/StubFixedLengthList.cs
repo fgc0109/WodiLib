@@ -98,12 +98,12 @@ namespace WodiLib.Test.Tools
         [FixedLengthListConstructor]
         public ReadOnlyStubFixedLengthList(
             int length
-        ) : this(BuildSimpleList(length))
+        ) : this(new StubFixedLengthListSettings(length.Iterate(i => (IStubModelSettings)BuildItemFromIndex(i)).ToArray()))
         {
         }
 
         public ReadOnlyStubFixedLengthList(IStubFixedLengthListSettings settings)
-            : this(BuildSimpleList(settings.Settings))
+            : this(settings, BuildSimpleList(settings.Settings))
         {
             tags = settings.Tags.ToList();
         }
@@ -183,6 +183,7 @@ namespace WodiLib.Test.Tools
          * クラス内に保持する ExtendedList のコンストラクタ引数として指定する。
          */
         private protected IWodiLibListValidator<IStubModelSettings> BuildValidator(
+            IStubFixedLengthListSettings settings,
             SimpleList<StubModel> itemsImpl
         )
         {

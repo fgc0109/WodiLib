@@ -18,8 +18,12 @@ namespace WodiLib.Sys
     internal class FilePathStringObjectValueAttribute : CommonOneLineStringValueObjectAttribute
     {
         /// <inheritdoc/>
-        [DefaultValue(260)]
-        public override int MaxLength { get; init; } = 0!;
+        [DefaultValue(32767)] // Windows の場合。 C# は文字列を UTF-16 で扱うため、単純に文字列長を取得するだけでファイルパス長の判定が可能
+        public override int MaxLength { get; init; } = 0;
+
+        /// <inheritdoc/>
+        [DefaultValue(3)]
+        public override int MinLength { get; init; } = 0;
 
         /// <inheritdoc/>
         [DefaultValue(true)]

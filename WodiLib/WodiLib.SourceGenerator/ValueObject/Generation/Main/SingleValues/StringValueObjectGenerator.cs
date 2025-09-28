@@ -400,7 +400,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
                     $"{{   // Validate for ByteLength",
                     $@"    var encoding = System.Text.Encoding.GetEncoding(""{workState.PropertyValues[MyAttr.ByteLengthEncoding.Name]}"");",
                     $"    var byteLength = encoding.GetByteCount(value);",
-                    $@"    if (byteLength < {MyAttr.ByteMinLength.Name} || {MyAttr.ByteMaxLength.Name} < byteLength) throw new System.ArgumentOutOfRangeException(nameof(value), byteLength, $""byteLength between {MyAttr.ByteMinLength.Name} and {MyAttr.ByteMaxLength.Name}"");",
+                    $@"    if (byteLength < {MyAttr.ByteMinLength.Name} || {MyAttr.ByteMaxLength.Name} < byteLength) throw new System.ArgumentException($""string byteLength between {MyAttr.ByteMinLength.Name} and {MyAttr.ByteMaxLength.Name}"");",
                     $"}}",
                 }
             );
@@ -413,7 +413,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
                 {
                     $"{{   // Validate for Length",
                     $"    var length = value.Length;",
-                    $@"    if (length < {MyAttr.MinLength.Name} || {MyAttr.MaxLength.Name} < length) throw new System.ArgumentOutOfRangeException(nameof(value), length, $""length between {MyAttr.MinLength.Name} and {MyAttr.MaxLength.Name}"");",
+                    $@"    if (length < {MyAttr.MinLength.Name} || {MyAttr.MaxLength.Name} < length) throw new System.ArgumentException($""string length between {MyAttr.MinLength.Name} and {MyAttr.MaxLength.Name}"");",
                     $"}}",
                 }
             );
