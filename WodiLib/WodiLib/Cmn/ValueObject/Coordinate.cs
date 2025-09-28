@@ -11,10 +11,16 @@ using WodiLib.Sys;
 namespace WodiLib.Cmn
 {
     /// <summary>
-    /// 座標
+    ///     座標
     /// </summary>
     [CommonIntValueObject(MinValue = 0, MaxValue = int.MaxValue)]
-    public partial class Coordinate
+    public partial record Coordinate
     {
+        /// <summary>
+        ///     コンストラクタ
+        /// </summary>
+        public Coordinate() : this(0)
+        {
+        }
     }
 }

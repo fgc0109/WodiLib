@@ -9,222 +9,197 @@ namespace WodiLib.Test.Cmn
     [TestFixture]
     public class ThisCommonEventVariableAddressTest
     {
-        private static Logger logger;
+        private static Logger logger = null!;
+
+        private static ConstructorTestHelper constructorTestHelper = null!;
+        private static PropertyTestHelper propertyTestHelper = null!;
+        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
+        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
 
         [SetUp]
         public static void Setup()
         {
             LoggerInitializer.SetupLoggerForDebug();
             logger = Logger.GetInstance();
+
+            constructorTestHelper = new ConstructorTestHelper(logger);
+            propertyTestHelper = new PropertyTestHelper(logger);
+            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
+            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
         }
 
-        [TestCase(1599999, true)]
-        [TestCase(1600000, false)]
-        [TestCase(1600099, false)]
-        [TestCase(1600100, true)]
-        public static void ConstructorIntTest(int value, bool isError)
+        #region properties
+
+        #region public
+
+        #region ValueType
+
+        /// <summary>
+        ///     意図した値が取得できること。
+        /// </summary>
+        [Test]
+        public static void ValueTypeGetterTest()
         {
-            var errorOccured = false;
-            try
-            {
-                var _ = new ThisCommonEventVariableAddress(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+            propertyTestHelper.PropertyGetSuccess(
+                instance: new ThisCommonEventVariableAddress(),
+                getter: target => target.ValueType,
+                getValueVerifier: ValueVerifier<VariableAddressValueType>.AreEquals(VariableAddressValueType.Numeric)
+            );
         }
 
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Constructor
+
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase(1600000)]
         [TestCase(1600099)]
-        public static void ToIntTest(int value)
+        public static void ConstructorIntTest_Success(int value)
         {
-            var instance = new ThisCommonEventVariableAddress(value);
-
-            var intValue = instance.ToInt();
-
-            // セットした値と取得した値が一致すること
-            Assert.AreEqual(intValue, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new ThisCommonEventVariableAddress(value),
+                instanceVerifier: new ValueVerifier<ThisCommonEventVariableAddress>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(1599999, true)]
-        [TestCase(1600000, false)]
-        [TestCase(1600099, false)]
-        [TestCase(1600100, true)]
-        public static void CastIntToThisCommonEventVariableAddressTest(int value, bool isError)
+        /// <summary>
+        ///     引数に許容範囲外の値を指定した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(1599999)]
+        [TestCase(1600100)]
+        public static void ConstructorIntTest_Failure_OutOfRange(int value)
         {
-            var errorOccured = false;
-            try
-            {
-                var _ = (ThisCommonEventVariableAddress)value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new ThisCommonEventVariableAddress(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     int から ThisCommonEventVariableAddress に暗黙的型変換できること。
+        /// </summary>
         [TestCase(1600000)]
         [TestCase(1600099)]
-        public static void CastThisCommonEventVariableAddressToIntTest(int value)
+        public static void CastIntToThisCommonEventVariableAddressTest_Success(int value)
         {
-            var castValue = 0;
-
-            var instance = new ThisCommonEventVariableAddress(value);
-
-            var errorOccured = false;
-            try
-            {
-                castValue = (int)instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 元の値と一致すること
-            Assert.AreEqual(castValue, value);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => value,
+                resultValueVerifier: new ValueVerifier<ThisCommonEventVariableAddress>(actual =>
+                    {
+                        Assert.AreEqual(actual.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(1600000, -1, true)]
-        [TestCase(1600000, 0, false)]
-        [TestCase(1600000, 99, false)]
-        [TestCase(1600000, 100, true)]
-        [TestCase(1600002, -3, true)]
-        [TestCase(1600002, -2, false)]
-        [TestCase(1600002, 97, false)]
-        [TestCase(1600002, 98, true)]
-        public static void OperatorPlusTest(int variableAddress, int value, bool isError)
+        /// <summary>
+        ///     許容範囲外の値から ThisCommonEventVariableAddress に暗黙的型変換した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(1599999)]
+        [TestCase(1600100)]
+        public static void CastIntToThisCommonEventVariableAddressTest_Failure_OutOfRange(int value)
         {
-            var instance = new ThisCommonEventVariableAddress(variableAddress);
-            ThisCommonEventVariableAddress result = null;
-
-            var errorOccured = false;
-            try
-            {
-                result = instance + value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 意図した値と一致すること
-            Assert.AreEqual((int)result, variableAddress + value);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, variableAddress);
+            staticFunctionTestHelper.StaticFuncFailure<ThisCommonEventVariableAddress>(
+                execFunc: () => value,
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
-        [TestCase(1600000, -100, true)]
-        [TestCase(1600000, -99, false)]
-        [TestCase(1600000, 0, false)]
-        [TestCase(1600000, 1, true)]
-        [TestCase(1600002, -98, true)]
-        [TestCase(1600002, -97, false)]
-        [TestCase(1600002, 2, false)]
-        [TestCase(1600002, 3, true)]
-        public static void OperatorMinusIntTest(int variableAddress, int value, bool isError)
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     ThisCommonEventVariableAddress から int に暗黙的型変換できること。
+        /// </summary>
+        [TestCase(1600000)]
+        [TestCase(1600099)]
+        public static void CastThisCommonEventVariableAddressToIntTest_Success(int value)
         {
-            var instance = new ThisCommonEventVariableAddress(variableAddress);
-            ThisCommonEventVariableAddress result = null;
-
-            var errorOccured = false;
-            try
-            {
-                result = instance - value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 意図した値と一致すること
-            Assert.AreEqual((int)result, variableAddress - value);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, variableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => new ThisCommonEventVariableAddress(value),
+                resultValueVerifier: new ValueVerifier<int>(actual => { Assert.AreEqual(actual, value); })
+            );
         }
 
-        [TestCase(1600002, 1600000)]
-        [TestCase(1600000, 1000000)]
-        public static void OperatorMinusVariableAddressTestA(int srcVariableAddress, int dstVariableAddress)
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと。
+        /// </summary>
+        [TestCase(1600000, 1600000, true)]
+        [TestCase(1600000, 1600099, false)]
+        public static void OperatorEqualTest(int left, int right, bool expected)
         {
-            var instance = new ThisCommonEventVariableAddress(srcVariableAddress);
-            var dstInstance = VariableAddressFactory.Create(dstVariableAddress);
-            var result = 0;
+            var leftValue = (ThisCommonEventVariableAddress)left;
+            var rightValue = (ThisCommonEventVariableAddress)right;
 
-            var errorOccured = false;
-            try
-            {
-                result = instance - dstInstance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 意図した値と一致すること
-            Assert.AreEqual(result, srcVariableAddress - dstVariableAddress);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, srcVariableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
         }
 
-        [TestCase(1600002, 1600000)]
-        [TestCase(1600000, 1600099)]
-        public static void OperatorMinusVariableAddressTestB(int srcVariableAddress, int dstVariableAddress)
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと。
+        /// </summary>
+        [TestCase(1600000, 1600000, false)]
+        [TestCase(1600000, 1600099, true)]
+        public static void OperatorNotEqualTest(int left, int right, bool expected)
         {
-            var instance = new ThisCommonEventVariableAddress(srcVariableAddress);
-            var result = 0;
+            var leftValue = (ThisCommonEventVariableAddress)left;
+            var rightValue = (ThisCommonEventVariableAddress)right;
 
-            var errorOccured = false;
-            try
-            {
-                result = instance - (ThisCommonEventVariableAddress)dstVariableAddress;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 意図した値と一致すること
-            Assert.AreEqual(result, srcVariableAddress - dstVariableAddress);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, srcVariableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
         }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCase(1600000, 1600000, true)]
+        [TestCase(1600000, 1600099, false)]
+        public static void OperatorEqualsTest(int left, int right, bool expected)
+        {
+            var leftValue = (ThisCommonEventVariableAddress)left;
+            var rightValue = (ThisCommonEventVariableAddress)right;
+
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: leftValue,
+                execFunc: target => target.Equals(rightValue),
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        #endregion
+
+        #endregion
     }
 }

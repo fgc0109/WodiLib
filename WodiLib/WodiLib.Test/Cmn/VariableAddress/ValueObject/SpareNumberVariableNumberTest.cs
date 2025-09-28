@@ -9,111 +9,170 @@ namespace WodiLib.Test.Cmn
     [TestFixture]
     public class SpareNumberVariableNumberTest
     {
-        private static Logger logger;
+        private static Logger logger = null!;
+
+        private static ConstructorTestHelper constructorTestHelper = null!;
+        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
+        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
 
         [SetUp]
         public static void Setup()
         {
             LoggerInitializer.SetupLoggerForDebug();
             logger = Logger.GetInstance();
+
+            constructorTestHelper = new ConstructorTestHelper(logger);
+            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
+            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
         }
 
-        [TestCase(-1, true)]
-        [TestCase(0, false)]
-        [TestCase(9, false)]
-        [TestCase(10, true)]
-        public static void ConstructorIntTest(int value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = new SpareNumberVariableNumber(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+        #region Constructor
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-        }
-
-        [TestCase(-1, true)]
-        [TestCase(0, false)]
-        [TestCase(9, false)]
-        [TestCase(10, true)]
-        public static void CastIntToSpareNumberVariableNumberTest(int value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = (SpareNumberVariableNumber)value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-        }
-
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase(0)]
         [TestCase(9)]
-        public static void CastSpareNumberVariableNumberToIntTest(int value)
+        public static void ConstructorIntTest_Success(int value)
         {
-            var castValue = 0;
-
-            var instance = new SpareNumberVariableNumber(value);
-
-            var errorOccured = false;
-            try
-            {
-                castValue = instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 元の値と一致すること
-            Assert.AreEqual(castValue, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new SpareNumberVariableNumber(value),
+                instanceVerifier: new ValueVerifier<SpareNumberVariableNumber>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        private static readonly object[] EqualTestCaseSource =
+        /// <summary>
+        ///     引数に許容範囲外の値を指定した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(-1)]
+        [TestCase(10)]
+        public static void ConstructorIntTest_Failure_OutOfRange(int value)
         {
-            new object[] { 0, 0, true },
-            new object[] { 0, 9, false }
-        };
-
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualTest(int left, int right, bool isEqual)
-        {
-            var leftIndex = (SpareNumberVariableNumber)left;
-            var rightIndex = (SpareNumberVariableNumber)right;
-            Assert.AreEqual(leftIndex == rightIndex, isEqual);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new SpareNumberVariableNumber(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorNotEqualTest(int left, int right, bool isEqual)
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     int から SpareNumberVariableNumber に暗黙的型変換できること。
+        /// </summary>
+        [TestCase(0)]
+        [TestCase(9)]
+        public static void CastIntToSpareNumberVariableNumberTest_Success(int value)
         {
-            var leftIndex = (SpareNumberVariableNumber)left;
-            var rightIndex = (SpareNumberVariableNumber)right;
-            Assert.AreEqual(leftIndex != rightIndex, !isEqual);
+            staticFunctionTestHelper.StaticFuncSuccess<SpareNumberVariableNumber>(
+                execFunc: () => value,
+                resultValueVerifier: new ValueVerifier<SpareNumberVariableNumber>(actual =>
+                    {
+                        Assert.AreEqual(actual.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualsTest(int left, int right, bool isEqual)
+        /// <summary>
+        ///     許容範囲外の値から SpareNumberVariableNumber に暗黙的型変換したとき
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(-1)]
+        [TestCase(10)]
+        public static void CastIntToSpareNumberVariableNumberTest_Failure_OutOfRange(int value)
         {
-            var leftIndex = (SpareNumberVariableNumber)left;
-            var rightIndex = (SpareNumberVariableNumber)right;
-            Assert.AreEqual(leftIndex.Equals(rightIndex), isEqual);
+            staticFunctionTestHelper.StaticFuncFailure<SpareNumberVariableNumber>(
+                execFunc: () => value,
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
+
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     SpareNumberVariableNumber から int に暗黙的型変換できること。
+        /// </summary>
+        [TestCase(0)]
+        [TestCase(9)]
+        public static void CastSpareNumberVariableNumberToIntTest_Success(int value)
+        {
+            staticFunctionTestHelper.StaticFuncSuccess<int>(
+                execFunc: () => new SpareNumberVariableNumber(value),
+                resultValueVerifier: new ValueVerifier<int>(actual => { Assert.AreEqual(actual, value); })
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと
+        /// </summary>
+        [TestCase(0, 0, true)]
+        [TestCase(0, 9, false)]
+        public static void OperatorEqualTest(int left, int right, bool expected)
+        {
+            var leftValue = (SpareNumberVariableNumber)left;
+            var rightValue = (SpareNumberVariableNumber)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと
+        /// </summary>
+        [TestCase(0, 0, false)]
+        [TestCase(0, 9, true)]
+        public static void OperatorNotEqualTest(int left, int right, bool expected)
+        {
+            var leftValue = (SpareNumberVariableNumber)left;
+            var rightValue = (SpareNumberVariableNumber)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと
+        /// </summary>
+        [TestCase(0, 0, true)]
+        [TestCase(0, 9, false)]
+        public static void OperatorEqualsTest(int left, int right, bool expected)
+        {
+            var leftValue = (SpareNumberVariableNumber)left;
+            var rightValue = (SpareNumberVariableNumber)right;
+
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: leftValue,
+                execFunc: target => target.Equals(rightValue),
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        #endregion
+
+        #endregion
     }
 }

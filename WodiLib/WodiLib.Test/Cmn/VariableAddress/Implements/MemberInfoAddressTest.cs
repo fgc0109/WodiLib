@@ -9,215 +9,260 @@ namespace WodiLib.Test.Cmn
     [TestFixture]
     public class MemberInfoAddressTest
     {
-        private static Logger logger;
+        private static Logger logger = null!;
+
+        private static ConstructorTestHelper constructorTestHelper = null!;
+        private static PropertyTestHelper propertyTestHelper = null!;
+        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
+        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
 
         [SetUp]
         public static void Setup()
         {
             LoggerInitializer.SetupLoggerForDebug();
             logger = Logger.GetInstance();
+
+            constructorTestHelper = new ConstructorTestHelper(logger);
+            propertyTestHelper = new PropertyTestHelper(logger);
+            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
+            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
         }
 
-        [TestCase(9180009, true)]
-        [TestCase(9180010, false)]
-        [TestCase(9180059, false)]
-        [TestCase(9180060, true)]
-        public static void ConstructorIntTest(int value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = new MemberInfoAddress(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+        #region properties
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+        #region public
+
+        #region ValueType
+
+        /// <summary>
+        ///     意図した値が取得できること。
+        /// </summary>
+        [Test]
+        public static void ValueTypeGetterTest()
+        {
+            propertyTestHelper.PropertyGetSuccess(
+                instance: new MemberInfoAddress(),
+                getter: target => target.ValueType,
+                getValueVerifier: ValueVerifier<VariableAddressValueType>.AreEquals(VariableAddressValueType.Numeric)
+            );
         }
 
-        private static readonly object[] InfoTypeTestCaseSource =
+        #endregion
+
+        #region MemberId
+
+        private static readonly object[] MemberIdGetterTestCaseSource =
         {
-            new object[] { 9180010, InfoAddressInfoType.PositionX },
-            new object[] { 9180021, InfoAddressInfoType.PositionY },
-            new object[] { 9180022, InfoAddressInfoType.PositionXPrecise },
-            new object[] { 9180013, InfoAddressInfoType.PositionYPrecise },
-            new object[] { 9180024, InfoAddressInfoType.Height },
-            new object[] { 9180055, InfoAddressInfoType.ShadowGraphicId },
-            new object[] { 9180026, InfoAddressInfoType.Direction },
-            new object[] { 9180049, InfoAddressInfoType.CharacterGraphicName }
+            // [value, expected]
+            new object[] { new MemberInfoAddress(9180010), new MemberId(1) },
+            new object[] { new MemberInfoAddress(9180021), new MemberId(2) },
+            new object[] { new MemberInfoAddress(9180033), new MemberId(3) },
+            new object[] { new MemberInfoAddress(9180046), new MemberId(4) },
+            new object[] { new MemberInfoAddress(9180059), new MemberId(5) },
         };
 
-        [TestCaseSource(nameof(InfoTypeTestCaseSource))]
-        public static void InfoTypeTest(int variableAddress, InfoAddressInfoType infoType)
+        /// <summary>
+        ///     意図した値が取得できること。
+        /// </summary>
+        /// <param name="instance">処理対象</param>
+        /// <param name="expected">期待する値</param>
+        [TestCaseSource(nameof(MemberIdGetterTestCaseSource))]
+        public static void MemberIdGetterTest(MemberInfoAddress instance, MemberId expected)
         {
-            var instance = new MemberInfoAddress(variableAddress);
-
-            // プロパティの値が意図した値と一致すること
-            Assert.AreEqual(instance.InfoType, infoType);
+            propertyTestHelper.PropertyGetSuccess(
+                instance,
+                getter: target => target.MemberId,
+                getValueVerifier: ValueVerifier<MemberId>.AreEquals(expected)
+            );
         }
 
+        #endregion
+
+        #region InfoType
+
+        private static readonly object[] InfoTypeGetterTestCaseSource =
+        {
+            // [value, expected]
+            new object[] { new MemberInfoAddress(9180010), InfoAddressInfoType.PositionX },
+            new object[] { new MemberInfoAddress(9180011), InfoAddressInfoType.PositionY },
+            new object[] { new MemberInfoAddress(9180012), InfoAddressInfoType.PositionXPrecise },
+            new object[] { new MemberInfoAddress(9180013), InfoAddressInfoType.PositionYPrecise },
+            new object[] { new MemberInfoAddress(9180014), InfoAddressInfoType.Height },
+            new object[] { new MemberInfoAddress(9180015), InfoAddressInfoType.ShadowGraphicId },
+            new object[] { new MemberInfoAddress(9180016), InfoAddressInfoType.Direction },
+            new object[] { new MemberInfoAddress(9180017), InfoAddressInfoType.Empty },
+            new object[] { new MemberInfoAddress(9180018), InfoAddressInfoType.Empty },
+            new object[] { new MemberInfoAddress(9180019), InfoAddressInfoType.CharacterGraphicName },
+        };
+
+        /// <summary>
+        ///     意図した値が取得できること。
+        /// </summary>
+        /// <param name="instance">処理対象</param>
+        /// <param name="expected">期待する値</param>
+        [TestCaseSource(nameof(InfoTypeGetterTestCaseSource))]
+        public static void InfoTypeGetterTest(MemberInfoAddress instance, InfoAddressInfoType expected)
+        {
+            propertyTestHelper.PropertyGetSuccess(
+                instance,
+                getter: target => target.InfoType,
+                getValueVerifier: ValueVerifier<InfoAddressInfoType>.AreEquals(expected)
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Constructor
+
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase(9180010)]
         [TestCase(9180059)]
-        public static void ToIntTest(int value)
+        public static void ConstructorIntTest_Success(int value)
         {
-            var instance = new MemberInfoAddress(value);
-
-            var intValue = instance.ToInt();
-
-            // セットした値と取得した値が一致すること
-            Assert.AreEqual(intValue, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new MemberInfoAddress(value),
+                instanceVerifier: new ValueVerifier<MemberInfoAddress>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(9180009, true)]
-        [TestCase(9180010, false)]
-        [TestCase(9180059, false)]
-        [TestCase(9180060, true)]
-        public static void CastIntToMemberPositionAddressTest(int value, bool isError)
+        /// <summary>
+        ///     引数に許容範囲外の値を指定した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(9180009)]
+        [TestCase(9180060)]
+        public static void ConstructorIntTest_Failure_OutOfRange(int value)
         {
-            var errorOccured = false;
-            try
-            {
-                var _ = (MemberInfoAddress)value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new MemberInfoAddress(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     int から MemberInfoAddress に暗黙的型変換できること。
+        /// </summary>
         [TestCase(9180010)]
         [TestCase(9180059)]
-        public static void CastMemberPositionAddressToIntTest(int value)
+        public static void CastIntToMemberInfoAddressTest_Success(int value)
         {
-            var castValue = 0;
-
-            var instance = new MemberInfoAddress(value);
-
-            var errorOccured = false;
-            try
-            {
-                castValue = (int)instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 元の値と一致すること
-            Assert.AreEqual(castValue, value);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => value,
+                resultValueVerifier: new ValueVerifier<MemberInfoAddress>(actual =>
+                    {
+                        Assert.AreEqual(actual.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(9180010, -1, true)]
-        [TestCase(9180010, 0, false)]
-        [TestCase(9180010, 49, false)]
-        [TestCase(9180010, 50, true)]
-        [TestCase(9180030, -21, true)]
-        [TestCase(9180030, -20, false)]
-        [TestCase(9180030, 29, false)]
-        [TestCase(9180030, 30, true)]
-        public static void OperatorPlusTest(int variableAddress, int value, bool isError)
+        /// <summary>
+        ///     許容範囲外の値から MemberInfoAddress に暗黙的型変換した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(9180009)]
+        [TestCase(9180060)]
+        public static void CastIntToMemberInfoAddressTest_Failure_OutOfRange(int value)
         {
-            var instance = new MemberInfoAddress(variableAddress);
-            MemberInfoAddress result = null;
-
-            var errorOccured = false;
-            try
-            {
-                result = instance + value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 意図した値と一致すること
-            Assert.AreEqual((int)result, variableAddress + value);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, variableAddress);
+            staticFunctionTestHelper.StaticFuncFailure<MemberInfoAddress>(
+                execFunc: () => value,
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
-        [TestCase(9180010, -50, true)]
-        [TestCase(9180010, -49, false)]
-        [TestCase(9180010, 0, false)]
-        [TestCase(9180010, 1, true)]
-        [TestCase(9180030, -30, true)]
-        [TestCase(9180030, -29, false)]
-        [TestCase(9180030, 20, false)]
-        [TestCase(9180030, 21, true)]
-        public static void OperatorMinusIntTest(int variableAddress, int value, bool isError)
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     MemberInfoAddress から int に暗黙的型変換できること。
+        /// </summary>
+        [TestCase(9180010)]
+        [TestCase(9180059)]
+        public static void CastMemberInfoAddressToIntTest_Success(int value)
         {
-            var instance = new MemberInfoAddress(variableAddress);
-            MemberInfoAddress result = null;
-
-            var errorOccured = false;
-            try
-            {
-                result = instance - value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 意図した値と一致すること
-            Assert.AreEqual((int)result, variableAddress - value);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, variableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => new MemberInfoAddress(value),
+                resultValueVerifier: new ValueVerifier<int>(actual => { Assert.AreEqual(actual, value); })
+            );
         }
 
-        [TestCase(9180030, 9180010)]
-        [TestCase(9180010, 1000000)]
-        public static void OperatorMinusVariableAddressTest(int srcVariableAddress, int dstVariableAddress)
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと。
+        /// </summary>
+        [TestCase(9180010, 9180010, true)]
+        [TestCase(9180010, 9180059, false)]
+        public static void OperatorEqualTest(int left, int right, bool expected)
         {
-            var instance = new MemberInfoAddress(srcVariableAddress);
-            var dstInstance = VariableAddressFactory.Create(dstVariableAddress);
-            var result = 0;
+            var leftValue = (MemberInfoAddress)left;
+            var rightValue = (MemberInfoAddress)right;
 
-            var errorOccured = false;
-            try
-            {
-                result = instance - dstInstance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 意図した値と一致すること
-            Assert.AreEqual(result, srcVariableAddress - dstVariableAddress);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, srcVariableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
         }
+
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと。
+        /// </summary>
+        [TestCase(9180010, 9180010, false)]
+        [TestCase(9180010, 9180059, true)]
+        public static void OperatorNotEqualTest(int left, int right, bool expected)
+        {
+            var leftValue = (MemberInfoAddress)left;
+            var rightValue = (MemberInfoAddress)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCase(9180010, 9180010, true)]
+        [TestCase(9180010, 9180059, false)]
+        public static void OperatorEqualsTest(int left, int right, bool expected)
+        {
+            var leftValue = (MemberInfoAddress)left;
+            var rightValue = (MemberInfoAddress)right;
+
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: leftValue,
+                execFunc: target => target.Equals(rightValue),
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        #endregion
+
+        #endregion
     }
 }

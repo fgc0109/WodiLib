@@ -6,7 +6,6 @@
 // see LICENSE file
 // ========================================
 
-using System.ComponentModel;
 using WodiLib.Sys;
 
 namespace WodiLib.Cmn
@@ -27,50 +26,44 @@ namespace WodiLib.Cmn
 
         static VariableAddressValueType()
         {
-            Numeric = new VariableAddressValueType(nameof(Numeric), 0x01,
-                "[{0}]★エラー！整数変数ではありません！！");
-            String = new VariableAddressValueType(nameof(String), 0x02,
-                "[{0}]★エラー！文字変数ではありません！！");
-            Both = new VariableAddressValueType(nameof(Both), 0x03,
-                "[{0}]★エラー！該当する変数がありません");
+            Numeric = new VariableAddressValueType(
+                nameof(Numeric),
+                0x01
+            );
+            String = new VariableAddressValueType(
+                nameof(String),
+                0x02
+            );
+            Both = new VariableAddressValueType(
+                nameof(Both),
+                0x03
+            );
         }
 
-        private VariableAddressValueType(string id, byte typeFlag, string eventCommandStringErrorFormat) : base(id)
+        private VariableAddressValueType(string id, byte typeFlag) : base(id)
         {
             TypeFlag = typeFlag;
-            EventCommandStringErrorFormat = eventCommandStringErrorFormat;
         }
 
         private byte TypeFlag { get; }
-
-        /// <summary>イベントコマンド文フォーマット</summary>
-        public string EventCommandStringErrorFormat { get; }
-
-        /// <summary>
-        ///     エラー時のイベントコマンド文用文字列を生成する。
-        /// </summary>
-        /// <param name="value">値</param>
-        /// <returns>イベントコマンド文字列</returns>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public string MakeEventCommandErrorSentence(int value)
-        {
-            return string.Format(EventCommandStringErrorFormat, value);
-        }
 
         /// <summary>
         ///     自身のタイプ種別に指定したタイプ種別が適合するか判定する。
         /// </summary>
         /// <param name="target">判定対象</param>
-        /// <returns>targetがnullの場合false、適合する場合true。</returns>
+        /// <returns><paramref name="target"/> が <see langword="null"/> の場合 <see langword="false"/>、適合する場合 <see langword="true"/>。</returns>
         /// <remarks>
-        ///     自身がBothの場合、targetがBoth, Numeric, String いずれの場合もtrue。
-        ///     自身がNumericの場合、targetがNumericの場合のみtrue。
-        ///     自身がStringの場合、targetがStringの場合のみtrue。
+        ///     自身が <see cref="Both"/> の場合、<paramref name="target"/> が <see cref="Both"/>, <see cref="Numeric"/>,
+        ///     <see cref="String"/> いずれの場合も <see langword="true"/>。
+        ///     自身が <see cref="Numeric"/> の場合、targetが <see cref="Numeric"/> の場合のみ <see langword="true"/>。
+        ///     自身が <see cref="String"/> の場合、targetが <see cref="String"/> の場合のみ <see langword="true"/>。
         /// </remarks>
         public bool CheckTypeInclude(VariableAddressValueType? target)
         {
             if (target is null) return false;
-            return (TypeFlag & target.TypeFlag) != 0;
+
+            if (this == Both) return true;
+            return TypeFlag == target.TypeFlag;
         }
     }
 }

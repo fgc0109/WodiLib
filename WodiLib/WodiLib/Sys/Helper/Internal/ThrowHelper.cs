@@ -136,7 +136,7 @@ namespace WodiLib.Sys
         /// </summary>
         /// <param name="isThrow">検証結果</param>
         /// <param name="itemName">検証項目名</param>
-        /// <exception cref="ArgumentNullException">
+        /// <exception cref="ArgumentException">
         ///     <paramref name="isThrow"/> が <see langword="true"/> の場合。
         /// </exception>
         public static void ValidateArgumentItemsHasNotNull([DoesNotReturnIf(true)] bool isThrow, string itemName)
@@ -144,6 +144,42 @@ namespace WodiLib.Sys
             if (!isThrow) return;
 
             ArgumentNotEmpty(itemName);
+        }
+
+        /// <summary>
+        ///     引数が <see langword="null"/> でないことを検証する際の例外処理（引数インスタンスのプロパティ検証用）
+        /// </summary>
+        /// <param name="isThrow">検証結果</param>
+        /// <param name="itemName">検証項目名</param>
+        /// <param name="propertyName">検証項目のプロパティ名</param>
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="isThrow"/> が <see langword="true"/> の場合。
+        /// </exception>
+        public static void ValidateArgumentPropertyNotNull([DoesNotReturnIf(true)] bool isThrow, string itemName, string propertyName)
+        {
+            if (!isThrow) return;
+
+            throw new ArgumentException(
+                ErrorMessage.NotNullInList($"{itemName}.${propertyName}")
+            );
+        }
+
+        /// <summary>
+        ///     引数が <see langword="null"/> でないことを検証する際の例外処理（引数インスタンスのプロパティ検証用）
+        /// </summary>
+        /// <param name="isThrow">検証結果</param>
+        /// <param name="itemName">検証項目名</param>
+        /// <param name="propertyName">検証項目のプロパティ名</param>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="isThrow"/> が <see langword="true"/> の場合。
+        /// </exception>
+        public static void ValidateArgumentPropertyItemsHasNotNull([DoesNotReturnIf(true)] bool isThrow, string itemName, string propertyName)
+        {
+            if (!isThrow) return;
+
+            throw new ArgumentException(
+                ErrorMessage.NotNull($"{itemName}.${propertyName}")
+            );
         }
 
         #endregion

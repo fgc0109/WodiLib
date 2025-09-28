@@ -6,7 +6,6 @@
 // see LICENSE file
 // ========================================
 
-using System.Collections.Generic;
 using WodiLib.Sys;
 
 namespace WodiLib.Cmn
@@ -15,17 +14,13 @@ namespace WodiLib.Cmn
     ///     [Range(-999999, 999999)] 条件右辺
     /// </summary>
     [CommonIntValueObject(MinValue = -999999, MaxValue = 999999)]
-    public partial class ConditionRight
+    public partial record ConditionRight
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
         /// <summary>
-        ///     byte配列に変換する。
+        ///     コンストラクタ
         /// </summary>
-        /// <param name="endian">エンディアン</param>
-        /// <returns>byte配列</returns>
-        public IEnumerable<byte> ToBytes(Endian endian) => RawValue.ToBytes(endian);
+        public ConditionRight() : this(0)
+        {
+        }
     }
 }

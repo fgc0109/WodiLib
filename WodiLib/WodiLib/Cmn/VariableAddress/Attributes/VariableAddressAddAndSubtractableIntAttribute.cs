@@ -18,6 +18,6 @@ namespace WodiLib.Cmn
     {
         /// <inheritdoc/>
         [DefaultValue(new[] { typeof(int) })]
-        public override Type[] OtherTypes { get; init; } = default!;
+        public override Type[] OtherTypes { get; init; } = null!;
     }
 }

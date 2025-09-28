@@ -14,7 +14,13 @@ namespace WodiLib.Cmn
     ///     [Range(1, 5)] 仲間ID
     /// </summary>
     [CommonIntValueObject(MinValue = 1, MaxValue = 5)]
-    public partial class MemberId
+    public partial record MemberId
     {
+        /// <summary>
+        ///     コンストラクタ
+        /// </summary>
+        public MemberId() : this(MinValue)
+        {
+        }
     }
 }

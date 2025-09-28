@@ -6,11 +6,6 @@
 // see LICENSE file
 // ========================================
 
-using System.ComponentModel;
-using WodiLib.Common;
-using WodiLib.Project;
-using WodiLib.Sys;
-
 namespace WodiLib.Cmn
 {
     /// <summary>
@@ -20,61 +15,17 @@ namespace WodiLib.Cmn
     [VariableAddressGapCalculatable(
         OtherTypes = new[] { typeof(CommonEventVariableAddress), typeof(VariableAddress) }
     )]
-    public partial class CommonEventVariableAddress : VariableAddress
+    public partial record CommonEventVariableAddress : VariableAddress
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        private const string EventCommandSentenceFormat = "ｺﾓﾝEv{0}ｾﾙﾌ{1}{2}";
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
         /// <summary>変数種別</summary>
         public override VariableAddressValueType ValueType
             => VariableAddressValueType.Numeric;
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
         /// <summary>
-        ///     セルフ変数インデックス
+        ///     コンストラクタ
         /// </summary>
-        public CommonEventVariableIndex Index => RawValue.SubInt(0, 2);
-
-        /// <summary>
-        ///     文字列変数フラグ
-        /// </summary>
-        public bool IsStringVariable => Index.IsStringIndex;
-
-        /// <summary>コモンイベントID</summary>
-        public CommonEventId CommonEventId => RawValue.SubInt(2, 3);
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Override Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>
-        ///     イベントコマンド文用文字列を生成する。
-        /// </summary>
-        /// <param name="resolver">名前解決クラスインスタンス</param>
-        /// <param name="type">イベントコマンド種別</param>
-        /// <param name="desc">付加情報</param>
-        /// <returns>イベントコマンド文字列</returns>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        protected override string ResolveEventCommandString(EventCommandSentenceResolver resolver,
-            EventCommandSentenceType type, EventCommandSentenceResolveDesc? desc)
+        public CommonEventVariableAddress() : this(MinValue)
         {
-            var commonVariableName = resolver.GetCommonEventSelfVariableName(CommonEventId, Index);
-            if (!commonVariableName.Equals(string.Empty))
-            {
-                commonVariableName = $"[{commonVariableName}]";
-            }
-
-            return string.Format(EventCommandSentenceFormat, CommonEventId, Index, commonVariableName);
         }
     }
 }

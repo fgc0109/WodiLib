@@ -6,8 +6,6 @@
 // see LICENSE file
 // ========================================
 
-using System.ComponentModel;
-using WodiLib.Project;
 using WodiLib.Sys;
 
 namespace WodiLib.Cmn
@@ -19,19 +17,11 @@ namespace WodiLib.Cmn
     [VariableAddressGapCalculatable(
         OtherTypes = new[] { typeof(MemberInfoAddress), typeof(VariableAddress) }
     )]
-    public partial class MemberInfoAddress : VariableAddress
+    public partial record MemberInfoAddress : VariableAddress
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
         /// <summary>変数種別</summary>
         public override VariableAddressValueType ValueType
             => VariableAddressValueType.Numeric;
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
         /// <summary>仲間ID</summary>
         public MemberId MemberId => RawValue.SubInt(1, 1);
@@ -39,20 +29,11 @@ namespace WodiLib.Cmn
         /// <summary>取得情報</summary>
         public InfoAddressInfoType InfoType => InfoAddressInfoType.FromCode(RawValue.SubInt(0, 1));
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Override Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
         /// <summary>
-        ///     イベントコマンド文用文字列を生成する。
+        ///     コンストラクタ
         /// </summary>
-        /// <param name="resolver">名前解決クラスインスタンス</param>
-        /// <param name="type">イベントコマンド種別</param>
-        /// <param name="desc">付加情報</param>
-        /// <returns>イベントコマンド文字列</returns>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        protected override string ResolveEventCommandString(EventCommandSentenceResolver resolver,
-            EventCommandSentenceType type, EventCommandSentenceResolveDesc? desc)
-            => InfoType.MakeEventCommandSentenceForMember(MemberId);
+        public MemberInfoAddress() : this(MinValue)
+        {
+        }
     }
 }

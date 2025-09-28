@@ -14,7 +14,13 @@ namespace WodiLib.Cmn
     ///     [Range(0, 99999)] 予備変数インデックス
     /// </summary>
     [CommonIntValueObject(MinValue = 0, MaxValue = 99999)]
-    public partial class SpareNumberVariableIndex
+    public partial record SpareNumberVariableIndex
     {
+        /// <summary>
+        ///     コンストラクタ
+        /// </summary>
+        public SpareNumberVariableIndex() : this(MinValue)
+        {
+        }
     }
 }

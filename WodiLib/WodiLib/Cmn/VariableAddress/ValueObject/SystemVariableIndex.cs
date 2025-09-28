@@ -14,7 +14,13 @@ namespace WodiLib.Cmn
     ///     [Range(0, 99999)] システム変数インデックス
     /// </summary>
     [CommonIntValueObject(MinValue = 0, MaxValue = 99999)]
-    public partial class SystemVariableIndex
+    public partial record SystemVariableIndex
     {
+        /// <summary>
+        ///     コンストラクタ
+        /// </summary>
+        public SystemVariableIndex() : this(MinValue)
+        {
+        }
     }
 }

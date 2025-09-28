@@ -7,92 +7,149 @@
 // ========================================
 
 using System;
+using System.Diagnostics.CodeAnalysis;
+using WodiLib.Sys;
 
 namespace WodiLib.Cmn
 {
     /// <summary>
-    /// 変数アドレス値Factory
+    ///     変数アドレス値Factory
     /// </summary>
     public static class VariableAddressFactory
     {
         /// <summary>
-        /// int値からVariableAddressインスタンスを生成する
+        ///     int値をVariableAddressに変換する。
+        /// </summary>
+        /// <param name="value">対象</param>
+        /// <param name="result">
+        ///     変換に成功した場合、変換値。
+        ///     変換に失敗した場合、<see langword="null"/>。
+        /// </param>
+        /// <returns>変換に成功した場合 <see langword="false"/></returns>
+        public static bool TryCreate(int value, [NotNullWhen(true)] out VariableAddress? result)
+        {
+            if (value.IsBetween(ChangeableDatabaseAddress.MinValue, ChangeableDatabaseAddress.MaxValue))
+            {
+                result = new ChangeableDatabaseAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(CommonEventVariableAddress.MinValue, CommonEventVariableAddress.MaxValue))
+            {
+                result = new CommonEventVariableAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(EventInfoAddress.MinValue, EventInfoAddress.MaxValue))
+            {
+                result = new EventInfoAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(HeroInfoAddress.MinValue, HeroInfoAddress.MaxValue))
+            {
+                result = new HeroInfoAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(ThisMapEventInfoAddress.MinValue, ThisMapEventInfoAddress.MaxValue))
+            {
+                result = new ThisMapEventInfoAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(MapEventVariableAddress.MinValue, MapEventVariableAddress.MaxValue))
+            {
+                result = new MapEventVariableAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(MemberInfoAddress.MinValue, MemberInfoAddress.MaxValue))
+            {
+                result = new MemberInfoAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(NormalNumberVariableAddress.MinValue, NormalNumberVariableAddress.MaxValue))
+            {
+                result = new NormalNumberVariableAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(RandomVariableAddress.MinValue, RandomVariableAddress.MaxValue))
+            {
+                result = new RandomVariableAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(SpareNumberVariableAddress.MinValue, SpareNumberVariableAddress.MaxValue))
+            {
+                result = new SpareNumberVariableAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(StringVariableAddress.MinValue, StringVariableAddress.MaxValue))
+            {
+                result = new StringVariableAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(SystemDatabaseAddress.MinValue, SystemDatabaseAddress.MaxValue))
+            {
+                result = new SystemDatabaseAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(SystemVariableAddress.MinValue, SystemVariableAddress.MaxValue))
+            {
+                result = new SystemVariableAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(SystemStringVariableAddress.MinValue, SystemStringVariableAddress.MaxValue))
+            {
+                result = new SystemStringVariableAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(ThisCommonEventVariableAddress.MinValue, ThisCommonEventVariableAddress.MaxValue))
+            {
+                result = new ThisCommonEventVariableAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(ThisMapEventVariableAddress.MinValue, ThisMapEventVariableAddress.MaxValue))
+            {
+                result = new ThisMapEventVariableAddress(value);
+                return true;
+            }
+
+            if (value.IsBetween(UserDatabaseAddress.MinValue, UserDatabaseAddress.MaxValue))
+            {
+                result = new UserDatabaseAddress(value);
+                return true;
+            }
+
+            result = null;
+            return false;
+        }
+
+        /// <summary>
+        ///     int値から <see cref="VariableAddress"/> インスタンスを生成する
         /// </summary>
         /// <param name="value">対象値</param>
-        /// <returns>VariableAddressのインスタンス</returns>
-        /// <exception cref="ArgumentOutOfRangeException">valueが変数アドレス値として適切でない場合</exception>
+        /// <returns><see cref="VariableAddress"/>のインスタンス</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/>が変数アドレス値として適切でない場合。</exception>
         public static VariableAddress Create(int value)
         {
-            if (ChangeableDatabaseAddress.MinValue <= value &&
-                value <= ChangeableDatabaseAddress.MaxValue)
-                return new ChangeableDatabaseAddress(value);
+            if (!TryCreate(value, out var variableAddress))
+            {
+                throw new ArgumentOutOfRangeException(
+                    $"指定された値は変数アドレス値ではありません。（value：{value}）"
+                );
+            }
 
-            if (CommonEventVariableAddress.MinValue <= value &&
-                value <= CommonEventVariableAddress.MaxValue)
-                return new CommonEventVariableAddress(value);
-
-            if (EventInfoAddress.MinValue <= value &&
-                value <= EventInfoAddress.MaxValue)
-                return new EventInfoAddress(value);
-
-            if (HeroInfoAddress.MinValue <= value &&
-                value <= HeroInfoAddress.MaxValue)
-                return new HeroInfoAddress(value);
-
-            if (ThisMapEventInfoAddress.MinValue <= value &&
-                value <= ThisMapEventInfoAddress.MaxValue)
-                return new ThisMapEventInfoAddress(value);
-
-            if (MapEventVariableAddress.MinValue <= value &&
-                value <= MapEventVariableAddress.MaxValue)
-                return new MapEventVariableAddress(value);
-
-            if (MemberInfoAddress.MinValue <= value &&
-                value <= MemberInfoAddress.MaxValue)
-                return new MemberInfoAddress(value);
-
-            if (NormalNumberVariableAddress.MinValue <= value &&
-                value <= NormalNumberVariableAddress.MaxValue)
-                return new NormalNumberVariableAddress(value);
-
-            if (RandomVariableAddress.MinValue <= value &&
-                value <= RandomVariableAddress.MaxValue)
-                return new RandomVariableAddress(value);
-
-            if (SpareNumberVariableAddress.MinValue <= value &&
-                value <= SpareNumberVariableAddress.MaxValue)
-                return new SpareNumberVariableAddress(value);
-
-            if (StringVariableAddress.MinValue <= value &&
-                value <= StringVariableAddress.MaxValue)
-                return new StringVariableAddress(value);
-
-            if (SystemDatabaseAddress.MinValue <= value &&
-                value <= SystemDatabaseAddress.MaxValue)
-                return new SystemDatabaseAddress(value);
-
-            if (SystemVariableAddress.MinValue <= value &&
-                value <= SystemVariableAddress.MaxValue)
-                return new SystemVariableAddress(value);
-
-            if (SystemStringVariableAddress.MinValue <= value &&
-                value <= SystemStringVariableAddress.MaxValue)
-                return new SystemStringVariableAddress(value);
-
-            if (ThisCommonEventVariableAddress.MinValue <= value &&
-                value <= ThisCommonEventVariableAddress.MaxValue)
-                return new ThisCommonEventVariableAddress(value);
-
-            if (ThisMapEventVariableAddress.MinValue <= value &&
-                value <= ThisMapEventVariableAddress.MaxValue)
-                return new ThisMapEventVariableAddress(value);
-
-            if (UserDatabaseAddress.MinValue <= value &&
-                value <= UserDatabaseAddress.MaxValue)
-                return new UserDatabaseAddress(value);
-
-            throw new ArgumentOutOfRangeException(
-                $"指定された値は変数アドレス値ではありません。（value：{value}）");
+            return variableAddress;
         }
     }
 }

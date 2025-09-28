@@ -11,10 +11,16 @@ using WodiLib.Sys;
 namespace WodiLib.Cmn
 {
     /// <summary>
-    /// 辺の長さ
+    ///     辺の長さ
     /// </summary>
     [CommonIntValueObject(MinValue = 0, MaxValue = int.MaxValue)]
-    public partial class SideLength
+    public partial record SideLength
     {
+        /// <summary>
+        ///     コンストラクタ
+        /// </summary>
+        public SideLength() : this(0)
+        {
+        }
     }
 }

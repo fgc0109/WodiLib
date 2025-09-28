@@ -9,233 +9,225 @@ namespace WodiLib.Test.Cmn
     [TestFixture]
     public class NormalNumberVariableAddressTest
     {
-        private static Logger logger;
+        private static Logger logger = null!;
+
+        private static ConstructorTestHelper constructorTestHelper = null!;
+        private static PropertyTestHelper propertyTestHelper = null!;
+        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
+        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
 
         [SetUp]
         public static void Setup()
         {
             LoggerInitializer.SetupLoggerForDebug();
             logger = Logger.GetInstance();
+
+            constructorTestHelper = new ConstructorTestHelper(logger);
+            propertyTestHelper = new PropertyTestHelper(logger);
+            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
+            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
         }
 
-        [TestCase(1999999, true)]
-        [TestCase(2000000, false)]
-        [TestCase(2099999, false)]
-        [TestCase(2100000, true)]
-        public static void ConstructorIntTest(int value, bool isError)
+        #region properties
+
+        #region public
+
+        #region ValueType
+
+        /// <summary>
+        ///     意図した値が取得できること。
+        /// </summary>
+        [Test]
+        public static void ValueTypeGetterTest()
         {
-            var errorOccured = false;
-            try
-            {
-                var _ = new NormalNumberVariableAddress(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+            propertyTestHelper.PropertyGetSuccess(
+                instance: new NormalNumberVariableAddress(),
+                getter: target => target.ValueType,
+                getValueVerifier: ValueVerifier<VariableAddressValueType>.AreEquals(VariableAddressValueType.Numeric)
+            );
         }
 
-        [TestCase(2000000, 0)]
-        [TestCase(2000031, 31)]
-        [TestCase(2045678, 45678)]
-        public static void VariableIndexTest(int variableAddress, int answer)
+        #endregion
+
+        #region VariableIndex
+
+        private static readonly object[][] VariableIndexGetterTestCaseSource =
         {
-            var instance = new NormalNumberVariableAddress(variableAddress);
+            // [instance, expected]
+            new object[] { new NormalNumberVariableAddress(2000000), new NormalNumberVariableIndex(0) },
+            new object[] { new NormalNumberVariableAddress(2000001), new NormalNumberVariableIndex(1) },
+            new object[] { new NormalNumberVariableAddress(2000999), new NormalNumberVariableIndex(999) },
+        };
 
-            // 取得した値が意図した値と一致すること
-            Assert.AreEqual(instance.VariableIndex, (NormalNumberVariableIndex)answer);
+        /// <summary>
+        ///     意図した値が取得できること。
+        /// </summary>
+        [TestCaseSource(nameof(VariableIndexGetterTestCaseSource))]
+        public static void VariableIndexGetterTest(
+            NormalNumberVariableAddress instance,
+            NormalNumberVariableIndex expected
+        )
+        {
+            propertyTestHelper.PropertyGetSuccess(
+                instance,
+                getter: target => target.VariableIndex,
+                getValueVerifier: ValueVerifier<NormalNumberVariableIndex>.AreEquals(expected)
+            );
         }
 
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Constructor
+
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase(2000000)]
         [TestCase(2099999)]
-        public static void ToIntTest(int value)
+        public static void ConstructorIntTest_Success(int value)
         {
-            var instance = new NormalNumberVariableAddress(value);
-
-            var intValue = instance.ToInt();
-
-            // セットした値と取得した値が一致すること
-            Assert.AreEqual(intValue, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new NormalNumberVariableAddress(value),
+                instanceVerifier: new ValueVerifier<NormalNumberVariableAddress>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(1999999, true)]
-        [TestCase(2000000, false)]
-        [TestCase(2099999, false)]
-        [TestCase(2100000, true)]
-        public static void CastIntToNormalNumberVariableAddressTest(int value, bool isError)
+        /// <summary>
+        ///     引数に許容範囲外の値を指定した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(1999999)]
+        [TestCase(2100000)]
+        public static void ConstructorIntTest_Failure_OutOfRange(int value)
         {
-            var errorOccured = false;
-            try
-            {
-                var _ = (NormalNumberVariableAddress)value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new NormalNumberVariableAddress(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     int から NormalNumberVariableAddress に暗黙的型変換できること。
+        /// </summary>
         [TestCase(2000000)]
         [TestCase(2099999)]
-        public static void CastNormalNumberVariableAddressToIntTest(int value)
+        public static void CastIntToNormalNumberVariableAddressTest_Success(int value)
         {
-            var castValue = 0;
-
-            var instance = new NormalNumberVariableAddress(value);
-
-            var errorOccured = false;
-            try
-            {
-                castValue = (int)instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 元の値と一致すること
-            Assert.AreEqual(castValue, value);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => value,
+                resultValueVerifier: new ValueVerifier<NormalNumberVariableAddress>(actual =>
+                    {
+                        Assert.AreEqual(actual.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(2000000, -1, true)]
-        [TestCase(2000000, 0, false)]
-        [TestCase(2000000, 99999, false)]
-        [TestCase(2000000, 100000, true)]
-        [TestCase(2053002, -53003, true)]
-        [TestCase(2053002, -53002, false)]
-        [TestCase(2053002, 46997, false)]
-        [TestCase(2053002, 46998, true)]
-        public static void OperatorPlusTest(int variableAddress, int value, bool isError)
+        /// <summary>
+        ///     許容範囲外の値から NormalNumberVariableAddress に暗黙的型変換した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(1999999)]
+        [TestCase(2100000)]
+        public static void CastIntToNormalNumberVariableAddressTest_Failure_OutOfRange(int value)
         {
-            var instance = new NormalNumberVariableAddress(variableAddress);
-            NormalNumberVariableAddress result = null;
-
-            var errorOccured = false;
-            try
-            {
-                result = instance + value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 意図した値と一致すること
-            Assert.AreEqual((int)result, variableAddress + value);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, variableAddress);
+            staticFunctionTestHelper.StaticFuncFailure<NormalNumberVariableAddress>(
+                execFunc: () => value,
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
-        [TestCase(2000000, -100000, true)]
-        [TestCase(2000000, -99999, false)]
-        [TestCase(2000000, 0, false)]
-        [TestCase(2000000, 1, true)]
-        [TestCase(2053002, -46998, true)]
-        [TestCase(2053002, -46997, false)]
-        [TestCase(2053002, 53002, false)]
-        [TestCase(2053002, 53003, true)]
-        public static void OperatorMinusIntTest(int variableAddress, int value, bool isError)
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     NormalNumberVariableAddress から int に暗黙的型変換できること。
+        /// </summary>
+        [TestCase(2000000)]
+        [TestCase(2099999)]
+        public static void CastNormalNumberVariableAddressToIntTest_Success(int value)
         {
-            var instance = new NormalNumberVariableAddress(variableAddress);
-            NormalNumberVariableAddress result = null;
-
-            var errorOccured = false;
-            try
-            {
-                result = instance - value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 意図した値と一致すること
-            Assert.AreEqual((int)result, variableAddress - value);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, variableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => new NormalNumberVariableAddress(value),
+                resultValueVerifier: new ValueVerifier<int>(actual => { Assert.AreEqual(actual, value); })
+            );
         }
 
-        [TestCase(2053002, 2000000)]
-        [TestCase(2000000, 1000000)]
-        public static void OperatorMinusVariableAddressTestA(int srcVariableAddress, int dstVariableAddress)
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと。
+        /// </summary>
+        [TestCase(2000000, 2000000, true)]
+        [TestCase(2000000, 2099999, false)]
+        public static void OperatorEqualTest(int left, int right, bool expected)
         {
-            var instance = new NormalNumberVariableAddress(srcVariableAddress);
-            var dstInstance = VariableAddressFactory.Create(dstVariableAddress);
-            var result = 0;
+            var leftValue = (NormalNumberVariableAddress)left;
+            var rightValue = (NormalNumberVariableAddress)right;
 
-            var errorOccured = false;
-            try
-            {
-                result = instance - dstInstance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 意図した値と一致すること
-            Assert.AreEqual(result, srcVariableAddress - dstVariableAddress);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, srcVariableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
         }
 
-        [TestCase(2053002, 2000000)]
-        [TestCase(2000000, 2099999)]
-        public static void OperatorMinusVariableAddressTestB(int srcVariableAddress, int dstVariableAddress)
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと。
+        /// </summary>
+        [TestCase(2000000, 2000000, false)]
+        [TestCase(2000000, 2099999, true)]
+        public static void OperatorNotEqualTest(int left, int right, bool expected)
         {
-            var instance = new NormalNumberVariableAddress(srcVariableAddress);
-            var result = 0;
+            var leftValue = (NormalNumberVariableAddress)left;
+            var rightValue = (NormalNumberVariableAddress)right;
 
-            var errorOccured = false;
-            try
-            {
-                result = instance - (NormalNumberVariableAddress)dstVariableAddress;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 意図した値と一致すること
-            Assert.AreEqual(result, srcVariableAddress - dstVariableAddress);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, srcVariableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
         }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCase(2000000, 2000000, true)]
+        [TestCase(2000000, 2099999, false)]
+        public static void OperatorEqualsTest(int left, int right, bool expected)
+        {
+            var leftValue = (NormalNumberVariableAddress)left;
+            var rightValue = (NormalNumberVariableAddress)right;
+
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: leftValue,
+                execFunc: target => target.Equals(rightValue),
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        #endregion
+
+        #endregion
     }
 }

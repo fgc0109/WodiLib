@@ -9,111 +9,170 @@ namespace WodiLib.Test.Cmn
     [TestFixture]
     public class StringVariableIndexTest
     {
-        private static Logger logger;
+        private static Logger logger = null!;
+
+        private static ConstructorTestHelper constructorTestHelper = null!;
+        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
+        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
 
         [SetUp]
         public static void Setup()
         {
             LoggerInitializer.SetupLoggerForDebug();
             logger = Logger.GetInstance();
+
+            constructorTestHelper = new ConstructorTestHelper(logger);
+            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
+            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
         }
 
-        [TestCase(-1, true)]
-        [TestCase(0, false)]
-        [TestCase(999999, false)]
-        [TestCase(1000000, true)]
-        public static void ConstructorIntTest(int value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = new StringVariableIndex(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+        #region Constructor
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-        }
-
-        [TestCase(-1, true)]
-        [TestCase(0, false)]
-        [TestCase(999999, false)]
-        [TestCase(1000000, true)]
-        public static void CastIntToStringVariableIndexTest(int value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = (StringVariableIndex)value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-        }
-
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase(0)]
         [TestCase(999999)]
-        public static void CastStringVariableIndexToIntTest(int value)
+        public static void ConstructorIntTest_Success(int value)
         {
-            var castValue = 0;
-
-            var instance = new StringVariableIndex(value);
-
-            var errorOccured = false;
-            try
-            {
-                castValue = instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 元の値と一致すること
-            Assert.AreEqual(castValue, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new StringVariableIndex(value),
+                instanceVerifier: new ValueVerifier<StringVariableIndex>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        private static readonly object[] EqualTestCaseSource =
+        /// <summary>
+        ///     引数に許容範囲外の値を指定した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(-1)]
+        [TestCase(1000000)]
+        public static void ConstructorIntTest_Failure_OutOfRange(int value)
         {
-            new object[] { 0, 0, true },
-            new object[] { 0, 243, false }
-        };
-
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualTest(int left, int right, bool isEqual)
-        {
-            var leftIndex = (StringVariableIndex)left;
-            var rightIndex = (StringVariableIndex)right;
-            Assert.AreEqual(leftIndex == rightIndex, isEqual);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new StringVariableIndex(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorNotEqualTest(int left, int right, bool isEqual)
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     int から StringVariableIndex に暗黙的型変換できること。
+        /// </summary>
+        [TestCase(0)]
+        [TestCase(999999)]
+        public static void CastIntToStringVariableIndexTest_Success(int value)
         {
-            var leftIndex = (StringVariableIndex)left;
-            var rightIndex = (StringVariableIndex)right;
-            Assert.AreEqual(leftIndex != rightIndex, !isEqual);
+            staticFunctionTestHelper.StaticFuncSuccess<StringVariableIndex>(
+                execFunc: () => value,
+                resultValueVerifier: new ValueVerifier<StringVariableIndex>(actual =>
+                    {
+                        Assert.AreEqual(actual.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualsTest(int left, int right, bool isEqual)
+        /// <summary>
+        ///     許容範囲外の値から StringVariableIndex に暗黙的型変換したとき
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(-1)]
+        [TestCase(1000000)]
+        public static void CastIntToStringVariableIndexTest_Failure_OutOfRange(int value)
         {
-            var leftIndex = (StringVariableIndex)left;
-            var rightIndex = (StringVariableIndex)right;
-            Assert.AreEqual(leftIndex.Equals(rightIndex), isEqual);
+            staticFunctionTestHelper.StaticFuncFailure<StringVariableIndex>(
+                execFunc: () => value,
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
+
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     StringVariableIndex から int に暗黙的型変換できること
+        /// </summary>
+        [TestCase(0)]
+        [TestCase(999999)]
+        public static void CastStringVariableIndexToIntTest_Success(int value)
+        {
+            staticFunctionTestHelper.StaticFuncSuccess<int>(
+                execFunc: () => new StringVariableIndex(value),
+                resultValueVerifier: new ValueVerifier<int>(actual => { Assert.AreEqual(actual, value); })
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと
+        /// </summary>
+        [TestCase(0, 0, true)]
+        [TestCase(0, 999999, false)]
+        public static void OperatorEqualTest(int left, int right, bool expected)
+        {
+            var leftValue = (StringVariableIndex)left;
+            var rightValue = (StringVariableIndex)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと
+        /// </summary>
+        [TestCase(0, 0, false)]
+        [TestCase(0, 999999, true)]
+        public static void OperatorNotEqualTest(int left, int right, bool expected)
+        {
+            var leftValue = (StringVariableIndex)left;
+            var rightValue = (StringVariableIndex)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと
+        /// </summary>
+        [TestCase(0, 0, true)]
+        [TestCase(0, 999999, false)]
+        public static void OperatorEqualsTest(int left, int right, bool expected)
+        {
+            var leftValue = (StringVariableIndex)left;
+            var rightValue = (StringVariableIndex)right;
+
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: leftValue,
+                execFunc: target => target.Equals(rightValue),
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        #endregion
+
+        #endregion
     }
 }

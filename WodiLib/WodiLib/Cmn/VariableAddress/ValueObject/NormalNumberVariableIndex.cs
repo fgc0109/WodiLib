@@ -14,7 +14,13 @@ namespace WodiLib.Cmn
     ///     [Range(0, 99999)] 通常変数インデックス
     /// </summary>
     [CommonIntValueObject(MinValue = 0, MaxValue = 99999)]
-    public partial class NormalNumberVariableIndex
+    public partial record NormalNumberVariableIndex
     {
+        /// <summary>
+        ///     コンストラクタ
+        /// </summary>
+        public NormalNumberVariableIndex() : this(MinValue)
+        {
+        }
     }
 }

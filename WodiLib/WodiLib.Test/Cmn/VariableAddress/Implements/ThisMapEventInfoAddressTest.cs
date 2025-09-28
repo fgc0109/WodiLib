@@ -9,215 +9,231 @@ namespace WodiLib.Test.Cmn
     [TestFixture]
     public class ThisMapEventInfoAddressTest
     {
-        private static Logger logger;
+        private static Logger logger = null!;
+
+        private static ConstructorTestHelper constructorTestHelper = null!;
+        private static PropertyTestHelper propertyTestHelper = null!;
+        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
+        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
 
         [SetUp]
         public static void Setup()
         {
             LoggerInitializer.SetupLoggerForDebug();
             logger = Logger.GetInstance();
+
+            constructorTestHelper = new ConstructorTestHelper(logger);
+            propertyTestHelper = new PropertyTestHelper(logger);
+            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
+            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
         }
 
-        [TestCase(9189999, true)]
-        [TestCase(9190000, false)]
-        [TestCase(9199999, false)]
-        [TestCase(9200000, true)]
-        public static void ConstructorIntTest(int value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = new ThisMapEventInfoAddress(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+        #region properties
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+        #region public
+
+        #region ValueType
+
+        /// <summary>
+        ///     意図した値が取得できること。
+        /// </summary>
+        [Test]
+        public static void ValueTypeGetterTest()
+        {
+            propertyTestHelper.PropertyGetSuccess(
+                instance: new ChangeableDatabaseAddress(),
+                getter: target => target.ValueType,
+                getValueVerifier: ValueVerifier<VariableAddressValueType>.AreEquals(VariableAddressValueType.Numeric)
+            );
         }
 
-        private static readonly object[] InfoTypeTestCaseSource =
+        #endregion
+
+        #region InfoType
+
+        private static readonly object[] InfoTypeGetterTestCaseSource =
         {
-            new object[] { 9190000, InfoAddressInfoType.PositionX },
-            new object[] { 9190001, InfoAddressInfoType.PositionY },
-            new object[] { 9190002, InfoAddressInfoType.PositionXPrecise },
-            new object[] { 9190003, InfoAddressInfoType.PositionYPrecise },
-            new object[] { 9190004, InfoAddressInfoType.Height },
-            new object[] { 9190005, InfoAddressInfoType.ShadowGraphicId },
-            new object[] { 9190006, InfoAddressInfoType.Direction },
-            new object[] { 9199999, InfoAddressInfoType.CharacterGraphicName }
+            // [value, expected]
+            new object[] { new ThisMapEventInfoAddress(9190000), InfoAddressInfoType.PositionX },
+            new object[] { new ThisMapEventInfoAddress(9190001), InfoAddressInfoType.PositionY },
+            new object[] { new ThisMapEventInfoAddress(9190012), InfoAddressInfoType.PositionXPrecise },
+            new object[] { new ThisMapEventInfoAddress(9190113), InfoAddressInfoType.PositionYPrecise },
+            new object[] { new ThisMapEventInfoAddress(9190234), InfoAddressInfoType.Height },
+            new object[] { new ThisMapEventInfoAddress(9190235), InfoAddressInfoType.ShadowGraphicId },
+            new object[] { new ThisMapEventInfoAddress(9190306), InfoAddressInfoType.Direction },
+            new object[] { new ThisMapEventInfoAddress(9191357), InfoAddressInfoType.Empty },
+            new object[] { new ThisMapEventInfoAddress(9192568), InfoAddressInfoType.Empty },
+            new object[] { new ThisMapEventInfoAddress(9199999), InfoAddressInfoType.CharacterGraphicName },
         };
 
-        [TestCaseSource(nameof(InfoTypeTestCaseSource))]
-        public static void InfoTypeTest(int variableAddress, InfoAddressInfoType infoType)
+        /// <summary>
+        ///     意図した値が取得できること。
+        /// </summary>
+        /// <param name="instance">処理対象</param>
+        /// <param name="expected">期待する値</param>
+        [TestCaseSource(nameof(InfoTypeGetterTestCaseSource))]
+        public static void InfoTypeGetterTest(ThisMapEventInfoAddress instance, InfoAddressInfoType expected)
         {
-            var instance = new ThisMapEventInfoAddress(variableAddress);
-
-            // プロパティの値が意図した値と一致すること
-            Assert.AreEqual(instance.InfoType, infoType);
+            propertyTestHelper.PropertyGetSuccess(
+                instance,
+                getter: target => target.InfoType,
+                getValueVerifier: ValueVerifier<InfoAddressInfoType>.AreEquals(expected)
+            );
         }
 
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Constructor
+
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase(9190000)]
         [TestCase(9199999)]
-        public static void ToIntTest(int value)
+        public static void ConstructorIntTest_Success(int value)
         {
-            var instance = new ThisMapEventInfoAddress(value);
-
-            var intValue = instance.ToInt();
-
-            // セットした値と取得した値が一致すること
-            Assert.AreEqual(intValue, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new ThisMapEventInfoAddress(value),
+                instanceVerifier: new ValueVerifier<ThisMapEventInfoAddress>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(9189999, true)]
-        [TestCase(9190000, false)]
-        [TestCase(9199999, false)]
-        [TestCase(9200000, true)]
-        public static void CastIntToHeroPositionAddressTest(int value, bool isError)
+        /// <summary>
+        ///     引数に許容範囲外の値を指定した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(9189999)]
+        [TestCase(9200000)]
+        public static void ConstructorIntTest_Failure_OutOfRange(int value)
         {
-            var errorOccured = false;
-            try
-            {
-                var _ = (ThisMapEventInfoAddress)value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new ThisMapEventInfoAddress(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     int から ThisMapEventInfoAddress に暗黙的型変換できること。
+        /// </summary>
         [TestCase(9190000)]
         [TestCase(9199999)]
-        public static void CastHeroPositionAddressToIntTest(int value)
+        public static void CastIntToThisMapEventInfoAddressTest_Success(int value)
         {
-            var castValue = 0;
-
-            var instance = new ThisMapEventInfoAddress(value);
-
-            var errorOccured = false;
-            try
-            {
-                castValue = (int)instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 元の値と一致すること
-            Assert.AreEqual(castValue, value);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => value,
+                resultValueVerifier: new ValueVerifier<ThisMapEventInfoAddress>(actual =>
+                    {
+                        Assert.AreEqual(actual.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(9190000, -1, true)]
-        [TestCase(9190000, 0, false)]
-        [TestCase(9190000, 9, false)]
-        [TestCase(9190000, 10000, true)]
-        [TestCase(9190003, -4, true)]
-        [TestCase(9190003, -3, false)]
-        [TestCase(9190003, 9996, false)]
-        [TestCase(9190003, 9997, true)]
-        public static void OperatorPlusTest(int variableAddress, int value, bool isError)
+        /// <summary>
+        ///     許容範囲外の値から ThisMapEventInfoAddress に暗黙的型変換した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(9189999)]
+        [TestCase(9200000)]
+        public static void CastIntToThisMapEventInfoAddressTest_Failure_OutOfRange(int value)
         {
-            var instance = new ThisMapEventInfoAddress(variableAddress);
-            ThisMapEventInfoAddress result = null;
-
-            var errorOccured = false;
-            try
-            {
-                result = instance + value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 意図した値と一致すること
-            Assert.AreEqual((int)result, variableAddress + value);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, variableAddress);
+            staticFunctionTestHelper.StaticFuncFailure<ThisMapEventInfoAddress>(
+                execFunc: () => value,
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
-        [TestCase(9190009, -9991, true)]
-        [TestCase(9190009, -9990, false)]
-        [TestCase(9190009, 9, false)]
-        [TestCase(9190009, 10, true)]
-        [TestCase(9199996, -4, true)]
-        [TestCase(9199996, -3, false)]
-        [TestCase(9199996, 9996, false)]
-        [TestCase(9199996, 9997, true)]
-        public static void OperatorMinusIntTest(int variableAddress, int value, bool isError)
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     ThisMapEventInfoAddress から int に暗黙的型変換できること。
+        /// </summary>
+        [TestCase(9190000)]
+        [TestCase(9199999)]
+        public static void CastThisMapEventInfoAddressToIntTest_Success(int value)
         {
-            var instance = new ThisMapEventInfoAddress(variableAddress);
-            ThisMapEventInfoAddress result = null;
-
-            var errorOccured = false;
-            try
-            {
-                result = instance - value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 意図した値と一致すること
-            Assert.AreEqual((int)result, variableAddress - value);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, variableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => new ThisMapEventInfoAddress(value),
+                resultValueVerifier: new ValueVerifier<int>(actual => { Assert.AreEqual(actual, value); })
+            );
         }
 
-        [TestCase(9190003, 9190000)]
-        [TestCase(9190000, 1000000)]
-        public static void OperatorMinusVariableAddressTest(int srcVariableAddress, int dstVariableAddress)
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと。
+        /// </summary>
+        [TestCase(9190000, 9190000, true)]
+        [TestCase(9190000, 9199999, false)]
+        public static void OperatorEqualTest(int left, int right, bool expected)
         {
-            var instance = new ThisMapEventInfoAddress(srcVariableAddress);
-            var dstInstance = VariableAddressFactory.Create(dstVariableAddress);
-            var result = 0;
+            var leftValue = (ThisMapEventInfoAddress)left;
+            var rightValue = (ThisMapEventInfoAddress)right;
 
-            var errorOccured = false;
-            try
-            {
-                result = instance - dstInstance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 意図した値と一致すること
-            Assert.AreEqual(result, srcVariableAddress - dstVariableAddress);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, srcVariableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
         }
+
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと。
+        /// </summary>
+        [TestCase(9190000, 9190000, false)]
+        [TestCase(9190000, 9199999, true)]
+        public static void OperatorNotEqualTest(int left, int right, bool expected)
+        {
+            var leftValue = (ThisMapEventInfoAddress)left;
+            var rightValue = (ThisMapEventInfoAddress)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCase(9190000, 9190000, true)]
+        [TestCase(9190000, 9199999, false)]
+        public static void OperatorEqualsTest(int left, int right, bool expected)
+        {
+            var leftValue = (ThisMapEventInfoAddress)left;
+            var rightValue = (ThisMapEventInfoAddress)right;
+
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: leftValue,
+                execFunc: target => target.Equals(rightValue),
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        #endregion
+
+        #endregion
     }
 }

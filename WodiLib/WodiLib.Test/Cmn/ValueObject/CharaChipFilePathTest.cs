@@ -1,145 +1,342 @@
 using System;
+using System.IO;
 using Commons;
 using NUnit.Framework;
 using WodiLib.Cmn;
 using WodiLib.Test.Tools;
 
-namespace WodiLib.Test.Cmn
+namespace WodiLib.Test.Cmn.ValueObject
 {
     [TestFixture]
     public class CharaChipFilePathTest
     {
-        private static Logger logger;
+        private static Logger logger = null!;
+
+        private static ConstructorTestHelper constructorTestHelper = null!;
+        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
+        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
 
         [SetUp]
         public static void Setup()
         {
             LoggerInitializer.SetupLoggerForDebug();
             logger = Logger.GetInstance();
+
+            constructorTestHelper = new ConstructorTestHelper(logger);
+            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
+            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
         }
 
-        [TestCase(null, true)]
-        [TestCase("", false)]
-        [TestCase("abc", false)]
-        [TestCase("あいうえお", false)]
-        [TestCase("Hello\r\nWorld!", true)]
-        [TestCase("Wolf\nRPG\nEditor.", true)]
-        public static void ConstructorTest(string value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = new CharaChipFilePath(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+        #region Constructor
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-        }
-
-        [TestCase("")]
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase("abc")]
         [TestCase("あいうえお")]
-        public static void ToStringTest(string value)
+        [TestCase(@"c:\＜Not＞Error\file")]
+        [TestCase(
+            @"d:\Too\Long\Long\PathName\123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234"
+        )]
+        [TestCase(@"c:\COM0.test")]
+        [TestCase(@".\relative\path.txt")]
+        [TestCase(@"..\relative\path.txt")]
+        [TestCase("file.🐺")]
+        public static void ConstructorStringTest_Success(string value)
         {
-            var instance = new CharaChipFilePath(value);
-
-            var strValue = instance.ToString();
-
-            // セットした値と取得した値が一致すること
-            Assert.AreEqual(strValue, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new CharaChipFilePath(value),
+                instanceVerifier: new ValueVerifier<CharaChipFilePath>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(null)]
-        [TestCase("")]
-        [TestCase("abc")]
-        [TestCase("あいうえお")]
-        public static void CastToStringTest(string value)
+        /// <summary>
+        ///     引数が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NullArgs()
         {
-            var instance = value != null
-                ? new CharaChipFilePath(value)
-                : null;
-
-            var errorOccured = false;
-            try
-            {
-                var _ = (string)instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // キャストした結果が一致すること
-            Assert.AreEqual((string)instance, value);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new CharaChipFilePath(null!),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
         }
 
-        [TestCase(null, false)]
-        [TestCase("", false)]
-        [TestCase("abc", false)]
-        [TestCase("あいうえお", false)]
-        [TestCase("Hello\r\nWorld!", true)]
-        [TestCase("Wolf\nRPG\nEditor.", true)]
-        public static void CastFromStringTest(string value, bool isError)
+        /// <summary>
+        ///     引数に改行が含まれる場合、
+        ///     ArgumentException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NewLine()
         {
-            CharaChipFilePath instance = null;
-
-            var errorOccured = false;
-            try
-            {
-                instance = value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // キャストした結果が一致すること
-            Assert.AreEqual((string)instance, value);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new CharaChipFilePath("Hello\r\nWorld!"),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
+            );
         }
 
-        private static readonly object[] EqualTestCaseSource =
+        /// <summary>
+        ///     引数が最小文字列長未満の場合、
+        ///     ArgumentException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_Empty()
         {
-            new object[] { "a", "a", true },
-            new object[] { "a", "b", false }
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new CharaChipFilePath("12"),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
+            );
+        }
+
+        /// <summary>
+        ///     引数が最大文字列長を超える場合、
+        ///     ArgumentException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_OverMaxSize()
+        {
+            var value = new string('a', 32768);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new CharaChipFilePath(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
+            );
+        }
+
+        /// <summary>
+        ///     引数がパス名に使用できない文字を含むと場合、
+        ///     ArgumentException が発生すること。
+        /// </summary>
+        [TestCase(@"c:\Error:Path\file")]
+        [TestCase(@"c:\Error<string>\file")]
+        [TestCase(@"c:\Error|name.txt")]
+        [TestCase(@"c:\Error""name.txt")]
+        [TestCase(@".\Error*name")]
+        [TestCase(@".\Error?name")] //
+        [TestCase(@"c:\CON.test")]
+        [TestCase(@"c:\COM1.test")]
+        public static void ConstructorStringTest_Failure_InvalidChar(string value)
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new CharaChipFilePath(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
+            );
+        }
+
+        /// <summary>
+        ///     引数にボリューム識別子の一部ではないコロンを含む場合、
+        ///     NotSupportedException が発生すること。
+        /// </summary>
+        [TestCase(@"c:\Error:Path\file")]
+        [TestCase(@"c:\Error<string>\file")]
+        public static void ConstructorStringTest_Failure_InvalidColon(string value)
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new CharaChipFilePath(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
+            );
+        }
+
+        /// <summary>
+        ///     引数がパスとして長過ぎる場合、
+        ///     PathTooLongException が発生すること。
+        /// </summary>
+        // [TestCase(
+        //     @"d:\Too\Long\Long\PathName\1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345"
+        // )]
+        [Ignore("システムでファイルパス260文字超えを許容していない場合のみ発生する")]
+        public static void ConstructorStringTest_Failure_TooLong(string value)
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new CharaChipFilePath(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(PathTooLongException))
+            );
+        }
+
+        #endregion
+
+        #region Methods
+
+        #region public
+
+        #region GetHashCode
+
+        [Test]
+        public static void GetHashCodeTest()
+        {
+            var instance1 = new CharaChipFilePath("abc");
+            var instance2 = new CharaChipFilePath("abc");
+            var instance3 = new CharaChipFilePath("aac");
+
+            // 同じ値は同じハッシュコードを返すこと
+            Assert.AreEqual(instance1.GetHashCode(), instance2.GetHashCode());
+
+            // 異なる値は異なるハッシュコードを返すこと
+            Assert.AreNotEqual(instance1.GetHashCode(), instance3.GetHashCode());
+        }
+
+        #endregion
+
+        #region ToString
+
+        [Test]
+        public static void ToStringTest_Success()
+        {
+            const string value = "String TestValue";
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: new CharaChipFilePath(value),
+                execFunc: target => target.ToString(),
+                resultValueVerifier: ValueVerifier.AreEquals(value)
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     string から CharaChipFilePath に暗黙的型変換できること。
+        /// </summary>
+        [Test]
+        public static void CastStringToCharaChipFilePathTest_Success()
+        {
+            const string value = "abc";
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => value,
+                resultValueVerifier: ValueVerifier<CharaChipFilePath>.AreEquals(value)
+            );
+        }
+
+        /// <summary>
+        ///     改行を含む文字 から CharaChipFilePath に暗黙的型変換した場合、
+        ///     ArgumentException が発生すること。
+        /// </summary>
+        [Test]
+        public static void CastStringToCharaChipFilePathTest_Failure_NewLine()
+        {
+            staticFunctionTestHelper.StaticFuncFailure<CharaChipFilePath>(
+                execFunc: () => (string)"Wolf\nRPG\nEditor.",
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
+            );
+        }
+
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     CharaChipFilePath から string に暗黙的型変換できること。
+        /// </summary>
+        [Test]
+        public static void CastCharaChipFilePathToStringTest_Success()
+        {
+            const string value = "abc";
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => new CharaChipFilePath(value),
+                resultValueVerifier: ValueVerifier.AreEquals(value)
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと。
+        /// </summary>
+        [TestCase("abc", "abc", true)]
+        [TestCase("abc", "cba", false)]
+        [TestCase("abc", null, false)]
+        [TestCase(null, "cba", false)]
+        public static void OperatorEqualTest(string? left, string? right, bool expected)
+        {
+            var leftValue = (CharaChipFilePath?)left;
+            var rightValue = (CharaChipFilePath?)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと。
+        /// </summary>
+        [TestCase("abc", "abc", false)]
+        [TestCase("abc", "cba", true)]
+        [TestCase("abc", null, true)]
+        [TestCase(null, "cba", true)]
+        public static void OperatorNotEqualTest(string? left, string? right, bool expected)
+        {
+            var leftValue = (CharaChipFilePath?)left;
+            var rightValue = (CharaChipFilePath?)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCase("abc", "abc", true)]
+        [TestCase("abc", "cba", false)]
+        [TestCase("abc", null, false)]
+        public static void EqualsTest_CharaChipFilePath(string left, string? right, bool expected)
+        {
+            var leftValue = (CharaChipFilePath)left;
+            var rightValue = (CharaChipFilePath?)right;
+
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: leftValue,
+                execFunc: target => target.Equals(rightValue),
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        private static readonly object?[][] EqualsObjectTestCaseSource =
+        {
+            // [left, right, expected]
+            new object?[] { "abc", new CharaChipFilePath("abc"), true },
+            new object?[] { "abc", new CharaChipFilePath("cba"), false },
+            new object?[] { "abc", "abc", false },
+            new object?[] { "abc", 10, false },
+            new object?[] { "abc", null, false },
         };
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualTest(string left, string right, bool isEqual)
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCaseSource(nameof(EqualsObjectTestCaseSource))]
+        public static void EqualsTest_Object(string left, object? right, bool expected)
         {
-            var leftIndex = (CharaChipFilePath)left;
-            var rightIndex = (CharaChipFilePath)right;
-            Assert.AreEqual(leftIndex == rightIndex, isEqual);
+            var leftValue = (CharaChipFilePath)left;
+
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: leftValue,
+                execFunc: target => target.Equals(right),
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
         }
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorNotEqualTest(string left, string right, bool isEqual)
-        {
-            var leftIndex = (CharaChipFilePath)left;
-            var rightIndex = (CharaChipFilePath)right;
-            Assert.AreEqual(leftIndex != rightIndex, !isEqual);
-        }
+        #endregion
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualsTest(string left, string right, bool isEqual)
-        {
-            var leftIndex = (CharaChipFilePath)left;
-            var rightIndex = (CharaChipFilePath)right;
-            Assert.AreEqual(leftIndex.Equals(rightIndex), isEqual);
-        }
+        #endregion
     }
 }

@@ -4,119 +4,175 @@ using NUnit.Framework;
 using WodiLib.Cmn;
 using WodiLib.Test.Tools;
 
-namespace WodiLib.Test.Cmn
+namespace WodiLib.Test.Cmn.ValueObject
 {
     [TestFixture]
     public class ConditionRightTest
     {
-        private static Logger logger;
+        private static Logger logger = null!;
+
+        private static ConstructorTestHelper constructorTestHelper = null!;
+        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
+        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
 
         [SetUp]
         public static void Setup()
         {
             LoggerInitializer.SetupLoggerForDebug();
             logger = Logger.GetInstance();
+
+            constructorTestHelper = new ConstructorTestHelper(logger);
+            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
+            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
         }
 
-        [TestCase(-1000000, true)]
-        [TestCase(-999999, false)]
-        [TestCase(999999, false)]
-        [TestCase(1000000, true)]
-        public static void ConstructorTest(int value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = new ConditionRight(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+        #region Constructor
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-        }
-
-        [TestCase(-1000000, true)]
-        [TestCase(-999999, false)]
-        [TestCase(999999, false)]
-        [TestCase(1000000, true)]
-        public static void CastFromIntTest(int value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = (ConditionRight)value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // キャストした結果が一致すること
-            Assert.AreEqual((int)(ConditionRight)value, value);
-        }
-
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase(-999999)]
         [TestCase(999999)]
-        public static void CastToIntTest(int value)
+        public static void ConstructorIntTest_Success(int value)
         {
-            var instance = new ConditionRight(value);
-
-            var errorOccured = false;
-            try
-            {
-                var _ = (int)instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // キャストした結果が一致すること
-            Assert.AreEqual((int)instance, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new ConditionRight(value),
+                instanceVerifier: new ValueVerifier<ConditionRight>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        private static readonly object[] EqualTestCaseSource =
+        /// <summary>
+        ///     引数に許容範囲外の値を指定した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(-1000000)]
+        [TestCase(1000000)]
+        public static void ConstructorIntTest_Failure_OutOfRange(int value)
         {
-            new object[] { 0, 0, true },
-            new object[] { 0, 31, false }
-        };
-
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualTest(int left, int right, bool isEqual)
-        {
-            var leftIndex = (ConditionRight)left;
-            var rightIndex = (ConditionRight)right;
-            Assert.AreEqual(leftIndex == rightIndex, isEqual);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new ConditionRight(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorNotEqualTest(int left, int right, bool isEqual)
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     int から ConditionRight に暗黙的型変換できること。
+        /// </summary>
+        [TestCase(-999999)]
+        [TestCase(999999)]
+        public static void CastIntToConditionRightTest_Success(int value)
         {
-            var leftIndex = (ConditionRight)left;
-            var rightIndex = (ConditionRight)right;
-            Assert.AreEqual(leftIndex != rightIndex, !isEqual);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => value,
+                resultValueVerifier: new ValueVerifier<ConditionRight>(actual =>
+                    {
+                        Assert.AreEqual(actual.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualsTest(int left, int right, bool isEqual)
+        /// <summary>
+        ///     許容範囲外の値から ConditionRight に暗黙的型変換した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(-1000000)]
+        [TestCase(1000000)]
+        public static void CastIntToConditionRightTest_Failure_OutOfRange(int value)
         {
-            var leftIndex = (ConditionRight)left;
-            var rightIndex = (ConditionRight)right;
-            Assert.AreEqual(leftIndex.Equals(rightIndex), isEqual);
+            staticFunctionTestHelper.StaticFuncFailure<ConditionRight>(
+                execFunc: () => value,
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
+
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     ConditionRight から int に暗黙的型変換できること。
+        /// </summary>
+        [TestCase(-999999)]
+        [TestCase(999999)]
+        public static void CastConditionRightToIntTest_Success(int value)
+        {
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => new ConditionRight(value),
+                resultValueVerifier: ValueVerifier<int>.AreEquals(value)
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと
+        /// </summary>
+        [TestCase(-999999, -999999, true)]
+        [TestCase(-999999, 999999, false)]
+        public static void OperatorEqualTest(int left, int right, bool expected)
+        {
+            var leftValue = (ConditionRight)left;
+            var rightValue = (ConditionRight)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと
+        /// </summary>
+        [TestCase(-999999, -999999, false)]
+        [TestCase(-999999, 999999, true)]
+        public static void OperatorNotEqualTest(int left, int right, bool expected)
+        {
+            var leftValue = (ConditionRight)left;
+            var rightValue = (ConditionRight)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと
+        /// </summary>
+        [TestCase(-999999, -999999, true)]
+        [TestCase(-999999, 999999, false)]
+        public static void OperatorEqualsTest(int left, int right, bool expected)
+        {
+            var leftValue = (ConditionRight)left;
+            var rightValue = (ConditionRight)right;
+
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: leftValue,
+                execFunc: target => target.Equals(rightValue),
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        #endregion
+
+        #endregion
     }
 }

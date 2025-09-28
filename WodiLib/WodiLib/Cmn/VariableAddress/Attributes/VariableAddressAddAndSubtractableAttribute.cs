@@ -24,7 +24,7 @@ namespace WodiLib.Cmn
 
         /// <inheritdoc/>
         [DefaultValue(typeof(int))]
-        public override Type InnerCastType { get; init; } = default!;
+        public override Type InnerCastType { get; init; } = null!;
 
         /// <inheritdoc/>
         [DefaultValue(BinaryOperateOtherPosition.Right)]
@@ -32,7 +32,7 @@ namespace WodiLib.Cmn
 
         /// <inheritdoc/>
         [DefaultValue(typeof(int))]
-        public override Type ReturnType { get; init; } = default!;
+        public override Type ReturnType { get; init; } = null!;
 
         /// <inheritdoc/>
         [DefaultValue(OperationResultReturnCodeType.ImplicitCast)]

@@ -3,9 +3,9 @@
     <PropertyGroup>
         <Nullable>enable</Nullable>
         <PackageId>WodiLib</PackageId>
-        <PackageVersion>2.3.65534.39</PackageVersion>
+        <PackageVersion>2.3.65534.40</PackageVersion>
         <Copyright>Copyright 2019 kameske</Copyright>
-        <Version>2.3.65534.39</Version>
+        <Version>2.3.65534.40</Version>
         <PackageProjectUrl>https://github.com/kameske/WodiLib</PackageProjectUrl>
         <PackageLicenseUrl/>
         <RepositoryUrl>https://github.com/kameske/WodiLib.git</RepositoryUrl>
@@ -14,7 +14,7 @@
         <Authors>Kameske</Authors>
         <RootNamespace>WodiLib</RootNamespace>
         <Product>WodiLib</Product>
-        <AssemblyVersion>2.3.65534.39</AssemblyVersion>
+        <AssemblyVersion>2.3.65534.40</AssemblyVersion>
         <AssemblyName>WodiLib</AssemblyName>
         <LangVersion>9</LangVersion>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -45,10 +45,8 @@
         <Compile Remove="Event\**"/>
         <Compile Remove="Map\**"/>
         <Compile Remove="Project\**"/>
-        <Compile Remove="Cmn\VariableAddress\**"/>
         <Compile Remove="IO\**"/>
         <Compile Remove="Ini\**"/>
-        <Compile Remove="Cmn\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -81,10 +79,8 @@
         <None Remove="Event\**"/>
         <None Remove="Map\**"/>
         <None Remove="Project\**"/>
-        <None Remove="Cmn\VariableAddress\**"/>
         <None Remove="IO\**"/>
         <None Remove="Ini\**"/>
-        <None Remove="Cmn\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -93,9 +89,7 @@
         <EmbeddedResource Remove="Event\**"/>
         <EmbeddedResource Remove="Map\**"/>
         <EmbeddedResource Remove="Project\**"/>
-        <EmbeddedResource Remove="Cmn\VariableAddress\**"/>
         <EmbeddedResource Remove="IO\**"/>
         <EmbeddedResource Remove="Ini\**"/>
-        <EmbeddedResource Remove="Cmn\**" />
     </ItemGroup>
 </Project>

@@ -14,7 +14,13 @@ namespace WodiLib.Cmn
     ///     [Range(0, 999999)] ランダム変数ランダム量
     /// </summary>
     [CommonIntValueObject(MinValue = 0, MaxValue = 999999)]
-    public partial class RandomVariableValue
+    public partial record RandomVariableValue
     {
+        /// <summary>
+        ///     コンストラクタ
+        /// </summary>
+        public RandomVariableValue() : this(MinValue)
+        {
+        }
     }
 }

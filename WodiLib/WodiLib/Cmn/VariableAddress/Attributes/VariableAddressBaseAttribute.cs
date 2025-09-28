@@ -16,12 +16,11 @@ namespace WodiLib.Cmn
     /// <summary>
     ///     変数アドレス値基底クラス自動生成用属性
     /// </summary>
-    [EditorBrowsable(EditorBrowsableState.Never)]
     internal class VariableAddressBaseAttribute : IntValueObjectAttribute
     {
         /// <inheritdoc/>
         [DefaultValue(true)]
-        public override bool IsComparable { get; init; } = default!;
+        public override bool IsComparable { get; init; } = false;
 
         /// <inheritdoc/>
         [DefaultValue(IntegralNumericOperation.Compare)]

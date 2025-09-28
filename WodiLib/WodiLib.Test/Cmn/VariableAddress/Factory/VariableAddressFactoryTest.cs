@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Commons;
 using NUnit.Framework;
 using WodiLib.Cmn;
@@ -9,101 +10,148 @@ namespace WodiLib.Test.Cmn
     [TestFixture]
     public class VariableAddressFactoryTest
     {
-        private static Logger logger;
+        private static Logger logger = null!;
+
+        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
 
         [SetUp]
         public static void Setup()
         {
             LoggerInitializer.SetupLoggerForDebug();
             logger = Logger.GetInstance();
+
+            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
         }
 
-        private static readonly object[] CreateTestCaseSource =
+        #region public
+
+        private static readonly object?[][] CreateTestCaseSource =
         {
-            new object[] { int.MinValue, true, null },
-            new object[] { -2000000000, true, null },
-            new object[] { 999999, true, null },
-            new object[] { 1000000, false, typeof(MapEventVariableAddress) },
-            new object[] { 1099999, false, typeof(MapEventVariableAddress) },
-            new object[] { 1100000, false, typeof(ThisMapEventVariableAddress) },
-            new object[] { 1100009, false, typeof(ThisMapEventVariableAddress) },
-            new object[] { 1100010, true, null },
-            new object[] { 1599999, true, null },
-            new object[] { 1600000, false, typeof(ThisCommonEventVariableAddress) },
-            new object[] { 1600099, false, typeof(ThisCommonEventVariableAddress) },
-            new object[] { 1600100, true, null },
-            new object[] { 1999999, true, null },
-            new object[] { 2000000, false, typeof(NormalNumberVariableAddress) },
-            new object[] { 2099999, false, typeof(NormalNumberVariableAddress) },
-            new object[] { 2100000, false, typeof(SpareNumberVariableAddress) },
-            new object[] { 2999999, false, typeof(SpareNumberVariableAddress) },
-            new object[] { 3000000, false, typeof(StringVariableAddress) },
-            new object[] { 3999999, false, typeof(StringVariableAddress) },
-            new object[] { 4000000, true, null },
-            new object[] { 7999999, true, null },
-            new object[] { 8000000, false, typeof(RandomVariableAddress) },
-            new object[] { 8999999, false, typeof(RandomVariableAddress) },
-            new object[] { 9000000, false, typeof(SystemVariableAddress) },
-            new object[] { 9099999, false, typeof(SystemVariableAddress) },
-            new object[] { 9100000, false, typeof(EventInfoAddress) },
-            new object[] { 9179999, false, typeof(EventInfoAddress) },
-            new object[] { 9180000, false, typeof(HeroInfoAddress) },
-            new object[] { 9180009, false, typeof(HeroInfoAddress) },
-            new object[] { 9180010, false, typeof(MemberInfoAddress) },
-            new object[] { 9180059, false, typeof(MemberInfoAddress) },
-            new object[] { 9180060, true, null },
-            new object[] { 9189999, true, null },
-            new object[] { 9190000, false, typeof(ThisMapEventInfoAddress) },
-            new object[] { 9199999, false, typeof(ThisMapEventInfoAddress) },
-            new object[] { 9200000, true, null },
-            new object[] { 9899999, true, null },
-            new object[] { 9900000, false, typeof(SystemStringVariableAddress) },
-            new object[] { 9999999, false, typeof(SystemStringVariableAddress) },
-            new object[] { 10000000, true, null },
-            new object[] { 14899999, true, null },
-            new object[] { 15000000, false, typeof(CommonEventVariableAddress) },
-            new object[] { 15999999, false, typeof(CommonEventVariableAddress) },
-            new object[] { 16000000, true, null },
-            new object[] { 999999999, true, null },
-            new object[] { 1000000000, false, typeof(UserDatabaseAddress) },
-            new object[] { 1099999999, false, typeof(UserDatabaseAddress) },
-            new object[] { 1100000000, false, typeof(ChangeableDatabaseAddress) },
-            new object[] { 1199999999, false, typeof(ChangeableDatabaseAddress) },
-            new object[] { 1300000000, false, typeof(SystemDatabaseAddress) },
-            new object[] { 1399999920, false, typeof(SystemDatabaseAddress) },
-            new object[] { 1399999921, false, typeof(SystemDatabaseAddress) },
-            new object[] { 1399999999, false, typeof(SystemDatabaseAddress) },
-            new object[] { 1400000000, true, null },
-            new object[] { 2000000000, true, null },
-            new object[] { int.MaxValue, true, null }
+            new object?[] { int.MinValue, false, null },
+            new object?[] { -2000000000, false, null },
+            new object?[] { 999999, false, null },
+            new object?[] { 1000000, true, typeof(MapEventVariableAddress) },
+            new object?[] { 1099999, true, typeof(MapEventVariableAddress) },
+            new object?[] { 1100000, true, typeof(ThisMapEventVariableAddress) },
+            new object?[] { 1100009, true, typeof(ThisMapEventVariableAddress) },
+            new object?[] { 1100010, false, null },
+            new object?[] { 1599999, false, null },
+            new object?[] { 1600000, true, typeof(ThisCommonEventVariableAddress) },
+            new object?[] { 1600099, true, typeof(ThisCommonEventVariableAddress) },
+            new object?[] { 1600100, false, null },
+            new object?[] { 1999999, false, null },
+            new object?[] { 2000000, true, typeof(NormalNumberVariableAddress) },
+            new object?[] { 2099999, true, typeof(NormalNumberVariableAddress) },
+            new object?[] { 2100000, true, typeof(SpareNumberVariableAddress) },
+            new object?[] { 2999999, true, typeof(SpareNumberVariableAddress) },
+            new object?[] { 3000000, true, typeof(StringVariableAddress) },
+            new object?[] { 3999999, true, typeof(StringVariableAddress) },
+            new object?[] { 4000000, false, null },
+            new object?[] { 7999999, false, null },
+            new object?[] { 8000000, true, typeof(RandomVariableAddress) },
+            new object?[] { 8999999, true, typeof(RandomVariableAddress) },
+            new object?[] { 9000000, true, typeof(SystemVariableAddress) },
+            new object?[] { 9099999, true, typeof(SystemVariableAddress) },
+            new object?[] { 9100000, true, typeof(EventInfoAddress) },
+            new object?[] { 9179999, true, typeof(EventInfoAddress) },
+            new object?[] { 9180000, true, typeof(HeroInfoAddress) },
+            new object?[] { 9180009, true, typeof(HeroInfoAddress) },
+            new object?[] { 9180010, true, typeof(MemberInfoAddress) },
+            new object?[] { 9180059, true, typeof(MemberInfoAddress) },
+            new object?[] { 9180060, false, null },
+            new object?[] { 9189999, false, null },
+            new object?[] { 9190000, true, typeof(ThisMapEventInfoAddress) },
+            new object?[] { 9199999, true, typeof(ThisMapEventInfoAddress) },
+            new object?[] { 9200000, false, null },
+            new object?[] { 9899999, false, null },
+            new object?[] { 9900000, true, typeof(SystemStringVariableAddress) },
+            new object?[] { 9999999, true, typeof(SystemStringVariableAddress) },
+            new object?[] { 10000000, false, null },
+            new object?[] { 14899999, false, null },
+            new object?[] { 15000000, true, typeof(CommonEventVariableAddress) },
+            new object?[] { 15999999, true, typeof(CommonEventVariableAddress) },
+            new object?[] { 16000000, false, null },
+            new object?[] { 999999999, false, null },
+            new object?[] { 1000000000, true, typeof(UserDatabaseAddress) },
+            new object?[] { 1099999999, true, typeof(UserDatabaseAddress) },
+            new object?[] { 1100000000, true, typeof(ChangeableDatabaseAddress) },
+            new object?[] { 1199999999, true, typeof(ChangeableDatabaseAddress) },
+            new object?[] { 1200000000, false, null },
+            new object?[] { 1299999999, false, null },
+            new object?[] { 1300000000, true, typeof(SystemDatabaseAddress) },
+            new object?[] { 1399999999, true, typeof(SystemDatabaseAddress) },
+            new object?[] { 1400000000, false, null },
+            new object?[] { 2000000000, false, null },
+            new object?[] { int.MaxValue, false, null },
         };
 
+        #region TryCreate
+
+        /// <summary>
+        ///     意図した結果が取得されること。
+        /// </summary>
+        /// <param name="value">チェック対象</param>
+        /// <param name="expected">期待する結果</param>
+        /// <param name="expectedCreatedInstanceType">返却された変換値の期待型</param>
         [TestCaseSource(nameof(CreateTestCaseSource))]
-        public static void CreateTest(int value, bool isError, Type createdInstanceType)
+        public static void TryCreateTest(int value, bool expected, Type expectedCreatedInstanceType)
         {
-            VariableAddress instance = null;
+            VariableAddress? result = null;
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => VariableAddressFactory.TryCreate(value, out result),
+                resultValueVerifier: ValueVerifier<bool>.AreEquals(expected)
+            );
 
-            var errorOccured = false;
-            try
+            // 変換値が期待する型であること
+            if (result is not null)
             {
-                instance = VariableAddressFactory.Create(value);
+                ValueVerifier<VariableAddress>.IsType(expectedCreatedInstanceType).Verify(result);
             }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 意図した型にキャストできること
-            Assert.AreEqual(instance.GetType(), createdInstanceType);
-
-            // セットした値が正しく取得できること
-            Assert.AreEqual(instance.ToInt(), value);
         }
+
+        #endregion
+
+        #region Create
+
+        private static object?[][] CreateTestCaseSource_SuccessPattern =>
+            CreateTestCaseSource.Where(@case => (bool)@case[1]!).ToArray();
+
+        /// <summary>
+        ///     意図した変数アドレス値のインスタンスが取得されること
+        /// </summary>
+        /// <param name="value">対象</param>
+        /// <param name="_"></param>
+        /// <param name="expectedCreatedInstanceType">期待する返却値型</param>
+        [TestCaseSource(nameof(CreateTestCaseSource_SuccessPattern))]
+        public static void CreateTest_Success(int value, bool _, Type expectedCreatedInstanceType)
+        {
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => VariableAddressFactory.Create(value),
+                resultValueVerifier: ValueVerifier<VariableAddress>.IsType(expectedCreatedInstanceType)
+            );
+        }
+
+        private static object?[][] CreateTestCaseSource_FailurePattern =>
+            CreateTestCaseSource.Where(@case => !(bool)@case[1]!).ToArray();
+
+        /// <summary>
+        ///     変数アドレス値ではない値の場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        /// <param name="value">対象</param>
+        /// <param name="_"></param>
+        /// <param name="__"></param>
+        [TestCaseSource(nameof(CreateTestCaseSource_FailurePattern))]
+        public static void CreateTest_Failure(int value, bool _, Type __)
+        {
+            staticFunctionTestHelper.StaticFuncFailure(
+                execFunc: () => VariableAddressFactory.Create(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
+        }
+
+        #endregion
+
+        #endregion
     }
 }

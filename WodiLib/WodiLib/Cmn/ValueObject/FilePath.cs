@@ -7,7 +7,6 @@
 // ========================================
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -19,49 +18,28 @@ namespace WodiLib.Cmn
     ///     [NotNewLine] ファイルパス
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    [FilePathStringObjectValueAttribute]
-    public partial class FilePath
+    [FilePathStringObjectValue]
+    public partial record FilePath
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Constructors
 
-        /// <summary>デフォルトの空文字許可フラグ</summary>
-        private const bool DefaultAllowEmptyStringFlag = true;
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>空文字許可フラグ</summary>
-        protected virtual bool IsAllowEmptyString => DefaultAllowEmptyStringFlag;
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Constructor
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region InitializeMethods
 
         partial void DoConstructorExpansion(string value)
         {
-            // 空文字チェック
-            if (value.IsEmpty())
-            {
-                if (!IsAllowEmptyString)
-                    throw new ArgumentException(
-                        ErrorMessage.Unsuitable("ファイル名", $"（パス：{value}）"));
-                return;
-            }
-
             // フルパスチェック
             //   .NET Standard 2.1 では一部の不正な文字列がパス中に含まれていても例外が発生しない
-            //   そのためこのあとの処理を変更して対応
+            //   そのためこのあとチェックのための追加処理を行う
             try
             {
-                var _ = Path.GetFullPath(value);
+                _ = Path.GetFullPath(value);
             }
             catch (Exception ex)
             {
                 throw new ArgumentException(
-                    ErrorMessage.Unsuitable("ファイル名", $"（パス：{value}）"), ex);
+                    ErrorMessage.Unsuitable("ファイル名", $"（パス：{value}）"),
+                    ex
+                );
             }
 
             // ファイル名が適切かどうかチェック
@@ -76,23 +54,32 @@ namespace WodiLib.Cmn
                 if (fileName.HasInvalidFileNameChars())
                 {
                     throw new ArgumentException(
-                        ErrorMessage.Unsuitable("ファイル名", $"（パス：{value}）"));
+                        ErrorMessage.Unsuitable("ファイル名", $"（パス：{value}）")
+                    );
                 }
             }
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #endregion
 
-        /// <summary>
-        ///     ウディタ文字列のbyte配列に変換する。
-        /// </summary>
-        /// <returns>ウディタ文字列のbyte配列</returns>
-        public IEnumerable<byte> ToWoditorStringBytes()
+        #endregion
+
+        #region Methods
+
+        #region public
+
+        #region ToString
+
+        /// <inheritdoc/>
+        public override string ToString()
         {
-            var woditorStr = new WoditorString(RawValue);
-            return woditorStr.StringByte;
+            return RawValue;
         }
+
+        #endregion
+
+        #endregion
+
+        #endregion
     }
 }

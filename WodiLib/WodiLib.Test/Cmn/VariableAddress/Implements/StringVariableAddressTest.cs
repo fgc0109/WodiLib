@@ -9,233 +9,222 @@ namespace WodiLib.Test.Cmn
     [TestFixture]
     public class StringVariableAddressTest
     {
-        private static Logger logger;
+        private static Logger logger = null!;
+
+        private static ConstructorTestHelper constructorTestHelper = null!;
+        private static PropertyTestHelper propertyTestHelper = null!;
+        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
+        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
 
         [SetUp]
         public static void Setup()
         {
             LoggerInitializer.SetupLoggerForDebug();
             logger = Logger.GetInstance();
+
+            constructorTestHelper = new ConstructorTestHelper(logger);
+            propertyTestHelper = new PropertyTestHelper(logger);
+            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
+            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
         }
 
-        [TestCase(2999999, true)]
-        [TestCase(3000000, false)]
-        [TestCase(3999999, false)]
-        [TestCase(4000000, true)]
-        public static void ConstructorIntTest(int value, bool isError)
+        #region properties
+
+        #region public
+
+        #region ValueType
+
+        /// <summary>
+        ///     意図した値が取得できること。
+        /// </summary>
+        [Test]
+        public static void ValueTypeGetterTest()
         {
-            var errorOccured = false;
-            try
-            {
-                var _ = new StringVariableAddress(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+            propertyTestHelper.PropertyGetSuccess(
+                instance: new StringVariableAddress(),
+                getter: target => target.ValueType,
+                getValueVerifier: ValueVerifier<VariableAddressValueType>.AreEquals(VariableAddressValueType.String)
+            );
         }
 
-        [TestCase(3000000, 0)]
-        [TestCase(3000031, 31)]
-        [TestCase(3045678, 45678)]
-        public static void VariableIndexTest(int variableAddress, int answer)
+        #endregion
+
+        #region VariableIndex
+
+        private static readonly object[][] VariableIndexGetterTestCaseSource =
         {
-            var instance = new StringVariableAddress(variableAddress);
+            // [instance, expected]
+            new object[] { new StringVariableAddress(3000000), new StringVariableIndex(0) },
+            new object[] { new StringVariableAddress(3000001), new StringVariableIndex(1) },
+            new object[] { new StringVariableAddress(3999999), new StringVariableIndex(999999) },
+        };
 
-            // 取得した値が意図した値と一致すること
-            Assert.AreEqual(instance.VariableIndex, (StringVariableIndex)answer);
+        /// <summary>
+        ///     意図した値が取得できること。
+        /// </summary>
+        [TestCaseSource(nameof(VariableIndexGetterTestCaseSource))]
+        public static void VariableIndexGetterTest(StringVariableAddress instance, StringVariableIndex expected)
+        {
+            propertyTestHelper.PropertyGetSuccess(
+                instance,
+                getter: target => target.VariableIndex,
+                getValueVerifier: ValueVerifier<StringVariableIndex>.AreEquals(expected)
+            );
         }
 
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Constructor
+
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase(3000000)]
         [TestCase(3999999)]
-        public static void ToIntTest(int value)
+        public static void ConstructorIntTest_Success(int value)
         {
-            var instance = new StringVariableAddress(value);
-
-            var intValue = instance.ToInt();
-
-            // セットした値と取得した値が一致すること
-            Assert.AreEqual(intValue, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new StringVariableAddress(value),
+                instanceVerifier: new ValueVerifier<StringVariableAddress>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(2999999, true)]
-        [TestCase(3000000, false)]
-        [TestCase(3999999, false)]
-        [TestCase(4000000, true)]
-        public static void CastIntToStringVariableAddressTest(int value, bool isError)
+        /// <summary>
+        ///     引数に許容範囲外の値を指定した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(2999999)]
+        [TestCase(4000000)]
+        public static void ConstructorIntTest_Failure_OutOfRange(int value)
         {
-            var errorOccured = false;
-            try
-            {
-                var _ = (StringVariableAddress)value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new StringVariableAddress(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     int から StringVariableAddress に暗黙的型変換できること。
+        /// </summary>
         [TestCase(3000000)]
         [TestCase(3999999)]
-        public static void CastStringVariableAddressToIntTest(int value)
+        public static void CastIntToStringVariableAddressTest_Success(int value)
         {
-            var castValue = 0;
-
-            var instance = new StringVariableAddress(value);
-
-            var errorOccured = false;
-            try
-            {
-                castValue = (int)instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 元の値と一致すること
-            Assert.AreEqual(castValue, value);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => value,
+                resultValueVerifier: new ValueVerifier<StringVariableAddress>(actual =>
+                    {
+                        Assert.AreEqual(actual.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(3000000, -1, true)]
-        [TestCase(3000000, 0, false)]
-        [TestCase(3000000, 999999, false)]
-        [TestCase(3000000, 1000000, true)]
-        [TestCase(3021551, -21552, true)]
-        [TestCase(3021551, -21551, false)]
-        [TestCase(3021551, 978448, false)]
-        [TestCase(3021551, 978449, true)]
-        public static void OperatorPlusTest(int variableAddress, int value, bool isError)
+        /// <summary>
+        ///     許容範囲外の値から StringVariableAddress に暗黙的型変換した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(2999999)]
+        [TestCase(4000000)]
+        public static void CastIntToStringVariableAddressTest_Failure_OutOfRange(int value)
         {
-            var instance = new StringVariableAddress(variableAddress);
-            StringVariableAddress result = null;
-
-            var errorOccured = false;
-            try
-            {
-                result = instance + value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 意図した値と一致すること
-            Assert.AreEqual((int)result, variableAddress + value);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, variableAddress);
+            staticFunctionTestHelper.StaticFuncFailure<StringVariableAddress>(
+                execFunc: () => value,
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
-        [TestCase(3000000, -1000000, true)]
-        [TestCase(3000000, -999999, false)]
-        [TestCase(3000000, 0, false)]
-        [TestCase(3000000, 1, true)]
-        [TestCase(3021551, -978449, true)]
-        [TestCase(3021551, -978448, false)]
-        [TestCase(3021551, 21551, false)]
-        [TestCase(3021551, 21552, true)]
-        public static void OperatorMinusIntTest(int variableAddress, int value, bool isError)
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     StringVariableAddress から int に暗黙的型変換できること。
+        /// </summary>
+        [TestCase(3000000)]
+        [TestCase(3999999)]
+        public static void CastStringVariableAddressToIntTest_Success(int value)
         {
-            var instance = new StringVariableAddress(variableAddress);
-            StringVariableAddress result = null;
-
-            var errorOccured = false;
-            try
-            {
-                result = instance - value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 意図した値と一致すること
-            Assert.AreEqual((int)result, variableAddress - value);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, variableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => new StringVariableAddress(value),
+                resultValueVerifier: new ValueVerifier<int>(actual => { Assert.AreEqual(actual, value); })
+            );
         }
 
-        [TestCase(3021551, 3000000)]
-        [TestCase(3000000, 1000000)]
-        public static void OperatorMinusVariableAddressTestA(int srcVariableAddress, int dstVariableAddress)
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと。
+        /// </summary>
+        [TestCase(3000000, 3000000, true)]
+        [TestCase(3000000, 3999999, false)]
+        public static void OperatorEqualTest(int left, int right, bool expected)
         {
-            var instance = new StringVariableAddress(srcVariableAddress);
-            var dstInstance = VariableAddressFactory.Create(dstVariableAddress);
-            var result = 0;
+            var leftValue = (StringVariableAddress)left;
+            var rightValue = (StringVariableAddress)right;
 
-            var errorOccured = false;
-            try
-            {
-                result = instance - dstInstance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 意図した値と一致すること
-            Assert.AreEqual(result, srcVariableAddress - dstVariableAddress);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, srcVariableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
         }
 
-        [TestCase(3021551, 3000000)]
-        [TestCase(3000000, 3999999)]
-        public static void OperatorMinusVariableAddressTestB(int srcVariableAddress, int dstVariableAddress)
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと。
+        /// </summary>
+        [TestCase(3000000, 3000000, false)]
+        [TestCase(3000000, 3999999, true)]
+        public static void OperatorNotEqualTest(int left, int right, bool expected)
         {
-            var instance = new StringVariableAddress(srcVariableAddress);
-            var result = 0;
+            var leftValue = (StringVariableAddress)left;
+            var rightValue = (StringVariableAddress)right;
 
-            var errorOccured = false;
-            try
-            {
-                result = instance - (StringVariableAddress)dstVariableAddress;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // 意図した値と一致すること
-            Assert.AreEqual(result, srcVariableAddress - dstVariableAddress);
-
-            // もとの値が変化していないこと
-            Assert.AreEqual((int)instance, srcVariableAddress);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
         }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCase(3000000, 3000000, true)]
+        [TestCase(3000000, 3999999, false)]
+        public static void OperatorEqualsTest(int left, int right, bool expected)
+        {
+            var leftValue = (StringVariableAddress)left;
+            var rightValue = (StringVariableAddress)right;
+
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: leftValue,
+                execFunc: target => target.Equals(rightValue),
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        #endregion
+
+        #endregion
     }
 }
