@@ -45,6 +45,9 @@ namespace WodiLib.Cmn
         /// <summary>空</summary>
         public static readonly InfoAddressInfoType Empty;
 
+        /// <summary>全ての要素</summary>
+        public static IEnumerable<InfoAddressInfoType> AllItems => EnumItems.AllEnums;
+
         static InfoAddressInfoType()
         {
             PositionX = new InfoAddressInfoType(

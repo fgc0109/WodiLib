@@ -6,6 +6,7 @@
 // see LICENSE file
 // ========================================
 
+using System.Collections.Generic;
 using System.Linq;
 using WodiLib.Sys;
 
@@ -324,6 +325,9 @@ namespace WodiLib.Cmn
 
         /// <summary>DEL</summary>
         public static readonly KeyboardCode Del;
+
+        /// <summary>全ての要素</summary>
+        public static IEnumerable<KeyboardCode> AllItems => EnumItems.AllEnums;
 
         private const string NotFound = "非対応";
 

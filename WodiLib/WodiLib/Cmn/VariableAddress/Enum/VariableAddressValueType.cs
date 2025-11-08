@@ -6,6 +6,7 @@
 // see LICENSE file
 // ========================================
 
+using System.Collections.Generic;
 using WodiLib.Sys;
 
 namespace WodiLib.Cmn
@@ -23,6 +24,9 @@ namespace WodiLib.Cmn
 
         /// <summary>両方</summary>
         public static readonly VariableAddressValueType Both;
+
+        /// <summary>全ての要素</summary>
+        public static IEnumerable<VariableAddressValueType> AllItems => EnumItems.AllEnums;
 
         static VariableAddressValueType()
         {

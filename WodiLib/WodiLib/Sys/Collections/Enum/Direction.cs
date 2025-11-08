@@ -6,6 +6,8 @@
 // see LICENSE file
 // ========================================
 
+using System.Collections.Generic;
+
 namespace WodiLib.Sys.Collections
 {
     /// <summary>
@@ -21,6 +23,9 @@ namespace WodiLib.Sys.Collections
 
         /// <summary>未指定</summary>
         public static Direction None { get; }
+
+        /// <summary>全ての要素</summary>
+        public static IEnumerable<Direction> AllItems => EnumItems.AllEnums;
 
         static Direction()
         {
