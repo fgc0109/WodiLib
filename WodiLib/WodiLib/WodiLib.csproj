@@ -3,9 +3,9 @@
     <PropertyGroup>
         <Nullable>enable</Nullable>
         <PackageId>WodiLib</PackageId>
-        <PackageVersion>2.3.65534.40</PackageVersion>
+        <PackageVersion>2.3.65534.41</PackageVersion>
         <Copyright>Copyright 2019 kameske</Copyright>
-        <Version>2.3.65534.40</Version>
+        <Version>2.3.65534.41</Version>
         <PackageProjectUrl>https://github.com/kameske/WodiLib</PackageProjectUrl>
         <PackageLicenseUrl/>
         <RepositoryUrl>https://github.com/kameske/WodiLib.git</RepositoryUrl>
@@ -14,7 +14,7 @@
         <Authors>Kameske</Authors>
         <RootNamespace>WodiLib</RootNamespace>
         <Product>WodiLib</Product>
-        <AssemblyVersion>2.3.65534.40</AssemblyVersion>
+        <AssemblyVersion>2.3.65534.41</AssemblyVersion>
         <AssemblyName>WodiLib</AssemblyName>
         <LangVersion>9</LangVersion>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -38,6 +38,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\NullableAttributes\NullableAttributes.csproj"/>
         <ProjectReference Include="..\WodiLib.SourceGenerator\WodiLib.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
         <!--    <Compile Remove="Generated\**\*.cs" />-->
         <Compile Remove="Common\**"/>

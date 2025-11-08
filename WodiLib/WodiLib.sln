@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WodiLib.SourceGenerator", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WodiLib.SourceGenerator.Test", "WodiLib.SourceGenerator.Test\WodiLib.SourceGenerator.Test.csproj", "{DA522834-C0D7-43D3-A655-A9105C77C129}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NullableAttributes", "NullableAttributes\NullableAttributes.csproj", "{71C91D37-1E19-4C74-AFFF-2CA282432201}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{DA522834-C0D7-43D3-A655-A9105C77C129}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA522834-C0D7-43D3-A655-A9105C77C129}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DA522834-C0D7-43D3-A655-A9105C77C129}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71C91D37-1E19-4C74-AFFF-2CA282432201}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71C91D37-1E19-4C74-AFFF-2CA282432201}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71C91D37-1E19-4C74-AFFF-2CA282432201}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71C91D37-1E19-4C74-AFFF-2CA282432201}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
