@@ -23,7 +23,7 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
             public string[] ImplementationCode => new StringList()
                 .AppendLine(DocComment)
                 .Append(
-                    $"{accessibility} new {ReturnTypeName}{NullableMark} {Name}{TypeParamDefinition}({ArgTypeAndNamesDefinition})"
+                    $"{accessibility} {ReturnTypeName}{NullableMark} {Name}{TypeParamDefinition}({ArgTypeAndNamesDefinition})"
                 )
                 .Append(MethodBody)
                 .ToArray();
@@ -77,7 +77,7 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
                     var bodyParam = string.Join(", ", methodSymbol.Parameters.Select(p => p.Name));
                     return new[]
                     {
-                        $" => base.{Name}{TypeParamDefinition}({bodyParam});",
+                        $" => MutableInstance.{Name}{TypeParamDefinition}({bodyParam});",
                     };
                 }
             }

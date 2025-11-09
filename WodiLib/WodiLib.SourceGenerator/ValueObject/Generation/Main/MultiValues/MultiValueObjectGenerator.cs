@@ -10,7 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
-using WodiLib.SourceGenerator.Core.Dtos;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using WodiLib.SourceGenerator.Core;
 using WodiLib.SourceGenerator.Core.Extensions;
 using WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
@@ -26,22 +27,27 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.MultiValues
     {
         public override InitializeAttributeSourceAddable TargetAttribute => MyAttr.Instance;
 
-        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(WorkState workState)
+        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
-            var thisType = workState.PropertyValues.TargetSymbol?.ClassName() ?? "";
-            var defInfo = workState.CurrentTypeDefinitionInfo;
+            var thisTypeName = source.ClassName();
 
-            var properties = GetInitializeProperties(workState)
+            var properties = GetInitializeProperties(source)
                 .ToList();
 
             return SourceTextFormatter.Format(
                 "",
                 new SourceFormatTarget[]
                 {
-                    $"{DefinitionSource(defInfo)} {thisType}",
+                    $"{DefinitionSource(source)} {thisTypeName}",
                     $"{{",
                 },
-                SourceTextFormatter.Format(IndentSpace, ConstructorSource(properties, workState)),
+                SourceTextFormatter.Format(IndentSpace, ConstructorSource(properties, source)),
                 new SourceFormatTarget[]
                 {
                     $"}}",
@@ -52,22 +58,21 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.MultiValues
         /// <summary>
         ///     定義宣言部のソースを生成する。
         /// </summary>
-        /// <param name="typeDefinitionInfo">型定義情報</param>
         /// <returns>ソースコード文字列</returns>
-        private static string DefinitionSource(TypeDefinitionInfo typeDefinitionInfo)
+        private static string DefinitionSource(INamedTypeSymbol source)
         {
             var resultBuilder = new StringBuilder();
 
-            var accessibility = AccessibilityConverter.ConvertSourceText(typeDefinitionInfo.Accessibility);
+            var accessibility = AccessibilityConverter.ConvertSourceText(source.DeclaredAccessibility);
             resultBuilder.Append(accessibility);
             resultBuilder.Append(" partial ");
-            if (typeDefinitionInfo.IsClass)
-            {
-                resultBuilder.Append("class");
-            }
-            else if (typeDefinitionInfo.IsRecord)
+            if (source.IsRecord)
             {
                 resultBuilder.Append("record");
+            }
+            else if (source.TypeKind == TypeKind.Class)
+            {
+                resultBuilder.Append("class");
             }
             else
             {
@@ -80,28 +85,23 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.MultiValues
         /// <summary>
         ///     初期化対象のプロパティ一覧を取得する。
         /// </summary>
-        /// <param name="workState"></param>
         /// <returns></returns>
-        private static IEnumerable<IPropertySymbol> GetInitializeProperties(WorkState workState)
+        private static IEnumerable<IPropertySymbol> GetInitializeProperties(INamedTypeSymbol source)
         {
             // public なプロパティのうち init アクセサを持たないプロパティを対象とする。
 
-            var symbol = workState.CurrentSymbol;
+            var properties = source.GetMembers()
+                .Where(member => member.Kind == SymbolKind.Property
+                                 && member.DeclaredAccessibility == Accessibility.Public
+                )
+                .Cast<IPropertySymbol>()
+                .ToList();
 
-            var properties = symbol?.GetMembers()
-                                 .Where(member => member.Kind == SymbolKind.Property
-                                                  && member.DeclaredAccessibility == Accessibility.Public
-                                 )
-                                 .Cast<IPropertySymbol>()
-                                 .ToList()
-                             ?? new List<IPropertySymbol>();
-
-            var initMethods = symbol?.GetMembers()
-                                  .Where(member => member.Kind == SymbolKind.Method
-                                                   && member.DeclaredAccessibility == Accessibility.Public
-                                                   && ((member as IMethodSymbol)?.IsInitOnly ?? false)
-                                  )
-                              ?? new List<ISymbol>();
+            var initMethods = source.GetMembers()
+                .Where(member => member.Kind == SymbolKind.Method
+                                 && member.DeclaredAccessibility == Accessibility.Public
+                                 && ((member as IMethodSymbol)?.IsInitOnly ?? false)
+                );
             var initPropertiesNames = initMethods.Select(method => method.Name.Substring(4) /* "set_" を除去 */)
                 .ToList();
 
@@ -111,17 +111,15 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.MultiValues
         /// <summary>
         ///     コンストラクタ部のソースブロックを生成する。
         /// </summary>
-        /// <param name="properties">コンストラクタで初期化するプロパティ一覧</param>
-        /// <param name="workState">ワーク状態</param>
         /// <returns>ソースコード文字列ブロック</returns>
         private static SourceFormatTargetBlock ConstructorSource(
             IEnumerable<IPropertySymbol> properties,
-            WorkState workState
+            INamedTypeSymbol source
         )
         {
             var propertyArray = properties.ToArray();
 
-            var typeName = workState.PropertyValues.TargetSymbol?.Name ?? "";
+            var typeName = source.Name;
             var argsDocComments = propertyArray.Select(prop =>
                 $"/// {Tag.Param(prop.Name.ToLowerFirstChar(), Tag.See.Cref(prop.Name))}"
             );

@@ -8,6 +8,9 @@
 
 using System;
 using System.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using WodiLib.SourceGenerator.Core;
 using WodiLib.SourceGenerator.Core.Extensions;
 using WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
@@ -21,11 +24,16 @@ namespace WodiLib.SourceGenerator.TemplateEngine.Generation.Main
     {
         public override InitializeAttributeSourceAddable TargetAttribute => TemplateContextAttribute.Instance;
 
-        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(WorkState workState)
+        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
-            var className = workState.Name;
-            var typeDefinitionInfo = workState.CurrentTypeDefinitionInfo;
-            var accessibility = AccessibilityConverter.ConvertSourceText(typeDefinitionInfo.Accessibility);
+            var className = source.Name;
+            var accessibility = AccessibilityConverter.ConvertSourceText(source.DeclaredAccessibility);
 
             return SourceTextFormatter.Format(
                 "",
@@ -35,7 +43,7 @@ namespace WodiLib.SourceGenerator.TemplateEngine.Generation.Main
                 },
                 SourceTextFormatter.Format(
                     $"{__}",
-                    ReplaceClassBodyTemplateLiteral(workState)
+                    ReplaceClassBodyTemplateLiteral(selfAttributeData)
                 ),
                 new[]
                 {
@@ -44,11 +52,11 @@ namespace WodiLib.SourceGenerator.TemplateEngine.Generation.Main
             );
         }
 
-        private static string[] ReplaceClassBodyTemplateLiteral(WorkState workState)
+        private static string[] ReplaceClassBodyTemplateLiteral(AttributeData selfAttributeData)
         {
-            var propertyValues = workState.PropertyValues;
-            var templateLiteral = propertyValues[TemplateContextAttribute.ClassBodyTemplateLiteral.Name]!;
-            var args = propertyValues.GetArrayValue(TemplateContextAttribute.Args.Name)
+            var templateLiteral =
+                selfAttributeData.GetPropertyData<string>(TemplateContextAttribute.ClassBodyTemplateLiteral.Name)!;
+            var args = selfAttributeData.GetArrayPropertyData(TemplateContextAttribute.Args.Name)
                        ?? Array.Empty<string>();
 
             // テンプレート文字列を順次置換
@@ -66,14 +74,6 @@ namespace WodiLib.SourceGenerator.TemplateEngine.Generation.Main
 
             // 改行コードで分割して返却
             return result.Split('\n');
-        }
-
-        private protected override string HintName(WorkState workState)
-        {
-            var propertyValues = workState.PropertyValues;
-            var outKey = propertyValues[TemplateContextAttribute.OutKey.Name]!;
-
-            return $"{workState.FullName.ReplaceAngleBracketsToUnderscore()}_{outKey}";
         }
 
         private PartialClassGenerator()

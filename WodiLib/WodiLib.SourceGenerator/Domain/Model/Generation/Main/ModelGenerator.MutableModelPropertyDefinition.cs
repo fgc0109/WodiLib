@@ -7,7 +7,6 @@
 // ========================================
 
 using Microsoft.CodeAnalysis;
-using static WodiLib.SourceGenerator.Core.SourceBuilder.SourceConstants;
 
 namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
 {
@@ -16,83 +15,37 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
         /// <summary>
         ///     プロパティ定義情報クラス
         /// </summary>
-        public class MutableModelPropertyDefinition
+        public class ImmutableModelPropertyDefinition
         {
             public string[] ImplementationCode => new StringList()
                 .AppendLine(DocComment)
-                .Append($"public new {returnType}{nullableMark} {Name}")
+                .Append($"{accessibility} {returnType} {Name}")
                 .Append(PropertyBody)
                 .ToArray();
 
             private readonly IPropertySymbol propertySymbol;
+            private readonly string accessibility;
             private readonly ITypeSymbol returnType;
-            private readonly string setterAccessibility;
-            private readonly string nullableMark;
-            private readonly bool requireCastGetBody;
 
             private string Name => propertySymbol.Name;
 
             private string DocComment
                 => $"/// <inheritdoc/>";
 
-            private string[] PropertyBody
+            private string[] PropertyBody => new[]
             {
-                get
-                {
-                    if (propertySymbol.IsAbstract)
-                    {
-                        return new[]
-                        {
-                            " { get; }",
-                        };
-                    }
+                $" => MutableInstance.{Name};",
+            };
 
-                    var getBodyCastKeyword = requireCastGetBody
-                        ? $"({returnType})"
-                        : "";
-
-                    var list = new StringList()
-                        .AppendLine("")
-                        .AppendLine("{")
-                        .AppendLine($"{__}get => {getBodyCastKeyword}base.{Name};");
-                    if (setterAccessibility != "NONE")
-                    {
-                        var accessibility = setterAccessibility == "public"
-                            ? ""
-                            : $"{setterAccessibility} ";
-                        list.AppendLine(
-                            $"{__}{accessibility}set => base.{Name} = value;"
-                        );
-                    }
-
-                    return list.AppendLine("}")
-                        .ToArray();
-                }
-            }
-
-            public MutableModelPropertyDefinition(
+            public ImmutableModelPropertyDefinition(
                 IPropertySymbol propertySymbol,
-                ITypeSymbol? forceReturnType,
-                string setterAccessibility
+                string accessibility,
+                ITypeSymbol? forceReturnType
             )
             {
                 this.propertySymbol = propertySymbol;
-                if (forceReturnType is null)
-                {
-                    returnType = propertySymbol.Type;
-                    nullableMark = propertySymbol.Type.NullableAnnotation == NullableAnnotation.Annotated
-                        ? "?"
-                        : "";
-                    requireCastGetBody = false;
-                }
-                else
-                {
-                    returnType = forceReturnType;
-                    nullableMark = "";
-                    requireCastGetBody = true;
-                }
-
-                this.setterAccessibility = setterAccessibility;
+                this.accessibility = accessibility;
+                returnType = forceReturnType ?? propertySymbol.Type;
             }
         }
     }

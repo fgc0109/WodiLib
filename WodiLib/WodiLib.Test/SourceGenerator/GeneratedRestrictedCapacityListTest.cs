@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
 using WodiLib.Test.Tools;
@@ -18,29 +17,12 @@ namespace WodiLib.Test.SourceGenerator
      * でテストを行う。自動生成した個別のクラスでは行わない。
      */
     [TestFixture]
-    public class GenerateRestrictedCapacityListTest
+    public class GenerateRestrictedCapacityListTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
-        private static PropertyTestHelper propertyTestHelper = null!;
-        private static ConstructorTestHelper constructorTestHelper = null!;
-        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
-        private static ImpureActionTestHelper impureActionTestHelper = null!;
-        private static ItemEqualsTestHelper itemEqualsTestHelper = null!;
-        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
-
-            propertyTestHelper = new PropertyTestHelper(logger);
-            constructorTestHelper = new ConstructorTestHelper(logger);
-            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
-            impureActionTestHelper = new ImpureActionTestHelper(logger);
-            itemEqualsTestHelper = new ItemEqualsTestHelper(logger);
-            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
+            InitializeTestHelpers();
         }
 
         #region Constants
@@ -163,13 +145,13 @@ namespace WodiLib.Test.SourceGenerator
 
         #endregion
 
-        #region Copy
+        #region SettingsDto
 
         /// <summary>
         ///     コピーコンストラクタが正常に終了すること
         /// </summary>
         [Test]
-        public static void ConstructorTest_Copy_Success()
+        public static void ConstructorTest_SettingsDto_Success()
         {
             var settings = CreateSettingsDto(length: 3);
             var src = new StubRestrictedCapacityList(settings);
@@ -294,7 +276,9 @@ namespace WodiLib.Test.SourceGenerator
         public static void ItemEqualsTest_ReadOnlyModel()
         {
             var left = new StubRestrictedCapacityList(CreateSettingsDto(length: 4));
-            var right = new ReadOnlyStubRestrictedCapacityList(CreateSettingsDto(length: 4));
+            var right = new ReadOnlyStubRestrictedCapacityList(
+                new StubRestrictedCapacityList(CreateSettingsDto(length: 4))
+            );
             itemEqualsTestHelper.ItemEquals(
                 left,
                 right,
@@ -313,7 +297,9 @@ namespace WodiLib.Test.SourceGenerator
         public static void ItemEqualsTest_FixedLengthList()
         {
             var left = new StubRestrictedCapacityList(CreateSettingsDto(length: 4));
-            var right = new FixedStubRestrictedCapacityList(CreateSettingsDto(length: 4));
+            var right = new FixedStubRestrictedCapacityList(
+                new StubRestrictedCapacityList(CreateSettingsDto(length: 4))
+            );
             itemEqualsTestHelper.ItemEquals(
                 left,
                 right,
@@ -384,7 +370,7 @@ namespace WodiLib.Test.SourceGenerator
             };
         }
 
-        private static StubModelSettings CreateItemSettingsDto(int index)
+        private static IStubModelSettings CreateItemSettingsDto(int index)
         {
             return new StubModelSettings()
             {

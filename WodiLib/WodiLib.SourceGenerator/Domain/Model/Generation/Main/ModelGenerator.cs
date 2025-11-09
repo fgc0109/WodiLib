@@ -8,11 +8,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using WodiLib.SourceGenerator.Core;
 using WodiLib.SourceGenerator.Core.Extensions;
 using WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
@@ -28,40 +28,34 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
         public override InitializeAttributeSourceAddable TargetAttribute =>
             ModelAttribute.Instance;
 
-        private protected override SourceFormatTargetBlock GenerateTImportUsingSource(WorkState workState)
+        private protected override SourceFormatTargetBlock GenerateTImportUsingSource(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
             return new[]
             {
+                "using System.Diagnostics.Contracts;", // PureAttribute 使用のため
                 "using System.Linq;", // IEnumerable<T> 拡張メソッド使用のため
                 "using WodiLib.Sys;", // EqualityComparerFactory 使用のため
             };
         }
 
-        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(WorkState workState)
+        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
             try
             {
-                var propertyValues = workState.PropertyValues;
-                var typeDefinitionInfo = workState.CurrentTypeDefinitionInfo;
-
-                var currentSymbol = workState.CurrentSymbol;
-                if (currentSymbol is null)
-                {
-                    return "";
-                }
-
-                var modelInfo = BuildModelInformation(
-                    workState,
-                    currentSymbol,
-                    mutableModelClassName: workState.Name.Replace("ReadOnly", ""),
-                    classTypeParameters: propertyValues.WorkResult.TargetSymbol?.TypeParameters,
-                    description: propertyValues[ModelAttribute.Description.Name]!,
-                    accessibility: AccessibilityConverter.ConvertSourceText(typeDefinitionInfo.Accessibility),
-                    isAbstract: typeDefinitionInfo.IsAbstract,
-                    baseModelClass: GetBaseModelClassName(propertyValues[ModelAttribute.BaseModelClass.Name]),
-                    settingsParameterTypes: propertyValues.GetArrayValue(ModelAttribute.SettingsParameterTypes.Name)
-                );
-                CollectModelMembers(currentSymbol, modelInfo);
+                var modelInfo = BuildModelInformation(source, selfAttributeData);
+                CollectModelMembers(source, modelInfo);
 
                 return SourceTextFormatter.Format(
                     "",
@@ -84,9 +78,9 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
             }
         }
 
-        private static void CollectModelMembers(INamedTypeSymbol currentSymbol, ModelInformation modelInfo)
+        private static void CollectModelMembers(INamedTypeSymbol source, ModelInformation modelInfo)
         {
-            currentSymbol.GetMembers()
+            source.GetMembers()
                 .Aggregate(
                     modelInfo.Members,
                     (acc, member) =>
@@ -100,33 +94,18 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
                                 // MutableMethodAttribute 探索
                                 var findMutableMethodAttrResult = methodSymbol.GetAttributes()
                                     .FirstOrDefault(attr => attr.AttributeClass?.FullName()
-                                                            == MutableMethodAttribute.Instance.TypeFullName
+                                                            == ImmutableMethodAttribute.Instance.TypeFullName
                                     );
                                 if (findMutableMethodAttrResult is not null)
                                 {
                                     var accessibility =
                                         findMutableMethodAttrResult.GetPropertyData<string>(
-                                            nameof(MutableMethodAttribute.Accessibility)
+                                            nameof(ImmutableMethodAttribute.Accessibility)
                                         )!;
-                                    acc.Methods.Add(
+                                    acc.PureMethods.Add(
                                         new MethodDefinition(
                                             methodSymbol,
                                             accessibility
-                                        )
-                                    );
-                                }
-
-                                // MutableConstructorAttribute 探索
-                                var findMutableConstantAttrResult = methodSymbol.GetAttributes()
-                                    .FirstOrDefault(attr => attr.AttributeClass?.FullName()
-                                                            == MutableConstructorAttribute.Instance.TypeFullName
-                                    );
-                                if (findMutableConstantAttrResult is not null)
-                                {
-                                    acc.Constructors.Add(
-                                        new ConstructorDefinition(
-                                            methodSymbol,
-                                            modelInfo.MutableInfo.MutableModelClassNameWithoutInOutKeyword
                                         )
                                     );
                                 }
@@ -138,25 +117,25 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
                                 // MutablePropertyAttribute 探索
                                 var findImmutablePropertyAttrResult = propertySymbol.GetAttributes()
                                     .FirstOrDefault(attr => attr.AttributeClass?.FullName()
-                                                            == MutablePropertyAttribute.Instance.TypeFullName
+                                                            == ImmutablePropertyAttribute.Instance.TypeFullName
                                     );
                                 if (findImmutablePropertyAttrResult is not null)
                                 {
+                                    // アクセス修飾子
+                                    var accessibility =
+                                        findImmutablePropertyAttrResult.GetPropertyData<string>(
+                                            nameof(ImmutablePropertyAttribute.Accessibility)
+                                        )!;
                                     // 戻り値の型情報
                                     var returnType =
                                         findImmutablePropertyAttrResult.GetPropertyData<INamedTypeSymbol?>(
-                                            nameof(MutablePropertyAttribute.ReturnType)
+                                            nameof(ImmutablePropertyAttribute.ReturnType)
                                         );
-                                    // setter アクセシビリティ
-                                    var setterAccessibility =
-                                        findImmutablePropertyAttrResult.GetPropertyData<string>(
-                                            nameof(MutablePropertyAttribute.Accessibility)
-                                        )!;
-                                    acc.MutableModelProperties.Add(
-                                        new MutableModelPropertyDefinition(
+                                    acc.ImmutableModelProperties.Add(
+                                        new ImmutableModelPropertyDefinition(
                                             propertySymbol,
-                                            returnType,
-                                            setterAccessibility
+                                            accessibility,
+                                            returnType
                                         )
                                     );
                                 }
@@ -198,6 +177,7 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
                                         new ModelSettingsPropertyDefinition(
                                             propertySymbol,
                                             returnType ?? propertySymbol.Type,
+                                            returnType is not null,
                                             modelInfo.ImmutableInfo.ImmutableModelClassNameWithoutInOutKeyword,
                                             modelInfo.SettingsInterfaceInfo.SettingsInterfaceName,
                                             defaultValue,
@@ -217,44 +197,28 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
                 );
         }
 
-        private static string? GetBaseModelClassName(string? originalValue)
-        {
-            if (originalValue is null)
-            {
-                return null;
-            }
-
-            if (originalValue.IndexOf('<') == -1)
-            {
-                // 総称型を使わない場合
-                //      名前空間を除去
-                return originalValue.Split('.').Last();
-            }
-
-            // 総称型を使う場合
-            //      クラス名部分と総称型部分に分割
-            //      クラス名部分は名前空間を除去
-            //      総称型部分はそのまま
-            var regex = new Regex("^([^<]*)(<.+)?");
-            var matchGroups = regex.Matches(originalValue)[0].Groups;
-            return $"{matchGroups[1].Value.Split('.').Last()}{matchGroups[2].Value}";
-        }
-
         private static ModelInformation BuildModelInformation(
-            WorkState workState,
-            INamedTypeSymbol currentSymbol,
-            string mutableModelClassName,
-            ImmutableArray<ITypeParameterSymbol>? classTypeParameters,
-            string description,
-            string accessibility,
-            bool isAbstract,
-            string? baseModelClass,
-            string[]? settingsParameterTypes
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData
         )
         {
+            var mutableModelClassName = source.ClassName();
+
+            var description = selfAttributeData.GetPropertyDataRecursive<string?>(ModelAttribute.Description.Name)
+                              ?? "";
+            var accessibility = AccessibilityConverter.ConvertSourceText(source.DeclaredAccessibility);
+            var isAbstract = source.IsAbstract;
+
+            var classTypeParameters = source.TypeParameters;
+            var settingsParameterTypes =
+                selfAttributeData.GetArrayPropertyDataRecursive(ModelAttribute.SettingsParameterTypes.Name);
+
+            var baseModelClass = GetBaseModelClassName(
+                selfAttributeData.GetPropertyDataRecursive<string?>(ModelAttribute.BaseModelClass.Name)
+            );
             var baseModelClassNoGeneric = baseModelClass?.Split('<')[0];
 
-            var typeParamConstraints = classTypeParameters?.Select(t =>
+            var typeParamConstraints = classTypeParameters.Select(t =>
                     {
                         var constraints = t.ConstraintTypes.Select(constraint => constraint.ToDisplayString())
                             .ToList();
@@ -316,11 +280,11 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
             var settingsDtoName =
                 $"{dtoNameBase}{markedSettingsParameterTypes.Replace("out ", "").Replace("in ", "")}";
 
-            var baseSettingsParameterTypes = workState.CurrentSymbol?.BaseType is not null
-                                             && workState.CurrentSymbol.BaseType.FullName()
+            var baseSettingsParameterTypes = source.BaseType is not null
+                                             && source.BaseType.FullName()
                                                  .StartsWith("WodiLib.Sys.BaseModel")
                 ? null
-                : workState.CurrentSymbol!.BaseType!.TypeParameters.Select(t =>
+                : source.BaseType?.TypeParameters.Select(t =>
                         {
                             var keyword = t.Variance switch
                             {
@@ -359,7 +323,7 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
             // 設定DTOに同じ内容で実装する。
             // ターゲットとなるItemEqualsメソッドが未実装の場合、NotImplementedException を投げるようにする
             var settingsInterfaceCompareCode =
-                GetSettingsInterfaceItemEqualsMethodBody(currentSymbol, settingsInterfaceName);
+                GetSettingsInterfaceItemEqualsMethodBody(source, settingsInterfaceName);
 
             return new ModelInformation(
                 typeParamConstraints,
@@ -388,25 +352,48 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
             );
         }
 
+        private static string? GetBaseModelClassName(string? originalValue)
+        {
+            if (originalValue is null)
+            {
+                return null;
+            }
+
+            if (originalValue.IndexOf('<') == -1)
+            {
+                // 総称型を使わない場合
+                //      名前空間を除去
+                return originalValue.Split('.').Last();
+            }
+
+            // 総称型を使う場合
+            //      クラス名部分と総称型部分に分割
+            //      クラス名部分は名前空間を除去
+            //      総称型部分はそのまま
+            var regex = new Regex("^([^<]*)(<.+)?");
+            var matchGroups = regex.Matches(originalValue)[0].Groups;
+            return $"{matchGroups[1].Value.Split('.').Last()}{matchGroups[2].Value}";
+        }
+
         /// <summary>
         ///     設定インタフェースと比較するItemEqualsメソッドの実装ソースコードを文字列として取得する。
         ///     取得できない場合は <see cref="NotImplementedException"/> をスローするソースコードを返す。
         /// </summary>
-        /// <param name="currentSymbol"></param>
+        /// <param name="source"></param>
         /// <param name="settingsInterfaceName"></param>
         /// <returns></returns>
         private static string GetSettingsInterfaceItemEqualsMethodBody(
-            INamedTypeSymbol currentSymbol,
+            INamedTypeSymbol source,
             string settingsInterfaceName
         )
         {
-            var targetMethod = currentSymbol
+            var targetMethod = source
                 .GetMembers()
                 .OfType<IMethodSymbol>()
                 .FirstOrDefault(m =>
                     m.Name == "ItemEquals"
                     && m.Parameters.Length == 1
-                    && m.Parameters[0].Type.ToString() == $"{settingsInterfaceName}?" // nullable
+                    && m.Parameters[0].Type.ToDisplayString().EndsWith($"{settingsInterfaceName}?") // nullable
                     && m.ReturnType.SpecialType == SpecialType.System_Boolean
                 );
 
@@ -473,10 +460,9 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
 
         private class ModelMembers
         {
-            public readonly List<MethodDefinition> Methods = new();
-            public readonly List<MutableModelPropertyDefinition> MutableModelProperties = new();
+            public readonly List<MethodDefinition> PureMethods = new();
+            public readonly List<ImmutableModelPropertyDefinition> ImmutableModelProperties = new();
             public readonly List<ModelSettingsPropertyDefinition> SettingsProperties = new();
-            public readonly List<ConstructorDefinition> Constructors = new();
         }
     }
 }

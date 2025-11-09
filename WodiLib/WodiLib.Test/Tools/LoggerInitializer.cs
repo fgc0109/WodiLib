@@ -63,7 +63,7 @@ namespace WodiLib.Test.Tools
 
         public class WodiLibLogHandlerContainer
         {
-            public WodiLibLogHandler Handler;
+            public readonly WodiLibLogHandler Handler;
 
             public IReadOnlyList<string> ErrorLogs => errorLogs;
             public IReadOnlyList<string> WarningLogs => warningLogs;
@@ -78,22 +78,21 @@ namespace WodiLib.Test.Tools
             public WodiLibLogHandlerContainer()
             {
                 Handler = new WodiLibLogHandler(
-                    errorAction: makeHandleAction(errorLogs),
-                    warningAction: makeHandleAction(warningLogs),
-                    infoAction: makeHandleAction(infoLogs),
-                    debugAction: makeHandleAction(debugLogs)
+                    errorAction: MakeHandleAction(errorLogs),
+                    warningAction: MakeHandleAction(warningLogs),
+                    infoAction: MakeHandleAction(infoLogs),
+                    debugAction: MakeHandleAction(debugLogs)
                 );
             }
 
-            private Action<string?> makeHandleAction(List<string> logs)
-                => new(msg =>
+            private static Action<string?> MakeHandleAction(List<string> logs)
+                => msg =>
+                {
+                    if (msg is not null)
                     {
-                        if (msg is not null)
-                        {
-                            logs.Add(msg);
-                        }
+                        logs.Add(msg);
                     }
-                );
+                };
 
             public void ClearAllLogs()
             {

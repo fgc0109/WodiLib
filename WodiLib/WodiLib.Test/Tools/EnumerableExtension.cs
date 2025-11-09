@@ -232,7 +232,6 @@ namespace WodiLib.Test.Tools
         /// <param name="others">比較対象</param>
         /// <param name="predicate">比較処理</param>
         /// <typeparam name="TSource">比較元型</typeparam>
-        /// <typeparam name="TOther">比較対象型</typeparam>
         /// <returns>
         ///     要素数が一致し、
         ///     全ての要素が <paramref name="predicate"/> で <see langword="true"/> を返す場合 <see langword="true"/>。

@@ -18,7 +18,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
     /// </summary>
     internal class ByteValueObjectAttribute : IntegralNumericValueObjectAttribute
     {
-        private new static readonly PropertyInfo MaxValue = new()
+        public new static readonly PropertyInfo MaxValue = new()
         {
             Name = "MaxValue",
             Type = "byte",
@@ -27,7 +27,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             DefaultValueAsSourceCode = true,
         };
 
-        private new static readonly PropertyInfo MinValue = new()
+        public new static readonly PropertyInfo MinValue = new()
         {
             Name = "MinValue",
             Type = "byte",
@@ -36,7 +36,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             DefaultValueAsSourceCode = true,
         };
 
-        private new static readonly PropertyInfo SafetyMaxValue = new()
+        public new static readonly PropertyInfo SafetyMaxValue = new()
         {
             Name = "SafetyMaxValue",
             Type = "byte",
@@ -45,7 +45,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attribut
             DefaultValueAsSourceCode = true,
         };
 
-        private new static readonly PropertyInfo SafetyMinValue = new()
+        public new static readonly PropertyInfo SafetyMinValue = new()
         {
             Name = "SafetyMinValue",
             Type = "byte",

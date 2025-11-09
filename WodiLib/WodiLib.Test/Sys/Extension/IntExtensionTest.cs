@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
 using WodiLib.Test.Tools;
@@ -9,15 +8,12 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.Sys
 {
     [TestFixture]
-    public class IntExtensionTest
+    public class IntExtensionTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
         [TestCase(10, 9, 9, false)]

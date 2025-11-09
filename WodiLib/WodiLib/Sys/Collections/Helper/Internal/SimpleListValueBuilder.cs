@@ -33,7 +33,7 @@ namespace WodiLib.Sys.Collections
         /// <param name="buildFromIndex">要素生成処理</param>
         public SimpleListValueBuilder(Func<int, T> buildFromIndex)
         {
-            builderImpl = (list, index) => buildFromIndex(index);
+            builderImpl = (_, index) => buildFromIndex(index);
         }
 
         /// <summary>

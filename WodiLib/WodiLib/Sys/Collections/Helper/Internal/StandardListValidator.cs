@@ -14,8 +14,11 @@ namespace WodiLib.Sys.Collections
     /// <summary>
     ///     リスト編集メソッドの引数汎用検証処理実施クラス
     /// </summary>
+    /// <typeparam name="TListSettings">リストの入力パラメータ型</typeparam>
     /// <typeparam name="TElementSettings">リスト内包型の入力パラメータ型</typeparam>
-    internal class StandardListValidator<TElementSettings> : IWodiLibListValidator<TElementSettings>
+    internal class StandardListValidator<TListSettings, TElementSettings> :
+        IWodiLibListValidator<TListSettings, TElementSettings>
+        where TListSettings : IListSettings<TElementSettings>
     {
         public delegate int GetCountDelegate();
 
@@ -26,10 +29,10 @@ namespace WodiLib.Sys.Collections
             CountGetter = countGetter;
         }
 
-        public virtual void Constructor(NamedValue<IEnumerable<TElementSettings>> initItems)
+        public virtual void Constructor(NamedValue<TListSettings> initSettings)
         {
-            ThrowHelper.ValidateArgumentNotNull(initItems.Value is null, initItems.Name);
-            ListValidationHelper.ItemsHasNotNull(initItems);
+            ThrowHelper.ValidateArgumentNotNull(initSettings.Value is null, initSettings.Name);
+            ListValidationHelper.ItemsHasNotNull<TElementSettings>((initSettings.Name, initSettings.Value.Settings));
         }
 
         public virtual void Get(NamedValue<int> index, NamedValue<int> count)

@@ -27,21 +27,24 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
                     $"/// <summary>",
                     $"/// {__}{modelInfo.Description}",
                     $"/// </summary>",
-                    $"{modelInfo.Accessibility} {modelInfo.AbstractKeyword}partial class {modelInfo.MutableInfo.MutableModelClassName} : {modelInfo.ImmutableInfo.ImmutableModelClassNameWithoutInOutKeyword},",
-                    $"{__}WodiLib.Sys.IDeepCloneable<{modelInfo.MutableInfo.MutableModelClassNameWithoutInOutKeyword}>",
+                    $"{modelInfo.Accessibility} {modelInfo.AbstractKeyword}partial class {modelInfo.MutableInfo.MutableModelClassName} : ModelBase,",
+                    $"{__}{modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword},",
+                    $"{__}IEqualityComparable<{modelInfo.MutableInfo.MutableModelClassNameWithoutInOutKeyword}>,",
+                    $"{__}IEqualityComparable<{modelInfo.ImmutableInfo.ImmutableModelClassNameWithoutInOutKeyword}>,",
+                    $"{__}IDeepCloneable<{modelInfo.MutableInfo.MutableModelClassNameWithoutInOutKeyword}>",
                     $"{{",
                 },
-                // Properties
-                BuildMutableClassSettingsInterfaceImplementsSource(modelInfo),
-                SourceFormatTargetBlock.Empty,
-                // Constructors
-                BuildConstructorSource(modelInfo),
-                SourceFormatTargetBlock.Empty,
-                // Methods
-                BuildMethodsSource(modelInfo),
+                // ItemEquals
+                BuildMutableClassItemEqualsSource(modelInfo),
                 SourceFormatTargetBlock.Empty,
                 // DeepClone
                 BuildMutableClassDeepCloneSource(modelInfo),
+                SourceFormatTargetBlock.Empty,
+                // SettingsInterface Implements
+                BuildMutableClassSettingsInterfaceImplementsSource(modelInfo),
+                SourceFormatTargetBlock.Empty,
+                // Implicit Type Conversion Operator
+                BuildImplicitTypeConversionOperatorSource(modelInfo),
                 // class end
                 new[]
                 {
@@ -50,33 +53,31 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
             );
         }
 
-        private static SourceFormatTargetBlock BuildMutableClassSettingsInterfaceImplementsSource(
+        private static SourceFormatTargetBlock BuildMutableClassItemEqualsSource(
             ModelInformation modelInfo
         )
         {
-            return SourceTextFormatter.Format(
-                $"{__}",
-                modelInfo.Members.MutableModelProperties.SelectMany(p => p.ImplementationCode).ToArray()
-            );
-        }
+            var objectItemEqualsKeyword = (modelInfo.IsExtendClass, modelInfo.IsAbstract) switch
+            {
+                (true, _) => "override ",
+                (_, true) => "virtual ",
+                (_, false) => "",
+            };
 
-        private static SourceFormatTargetBlock BuildConstructorSource(
-            ModelInformation modelInfo
-        )
-        {
             return SourceTextFormatter.Format(
-                $"{__}",
-                modelInfo.Members.Constructors.SelectMany(p => p.ImplementationCode).ToArray()
-            );
-        }
-
-        private static SourceFormatTargetBlock BuildMethodsSource(
-            ModelInformation modelInfo
-        )
-        {
-            return SourceTextFormatter.Format(
-                $"{__}",
-                modelInfo.Members.Methods.SelectMany(p => p.ImplementationCode).ToArray()
+                __,
+                $"/// <inheritdoc/>",
+                $"[Pure]",
+                $"public bool ItemEquals({modelInfo.SettingsDtoInfo.SettingsDtoName}? other) => ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});",
+                $"/// <inheritdoc/>",
+                $"[Pure]",
+                $"public bool ItemEquals({modelInfo.ImmutableInfo.ImmutableModelClassNameWithoutInOutKeyword}? other) => ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});",
+                $"/// <inheritdoc/>",
+                $"[Pure]",
+                $"public bool ItemEquals({modelInfo.MutableInfo.MutableModelClassNameWithoutInOutKeyword}? other) => ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});",
+                $"/// <inheritdoc/>",
+                $"[Pure]",
+                $"public bool {objectItemEqualsKeyword}ItemEquals(object? other) => ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});"
             );
         }
 
@@ -87,8 +88,45 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
             return SourceTextFormatter.Format(
                 __,
                 $"/// <inheritdoc/>",
-                $"public new {modelInfo.MutableInfo.MutableModelClassNameWithoutInOutKeyword} DeepClone() => new(this);",
-                $"object WodiLib.Sys.IDeepCloneable.DeepClone() => DeepClone();"
+                $"[Pure]",
+                $"public {modelInfo.MutableInfo.MutableModelClassNameWithoutInOutKeyword} DeepClone() => new(this);",
+                $"object IDeepCloneable.DeepClone() => DeepClone();"
+            );
+        }
+
+        private static SourceFormatTargetBlock BuildMutableClassSettingsInterfaceImplementsSource(
+            ModelInformation modelInfo
+        )
+        {
+            var targetProperties =
+                modelInfo.Members.SettingsProperties.Where(definition => definition.IsOverrideReturnType);
+
+            return SourceTextFormatter.Format(
+                __,
+                targetProperties.Select(definition => definition.GetInterfaceImplementCode
+                    )
+                    .ToArray()
+            );
+        }
+
+        private static SourceFormatTargetBlock BuildImplicitTypeConversionOperatorSource(ModelInformation modelInfo)
+        {
+            return SourceTextFormatter.Format(
+                __,
+                $"private {modelInfo.ImmutableInfo.ImmutableModelClassNameWithoutInOutKeyword}? immutableInstance = null;",
+                $"",
+                $"/// <summary>",
+                $"/// {__}読取専用クラスへの暗黙的型変換",
+                $"/// </summary>",
+                $"/// <param name=\"src\">変換元</param>",
+                $"/// <returns>変換したインスタンス</returns>",
+                $"[return: System.Diagnostics.CodeAnalysis.NotNullIfNotNull(nameof(src))]",
+                $"public static implicit operator {modelInfo.ImmutableInfo.ImmutableModelClassNameWithoutInOutKeyword}?({modelInfo.MutableInfo.MutableModelClassNameWithoutInOutKeyword}? src)",
+                $"{{",
+                $"{__}if (src is null) return null;",
+                $"{__}src.immutableInstance ??= new {modelInfo.ImmutableInfo.ImmutableModelClassNameWithoutInOutKeyword}(src);",
+                $"{__}return src.immutableInstance;",
+                $"}}"
             );
         }
     }

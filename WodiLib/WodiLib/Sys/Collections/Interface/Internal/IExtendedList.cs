@@ -15,22 +15,24 @@ namespace WodiLib.Sys.Collections
     ///     WodiLib 独自リストインタフェース
     /// </summary>
     /// <remarks>
-    ///     リストの編集・参照が可能。
+    ///     インタフェースの明確化・ドキュメントコメント切り出しのために定義する。
     /// </remarks>
     /// <typeparam name="TEditableElement">リスト要素型</typeparam>
-    /// <typeparam name="TReadOnlyElement">リスト要素読取専用型</typeparam>
     /// <typeparam name="TElementSettings">リスト要素設定DTO</typeparam>
-    internal interface IExtendedList<TEditableElement, out TReadOnlyElement, in TElementSettings>
-        where TEditableElement : TReadOnlyElement
-        where TReadOnlyElement : TElementSettings
-        where TElementSettings : notnull
+    internal interface IExtendedList<TEditableElement, in TElementSettings>
     {
         #region Properties
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.this[int]"/>
+        /// <summary>
+        ///     インデクサによるアクセス
+        /// </summary>
+        /// <param name="index">[Range(0, <see cref="Count"/> - 1)] インデックス</param>
+        /// <returns>指定したインデックスの要素</returns>
+        /// <exception cref="ArgumentNullException"><see lanword="null"/> をセットしようとした場合。</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/>が指定範囲外の場合。</exception>
         public TEditableElement this[int index] { get; set; }
 
-        /// <inheritdoc cref="IReadOnlyExtendedList{TReadOnlyElement}.Count"/>
+        /// <summary>要素数</summary>
         public int Count { get; }
 
         #endregion
@@ -55,16 +57,58 @@ namespace WodiLib.Sys.Collections
 
         #region CRUD
 
-        /// <inheritdoc cref="IReadOnlyExtendedList{TElement}.Get"/>
+        /// <summary>
+        ///     指定インデックスの要素を取得する。
+        /// </summary>
+        /// <param name="index">[Range(0, <see cref="Count"/> - 1)] インデックス</param>
+        /// <returns>指定範囲の要素簡易コピーリスト</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="index"/> が指定範囲外の場合。
+        /// </exception>
         public TEditableElement Get(int index);
 
-        /// <inheritdoc cref="IReadOnlyExtendedList{TElement}.GetRange"/>
+        /// <summary>
+        ///     指定範囲の要素を簡易コピーしたリストを取得する。
+        /// </summary>
+        /// <param name="index">[Range(0, <see cref="Count"/> - 1)] インデックス</param>
+        /// <param name="count">[Range(0, <see cref="Count"/>)] 要素数</param>
+        /// <returns>指定範囲の要素簡易コピーリスト</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="index"/>, <paramref name="count"/>が指定範囲外の場合。
+        /// </exception>
+        /// <exception cref="ArgumentException">有効な範囲外の要素を取得しようとした場合。</exception>
         public IEnumerable<TEditableElement> GetRange(int index, int count);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.Set"/>
+        /// <summary>
+        ///     リストの要素を更新する。
+        /// </summary>
+        /// <param name="index">[Range(0, <see cref="Count"/> - 1)] 更新開始インデックス</param>
+        /// <param name="settings">更新要素</param>
+        /// <returns>セットした要素</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合、
+        ///     または <paramref name="settings"/> に <see langword="null"/> 要素が含まれる場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/>が指定範囲外の場合。</exception>
+        /// <exception cref="ArgumentException">
+        ///     有効な範囲外の要素を編集しようとした場合。
+        /// </exception>
         public TEditableElement Set(int index, TElementSettings settings);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.SetRange"/>
+        /// <summary>
+        ///     リストの連続した要素を更新する。
+        /// </summary>
+        /// <param name="index">[Range(0, <see cref="Count"/> - 1)] 更新開始インデックス</param>
+        /// <param name="settings">更新要素</param>
+        /// <returns>セットした要素</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合、
+        ///     または <paramref name="settings"/> に <see langword="null"/> 要素が含まれる場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/>が指定範囲外の場合。</exception>
+        /// <exception cref="ArgumentException">
+        ///     有効な範囲外の要素を編集しようとした場合。
+        /// </exception>
         public IEnumerable<TEditableElement> SetRange(int index, IEnumerable<TElementSettings> settings);
 
         /// <summary>
@@ -161,10 +205,41 @@ namespace WodiLib.Sys.Collections
         /// </example>
         public IEnumerable<TEditableElement> Overwrite(int index, IEnumerable<TElementSettings> settings);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.Move"/>
+        /// <summary>
+        ///     指定したインデックスにある項目をコレクション内の新しい場所へ移動する。
+        /// </summary>
+        /// <param name="oldIndex">[Range(0, <see cref="Count"/> - 1)] 移動する項目のインデックス</param>
+        /// <param name="newIndex">[Range(0, <see cref="Count"/> - 1)] 移動先のインデックス</param>
+        /// <exception cref="InvalidOperationException">
+        ///     自身の要素数が0の場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="oldIndex"/>, <paramref name="newIndex"/> が指定範囲外の場合。
+        /// </exception>
         public void Move(int oldIndex, int newIndex);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.MoveRange"/>
+        /// <summary>
+        ///     指定したインデックスから始まる連続した項目をコレクション内の新しい場所へ移動する。
+        /// </summary>
+        /// <param name="oldIndex">
+        ///     [Range(0, <see cref="Count"/> - 1)]
+        ///     移動する項目のインデックス開始位置
+        /// </param>
+        /// <param name="newIndex">
+        ///     [Range(0, <see cref="Count"/> - 1)]
+        ///     移動先のインデックス開始位置
+        /// </param>
+        /// <param name="count">
+        ///     [Range(0, <see cref="Count"/>)]
+        ///     移動させる要素数
+        /// </param>
+        /// <exception cref="InvalidOperationException">
+        ///     自身の要素数が0の場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="oldIndex"/>, <paramref name="newIndex"/>, <paramref name="count"/> が指定範囲外の場合。
+        /// </exception>
+        /// <exception cref="ArgumentException">有効な範囲外の要素を移動しようとした場合。</exception>
         public void MoveRange(int oldIndex, int newIndex, int count);
 
         /// <summary>
@@ -253,12 +328,28 @@ namespace WodiLib.Sys.Collections
         ///     このメソッドは <paramref name="settings"/> の要素数が
         ///     <see cref="GetMinCapacity"/> 以上 <see cref="GetMaxCapacity"/> 以下であれば
         ///     成功する。<br/>
-        ///     現在の要素数と一致しない場合エラーとしたい場合は、
-        ///     容量固定型にキャストしてから同メソッドを呼び出す。
+        ///     現在の要素数と一致しない場合エラーとしたい場合は、<see cref="ResetStrict"/> を使用する。
         /// </remarks>
         public IEnumerable<TEditableElement> Reset(IEnumerable<TElementSettings> settings);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.Reset()"/>
+        /// <summary>
+        ///     要素を与えられた内容で一新する。
+        /// </summary>
+        /// <param name="settings">リストに詰め直す要素</param>
+        /// <returns>新たにリストに詰め直した要素</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合、
+        ///     または <paramref name="settings"/> に <see langword="null"/> 要素が含まれる場合。
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="settings"/> の要素数が <see cref="Count"/> と
+        ///     異なる場合。
+        /// </exception>
+        public IEnumerable<TEditableElement> ResetStrict(IEnumerable<TElementSettings> settings);
+
+        /// <summary>
+        ///     要素をデフォルト値で一新する。
+        /// </summary>
         public IEnumerable<TEditableElement> Reset();
 
         /// <summary>
@@ -270,16 +361,28 @@ namespace WodiLib.Sys.Collections
 
         #region Validate
 
-        /// <inheritdoc cref="IReadOnlyExtendedList{TReadOnlyElement}.ValidateGet"/>
+        /// <summary>
+        ///     <see cref="Get"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="Get" path="param|exception"/>
         public void ValidateGet(int index);
 
-        /// <inheritdoc cref="IReadOnlyExtendedList{TReadOnlyElement}.ValidateGetRange"/>
+        /// <summary>
+        ///     <see cref="GetRange"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="GetRange" path="param|exception"/>
         public void ValidateGetRange(int index, int count);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.ValidateSet"/>
+        /// <summary>
+        ///     <see cref="Set"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="Set" path="param|exception"/>
         public void ValidateSet(int index, TElementSettings settings);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.ValidateSetRange"/>
+        /// <summary>
+        ///     <see cref="SetRange"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="SetRange" path="param|exception"/>
         public void ValidateSetRange(int index, IEnumerable<TElementSettings> settings);
 
         /// <summary>
@@ -312,10 +415,16 @@ namespace WodiLib.Sys.Collections
         /// <inheritdoc cref="Overwrite" path="param|exception"/>
         public void ValidateOverwrite(int index, IEnumerable<TElementSettings> settings);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.ValidateMove"/>
+        /// <summary>
+        ///     <see cref="Move"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="Move" path="param|exception"/>
         public void ValidateMove(int oldIndex, int newIndex);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.ValidateMoveRange"/>
+        /// <summary>
+        ///     <see cref="MoveRange"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="MoveRange" path="param|exception"/>
         public void ValidateMoveRange(int oldIndex, int newIndex, int count);
 
         /// <summary>
@@ -345,6 +454,18 @@ namespace WodiLib.Sys.Collections
         public void ValidateReset(IEnumerable<TElementSettings> settings);
 
         /// <summary>
+        ///     <see cref="ResetStrict"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="ResetStrict" path="param|exception"/>
+        public void ValidateResetStrict(IEnumerable<TElementSettings> settings);
+
+        /// <summary>
+        ///     <see cref="Reset()"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="Reset()" path="param|exception"/>
+        public void ValidateReset();
+
+        /// <summary>
         ///     <see cref="Clear"/> メソッドの検証処理。
         /// </summary>
         /// <inheritdoc cref="Clear" path="param|exception"/>
@@ -354,16 +475,28 @@ namespace WodiLib.Sys.Collections
 
         #region CRUD core
 
-        /// <inheritdoc cref="IReadOnlyExtendedList{TReadOnlyElement}.GetInternal"/>
+        /// <summary>
+        ///     <see cref="Get"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="Get" path="param"/>
         public TEditableElement GetInternal(int index);
 
-        /// <inheritdoc cref="IReadOnlyExtendedList{TReadOnlyElement}.GetRangeInternal"/>
+        /// <summary>
+        ///     <see cref="GetRange"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="GetRange" path="param"/>
         public IEnumerable<TEditableElement> GetRangeInternal(int index, int count);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.SetInternal"/>
+        /// <summary>
+        ///     <see cref="Set"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="Set" path="param"/>
         public TEditableElement SetInternal(int index, TElementSettings settings);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.SetRangeInternal"/>
+        /// <summary>
+        ///     <see cref="SetRange"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="SetRange" path="param"/>
         public IEnumerable<TEditableElement> SetRangeInternal(int index, IEnumerable<TElementSettings> settings);
 
         /// <summary>
@@ -398,10 +531,16 @@ namespace WodiLib.Sys.Collections
         /// <inheritdoc cref="Overwrite" path="param|returns"/>
         public IEnumerable<TEditableElement> OverwriteInternal(int index, IEnumerable<TElementSettings> settings);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.MoveInternal"/>
+        /// <summary>
+        ///     <see cref="Move"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="Move" path="param"/>
         public void MoveInternal(int oldIndex, int newIndex);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.MoveRangeInternal"/>
+        /// <summary>
+        ///     <see cref="MoveRange"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="MoveRange" path="param"/>
         public void MoveRangeInternal(int oldIndex, int newIndex, int count);
 
         /// <summary>
@@ -424,8 +563,22 @@ namespace WodiLib.Sys.Collections
         /// <inheritdoc cref="AdjustLength" path="param|returns"/>
         public IEnumerable<TEditableElement> AdjustLengthInternal(int length);
 
-        /// <inheritdoc cref="IFixedLengthList{TEditableElement,TReadOnlyElement,TElementSettings}.SetRangeInternal"/>
+        /// <summary>
+        ///     <see cref="Reset(System.Collections.Generic.IEnumerable{TElementSettings})"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="AdjustLength" path="param|returns"/>
         public IEnumerable<TEditableElement> ResetInternal(IEnumerable<TElementSettings> settings);
+
+        /// <summary>
+        ///     <see cref="ResetStrict"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="ResetStrict" path="param"/>
+        public IEnumerable<TEditableElement> ResetStrictInternal(IEnumerable<TElementSettings> settings);
+
+        /// <summary>
+        ///     <see cref="Reset()"/> メソッド処理中核。
+        /// </summary>
+        public IEnumerable<TEditableElement> ResetInternal();
 
         /// <summary>
         ///     <see cref="Clear"/> メソッド処理中核。

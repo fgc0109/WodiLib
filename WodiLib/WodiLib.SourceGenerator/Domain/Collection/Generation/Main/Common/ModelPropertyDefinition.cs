@@ -47,8 +47,10 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 return new StringList()
                     .AppendLine("")
                     .AppendLine("{")
-                    .AppendLine($"{__}get => mutableInstance.{Name};")
-                    .AppendLine($"{__}{accessibility} set => mutableInstance.{Name} = value;")
+                    .AppendLine($"{__}get => MutableInstance.{Name};")
+                    .AppendLine(
+                        $"{__}{(accessibility != "public" ? $"{accessibility} " : "")}set => MutableInstance.{Name} = value;"
+                    )
                     .AppendLine("}")
                     .ToArray();
             }

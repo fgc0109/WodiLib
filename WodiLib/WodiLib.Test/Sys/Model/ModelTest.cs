@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using WodiLib.Sys;
+using WodiLib.Test.Tools;
 
 namespace WodiLib.Test.Sys
 {
     [TestFixture]
-    public class ModelTest
+    public class ModelTest : TestFixtureBase
     {
         [Test]
         public static void NotifyPropertyChangedTest()

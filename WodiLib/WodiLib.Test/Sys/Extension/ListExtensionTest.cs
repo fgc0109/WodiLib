@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
 using WodiLib.Test.Tools;
@@ -8,15 +7,12 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.Sys
 {
     [TestFixture]
-    public class ListExtensionTest
+    public class ListExtensionTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
         [TestCase(3, 1, -1, true)]

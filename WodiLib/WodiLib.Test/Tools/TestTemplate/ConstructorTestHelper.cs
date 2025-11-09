@@ -85,7 +85,7 @@ namespace WodiLib.Test.Tools
             }
             catch (Exception ex)
             {
-                logger?.Exception(ex);
+                logger.Exception(ex);
                 errorOccured = true;
                 exception = ex;
             }

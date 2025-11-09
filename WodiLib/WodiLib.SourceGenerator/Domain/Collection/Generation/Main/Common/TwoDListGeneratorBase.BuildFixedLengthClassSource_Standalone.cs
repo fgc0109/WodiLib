@@ -867,10 +867,12 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"/// </summary>",
                 $"/// <param name=\"src\">変換元</param>",
                 $"/// <returns>変換したインスタンス</returns>",
-                $"public static implicit operator {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}({modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword} src)",
+                $"[return: System.Diagnostics.CodeAnalysis.NotNullIfNotNull(nameof(src))]",
+                $"public static implicit operator {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}?({modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword}? src)",
                 $"{{",
-                $"    src.readonlyInstance ??= new {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}(src);",
-                $"    return src.readonlyInstance;",
+                $"{__}if (src is null) return null;",
+                $"{__}src.readonlyInstance ??= new {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}(src);",
+                $"{__}return src.readonlyInstance;",
                 $"}}"
             );
         }

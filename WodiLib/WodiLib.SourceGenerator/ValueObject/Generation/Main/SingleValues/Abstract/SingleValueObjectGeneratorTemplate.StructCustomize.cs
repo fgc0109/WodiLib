@@ -6,8 +6,10 @@
 // see LICENSE file
 // ========================================
 
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using WodiLib.SourceGenerator.Core;
-using WodiLib.SourceGenerator.Core.Dtos;
+using WodiLib.SourceGenerator.Core.Extensions;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
 using MyAttr =
     WodiLib.SourceGenerator.ValueObject.Generation.PostInitAction.Attributes.Abstract.SingleValueObjectAttribute;
@@ -32,22 +34,28 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
 
             /// <inheritdoc/>
             public SourceFormatTarget SourceFormatTargetEqualsObject(
-                PropertyValues workResult,
-                ITypeDefinitionInfoResolver typeDefinitionInfoResolver
+                SemanticModel semanticModel,
+                BaseTypeDeclarationSyntax typeDecl,
+                INamedTypeSymbol source,
+                AttributeData selfAttributeData,
+                ILogger logger
             )
             {
-                var className = workResult.Name;
+                var className = source.Name;
                 return $"public override bool Equals(object? obj) => obj is {className} other && Equals(other);";
             }
 
             /// <inheritdoc/>
             public SourceFormatTarget SourceFormatTargetEqualsOther(
-                PropertyValues workResult,
-                ITypeDefinitionInfoResolver typeDefinitionInfoResolver
+                SemanticModel semanticModel,
+                BaseTypeDeclarationSyntax typeDecl,
+                INamedTypeSymbol source,
+                AttributeData selfAttributeData,
+                ILogger logger
             )
             {
-                var className = workResult.Name;
-                var propertyName = workResult[MyAttr.PropertyName.Name];
+                var className = source.ClassName();
+                var propertyName = selfAttributeData.GetPropertyDataRecursive<string>(MyAttr.PropertyName.Name);
 
                 return $"public bool Equals({className} other) => {propertyName}.Equals(other.{propertyName});";
             }

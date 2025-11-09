@@ -15,42 +15,45 @@ namespace WodiLib.Sys.Collections
     ///     WodiLib内部で使用する二次元リストインタフェース
     /// </summary>
     /// <remarks>
-    ///     二次元リストの編集・参照が可能。
+    ///     インタフェースの明確化・ドキュメントコメント切り出しのために定義する。
     /// </remarks>
     /// <typeparam name="TFixedRowElement">行要素長さ固定型</typeparam>
-    /// <typeparam name="TReadOnlyRowElement">行要素読取専用型</typeparam>
     /// <typeparam name="TRowElementSettings">行要素設定DTO</typeparam>
-    /// <typeparam name="TEditableListElement">リスト要素型</typeparam>
-    /// <typeparam name="TReadOnlyListElement">リスト要素読取専用型</typeparam>
+    /// <typeparam name="TListElementImpl">リスト要素型</typeparam>
     /// <typeparam name="TListElementSettings">リスト要素設定DTO</typeparam>
     internal interface I2DList<
         TFixedRowElement,
-        out TReadOnlyRowElement,
         in TRowElementSettings,
-        TEditableListElement,
-        out TReadOnlyListElement,
+        TListElementImpl,
         in TListElementSettings>
-        where TFixedRowElement : TReadOnlyRowElement
-        where TReadOnlyRowElement : TRowElementSettings
-        where TRowElementSettings : notnull
-        where TEditableListElement : TReadOnlyListElement
-        where TReadOnlyListElement : TListElementSettings
-        where TListElementSettings : notnull
+        where TFixedRowElement : TRowElementSettings
+        where TListElementImpl : TListElementSettings
     {
         #region Properties
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.this[int]"/>
+        /// <summary>
+        ///     行インデクサによるアクセス
+        /// </summary>
+        /// <param name="rowIndex">[Range(0, <see cref="RowCount"/> - 1)] 行インデックス</param>
+        /// <returns>指定した行インデックスの行要素（長さ固定型）</returns>
+        /// <exception cref="ArgumentNullException"><see langword="null"/> をセットしようとした場合。</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="rowIndex"/>が指定範囲外の場合。</exception>
         public TFixedRowElement this[int rowIndex] { get; set; }
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.this[int,int]"/>
-        public TEditableListElement this[int rowIndex, int columnIndex] { get; set; }
+        /// <summary>
+        ///     セルインデクサによるアクセス
+        /// </summary>
+        /// <param name="rowIndex">[Range(0, <see cref="RowCount"/> - 1)] 行インデックス</param>
+        /// <param name="columnIndex">[Range(0, <see cref="ColumnCount"/> - 1)] 列インデックス</param>
+        /// <returns>指定した行・列インデックスのセル要素</returns>
+        /// <exception cref="ArgumentNullException"><see langword="null"/> をセットしようとした場合。</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="rowIndex"/>, <paramref name="columnIndex"/>が指定範囲外の場合。</exception>
+        public TListElementImpl this[int rowIndex, int columnIndex] { get; set; }
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.RowCount"/>
+        /// <summary>行数</summary>
         public int RowCount { get; }
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.ColumnCount"/>
+        /// <summary>列数</summary>
         public int ColumnCount { get; }
 
         #endregion
@@ -89,18 +92,57 @@ namespace WodiLib.Sys.Collections
 
         #region Row
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.GetRow"/>
+        /// <summary>
+        ///     指定行インデックスの行要素を取得する。
+        /// </summary>
+        /// <param name="rowIndex">[Range(0, <see cref="RowCount"/> - 1)] 行インデックス</param>
+        /// <returns>指定行の行要素</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="rowIndex"/> が指定範囲外の場合。
+        /// </exception>
         public TFixedRowElement GetRow(int rowIndex);
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.GetRowRange"/>
+        /// <summary>
+        ///     指定範囲の行要素を簡易コピーしたリストを取得する。
+        /// </summary>
+        /// <param name="rowIndex">[Range(0, <see cref="RowCount"/> - 1)] 行インデックス</param>
+        /// <param name="count">[Range(0, <see cref="RowCount"/>)] 行数</param>
+        /// <returns>指定範囲の行要素簡易コピーリスト</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="rowIndex"/>, <paramref name="count"/>が指定範囲外の場合。
+        /// </exception>
+        /// <exception cref="ArgumentException">有効な範囲外の行要素を取得しようとした場合。</exception>
         public IEnumerable<TFixedRowElement> GetRowRange(int rowIndex, int count);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.SetRow"/>
+        /// <summary>
+        ///     二次元リストの行要素を更新する。
+        /// </summary>
+        /// <param name="rowIndex">[Range(0, <see cref="RowCount"/> - 1)] 更新行インデックス</param>
+        /// <param name="settings">更新行要素</param>
+        /// <returns>セットした行要素</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="rowIndex"/>が指定範囲外の場合。</exception>
+        /// <exception cref="ArgumentException">
+        ///     有効な範囲外の行要素を編集しようとした場合。
+        /// </exception>
         public TFixedRowElement SetRow(int rowIndex, TRowElementSettings settings);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.SetRowRange"/>
+        /// <summary>
+        ///     二次元リストの連続した行要素を更新する。
+        /// </summary>
+        /// <param name="rowIndex">[Range(0, <see cref="RowCount"/> - 1)] 更新開始行インデックス</param>
+        /// <param name="settings">更新行要素</param>
+        /// <returns>セットした行要素</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合、
+        ///     または <paramref name="settings"/> に <see langword="null"/> 要素が含まれる場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="rowIndex"/>が指定範囲外の場合。</exception>
+        /// <exception cref="ArgumentException">
+        ///     有効な範囲外の行要素を編集しようとした場合。
+        /// </exception>
         public IEnumerable<TFixedRowElement> SetRowRange(int rowIndex, IEnumerable<TRowElementSettings> settings);
 
         /// <summary>
@@ -183,12 +225,41 @@ namespace WodiLib.Sys.Collections
         /// </exception>
         public IEnumerable<TFixedRowElement> OverwriteRow(int rowIndex, IEnumerable<TRowElementSettings> settings);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.MoveRow"/>
+        /// <summary>
+        ///     指定した行インデックスにある項目をコレクション内の新しい場所へ移動する。
+        /// </summary>
+        /// <param name="oldRowIndex">[Range(0, <see cref="RowCount"/> - 1)] 移動する行のインデックス</param>
+        /// <param name="newRowIndex">[Range(0, <see cref="RowCount"/> - 1)] 移動先の行インデックス</param>
+        /// <exception cref="InvalidOperationException">
+        ///     自身の行数が0の場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="oldRowIndex"/>, <paramref name="newRowIndex"/> が指定範囲外の場合。
+        /// </exception>
         public void MoveRow(int oldRowIndex, int newRowIndex);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.MoveRowRange"/>
+        /// <summary>
+        ///     指定した行インデックスから始まる連続した項目をコレクション内の新しい場所へ移動する。
+        /// </summary>
+        /// <param name="oldRowIndex">
+        ///     [Range(0, <see cref="RowCount"/> - 1)]
+        ///     移動する行のインデックス開始位置
+        /// </param>
+        /// <param name="newRowIndex">
+        ///     [Range(0, <see cref="RowCount"/> - 1)]
+        ///     移動先の行インデックス開始位置
+        /// </param>
+        /// <param name="count">
+        ///     [Range(0, <see cref="RowCount"/>)]
+        ///     移動させる行数
+        /// </param>
+        /// <exception cref="InvalidOperationException">
+        ///     自身の行数が0の場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="oldRowIndex"/>, <paramref name="newRowIndex"/>, <paramref name="count"/> が指定範囲外の場合。
+        /// </exception>
+        /// <exception cref="ArgumentException">有効な範囲外の行要素を移動しようとした場合。</exception>
         public void MoveRowRange(int oldRowIndex, int newRowIndex, int count);
 
         /// <summary>
@@ -264,19 +335,59 @@ namespace WodiLib.Sys.Collections
 
         #region Column
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.GetColumn"/>
-        public IEnumerable<TEditableListElement> GetColumn(int columnIndex);
+        /// <summary>
+        ///     指定列インデックスの列要素を取得する。
+        /// </summary>
+        /// <param name="columnIndex">[Range(0, <see cref="ColumnCount"/> - 1)] 列インデックス</param>
+        /// <returns>指定列の要素リスト</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="columnIndex"/> が指定範囲外の場合。
+        /// </exception>
+        public IEnumerable<TListElementImpl> GetColumn(int columnIndex);
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.GetColumnRange"/>
-        public IEnumerable<IEnumerable<TEditableListElement>> GetColumnRange(int columnIndex, int count);
+        /// <summary>
+        ///     指定範囲の列要素を簡易コピーしたリストを取得する。
+        /// </summary>
+        /// <param name="columnIndex">[Range(0, <see cref="ColumnCount"/> - 1)] 列インデックス</param>
+        /// <param name="count">[Range(0, <see cref="ColumnCount"/>)] 列数</param>
+        /// <returns>指定範囲の列要素簡易コピーリスト</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="columnIndex"/>, <paramref name="count"/>が指定範囲外の場合。
+        /// </exception>
+        /// <exception cref="ArgumentException">有効な範囲外の列要素を取得しようとした場合。</exception>
+        public IEnumerable<IEnumerable<TListElementImpl>> GetColumnRange(int columnIndex, int count);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.SetColumn"/>
-        public IEnumerable<TEditableListElement> SetColumn(int columnIndex, IEnumerable<TListElementSettings> settings);
+        /// <summary>
+        ///     二次元リストの列要素を更新する。
+        /// </summary>
+        /// <param name="columnIndex">[Range(0, <see cref="ColumnCount"/> - 1)] 更新列インデックス</param>
+        /// <param name="settings">更新列要素</param>
+        /// <returns>セットした列要素</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合、
+        ///     または <paramref name="settings"/> に <see langword="null"/> 要素が含まれる場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="columnIndex"/>が指定範囲外の場合。</exception>
+        /// <exception cref="ArgumentException">
+        ///     有効な範囲外の列要素を編集しようとした場合。
+        /// </exception>
+        public IEnumerable<TListElementImpl> SetColumn(int columnIndex, IEnumerable<TListElementSettings> settings);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.SetColumnRange"/>
-        public IEnumerable<IEnumerable<TEditableListElement>> SetColumnRange(
+        /// <summary>
+        ///     二次元リストの連続した列要素を更新する。
+        /// </summary>
+        /// <param name="columnIndex">[Range(0, <see cref="ColumnCount"/> - 1)] 更新開始列インデックス</param>
+        /// <param name="settings">更新列要素（外側のIEnumerableが列、内側のIEnumerableが各列の行要素）</param>
+        /// <returns>セットした列要素</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合、
+        ///     または <paramref name="settings"/> に <see langword="null"/> 要素が含まれる場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="columnIndex"/>が指定範囲外の場合。</exception>
+        /// <exception cref="ArgumentException">
+        ///     有効な範囲外の列要素を編集しようとした場合。
+        /// </exception>
+        public IEnumerable<IEnumerable<TListElementImpl>> SetColumnRange(
             int columnIndex,
             IEnumerable<IEnumerable<TListElementSettings>> settings
         );
@@ -293,7 +404,7 @@ namespace WodiLib.Sys.Collections
         /// <exception cref="InvalidOperationException">
         ///     操作によって列数が <see cref="GetMaxColumnCapacity"/> を上回る場合。
         /// </exception>
-        public IEnumerable<TEditableListElement> AddColumn(IEnumerable<TListElementSettings> settings);
+        public IEnumerable<TListElementImpl> AddColumn(IEnumerable<TListElementSettings> settings);
 
         /// <summary>
         ///     二次元リストの末尾に列要素を追加する。
@@ -307,7 +418,7 @@ namespace WodiLib.Sys.Collections
         /// <exception cref="InvalidOperationException">
         ///     操作によって列数が <see cref="GetMaxColumnCapacity"/> を上回る場合。
         /// </exception>
-        public IEnumerable<IEnumerable<TEditableListElement>> AddColumnRange(
+        public IEnumerable<IEnumerable<TListElementImpl>> AddColumnRange(
             IEnumerable<IEnumerable<TListElementSettings>> settings
         );
 
@@ -327,7 +438,7 @@ namespace WodiLib.Sys.Collections
         /// <exception cref="InvalidOperationException">
         ///     操作によって列数が <see cref="GetMaxColumnCapacity"/> を上回る場合。
         /// </exception>
-        public IEnumerable<TEditableListElement> InsertColumn(
+        public IEnumerable<TListElementImpl> InsertColumn(
             int columnIndex,
             IEnumerable<TListElementSettings> settings
         );
@@ -348,7 +459,7 @@ namespace WodiLib.Sys.Collections
         /// <exception cref="InvalidOperationException">
         ///     操作によって列数が <see cref="GetMaxColumnCapacity"/> を上回る場合。
         /// </exception>
-        public IEnumerable<IEnumerable<TEditableListElement>> InsertColumnRange(
+        public IEnumerable<IEnumerable<TListElementImpl>> InsertColumnRange(
             int columnIndex,
             IEnumerable<IEnumerable<TListElementSettings>> settings
         );
@@ -369,17 +480,46 @@ namespace WodiLib.Sys.Collections
         /// <exception cref="InvalidOperationException">
         ///     操作によって列数が <see cref="GetMaxColumnCapacity"/> を上回る場合。
         /// </exception>
-        public IEnumerable<IEnumerable<TEditableListElement>> OverwriteColumn(
+        public IEnumerable<IEnumerable<TListElementImpl>> OverwriteColumn(
             int columnIndex,
             IEnumerable<IEnumerable<TListElementSettings>> settings
         );
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.MoveColumn"/>
+        /// <summary>
+        ///     指定した列インデックスにある項目をコレクション内の新しい場所へ移動する。
+        /// </summary>
+        /// <param name="oldColumnIndex">[Range(0, <see cref="ColumnCount"/> - 1)] 移動する列のインデックス</param>
+        /// <param name="newColumnIndex">[Range(0, <see cref="ColumnCount"/> - 1)] 移動先の列インデックス</param>
+        /// <exception cref="InvalidOperationException">
+        ///     自身の列数が0の場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="oldColumnIndex"/>, <paramref name="newColumnIndex"/> が指定範囲外の場合。
+        /// </exception>
         public void MoveColumn(int oldColumnIndex, int newColumnIndex);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.MoveColumnRange"/>
+        /// <summary>
+        ///     指定した列インデックスから始まる連続した項目をコレクション内の新しい場所へ移動する。
+        /// </summary>
+        /// <param name="oldColumnIndex">
+        ///     [Range(0, <see cref="ColumnCount"/> - 1)]
+        ///     移動する列のインデックス開始位置
+        /// </param>
+        /// <param name="newColumnIndex">
+        ///     [Range(0, <see cref="ColumnCount"/> - 1)]
+        ///     移動先の列インデックス開始位置
+        /// </param>
+        /// <param name="count">
+        ///     [Range(0, <see cref="ColumnCount"/>)]
+        ///     移動させる列数
+        /// </param>
+        /// <exception cref="InvalidOperationException">
+        ///     自身の列数が0の場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="oldColumnIndex"/>, <paramref name="newColumnIndex"/>, <paramref name="count"/> が指定範囲外の場合。
+        /// </exception>
+        /// <exception cref="ArgumentException">有効な範囲外の列要素を移動しようとした場合。</exception>
         public void MoveColumnRange(int oldColumnIndex, int newColumnIndex, int count);
 
         /// <summary>
@@ -393,7 +533,7 @@ namespace WodiLib.Sys.Collections
         /// <exception cref="InvalidOperationException">
         ///     操作によって列数が <see cref="GetMinColumnCapacity"/> を下回る場合。
         /// </exception>
-        public IEnumerable<TEditableListElement> RemoveColumn(int columnIndex);
+        public IEnumerable<TListElementImpl> RemoveColumn(int columnIndex);
 
         /// <summary>
         ///     列要素の範囲を削除する。
@@ -410,7 +550,7 @@ namespace WodiLib.Sys.Collections
         /// <exception cref="InvalidOperationException">
         ///     操作によって列数が <see cref="GetMinColumnCapacity"/> を下回る場合。
         /// </exception>
-        public IEnumerable<IEnumerable<TEditableListElement>> RemoveColumnRange(int columnIndex, int count);
+        public IEnumerable<IEnumerable<TListElementImpl>> RemoveColumnRange(int columnIndex, int count);
 
         /// <summary>
         ///     列数を指定の数に合わせる。
@@ -423,7 +563,7 @@ namespace WodiLib.Sys.Collections
         /// <exception cref="ArgumentOutOfRangeException">
         ///     <paramref name="length"/> が指定範囲外の場合。
         /// </exception>
-        public IEnumerable<IEnumerable<TEditableListElement>> AdjustColumnLength(int length);
+        public IEnumerable<IEnumerable<TListElementImpl>> AdjustColumnLength(int length);
 
         /// <summary>
         ///     列数が不足している場合、列数を指定の数に合わせる。
@@ -436,7 +576,7 @@ namespace WodiLib.Sys.Collections
         /// <exception cref="ArgumentOutOfRangeException">
         ///     <paramref name="length"/> が指定範囲外の場合。
         /// </exception>
-        public IEnumerable<IEnumerable<TEditableListElement>> AdjustColumnLengthIfShort(int length);
+        public IEnumerable<IEnumerable<TListElementImpl>> AdjustColumnLengthIfShort(int length);
 
         /// <summary>
         ///     列数が超過している場合、列数を指定の数に合わせる。
@@ -449,18 +589,38 @@ namespace WodiLib.Sys.Collections
         /// <exception cref="ArgumentOutOfRangeException">
         ///     <paramref name="length"/> が指定範囲外の場合。
         /// </exception>
-        public IEnumerable<IEnumerable<TEditableListElement>> AdjustColumnLengthIfLong(int length);
+        public IEnumerable<IEnumerable<TListElementImpl>> AdjustColumnLengthIfLong(int length);
 
         #endregion
 
         #region Cell
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.GetCell"/>
-        public TEditableListElement GetCell(int rowIndex, int columnIndex);
+        /// <summary>
+        ///     指定行・列インデックスのセル要素を取得する。
+        /// </summary>
+        /// <param name="rowIndex">[Range(0, <see cref="RowCount"/> - 1)] 行インデックス</param>
+        /// <param name="columnIndex">[Range(0, <see cref="ColumnCount"/> - 1)] 列インデックス</param>
+        /// <returns>指定行・列のセル要素</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="rowIndex"/>, <paramref name="columnIndex"/> が指定範囲外の場合。
+        /// </exception>
+        public TListElementImpl GetCell(int rowIndex, int columnIndex);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.SetCell"/>
-        public TEditableListElement SetCell(int rowIndex, int columnIndex, TListElementSettings settings);
+        /// <summary>
+        ///     二次元リストのセル要素を更新する。
+        /// </summary>
+        /// <param name="rowIndex">[Range(0, <see cref="RowCount"/> - 1)] 行インデックス</param>
+        /// <param name="columnIndex">[Range(0, <see cref="ColumnCount"/> - 1)] 列インデックス</param>
+        /// <param name="settings">更新セル要素</param>
+        /// <returns>セットしたセル要素</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合。
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="rowIndex"/>, <paramref name="columnIndex"/>が指定範囲外の場合。</exception>
+        /// <exception cref="ArgumentException">
+        ///     有効な範囲外のセル要素を編集しようとした場合。
+        /// </exception>
+        public TListElementImpl SetCell(int rowIndex, int columnIndex, TListElementSettings settings);
 
         #endregion
 
@@ -487,14 +647,32 @@ namespace WodiLib.Sys.Collections
         ///     列数が <see cref="GetMinColumnCapacity"/> 以上 <see cref="GetMaxColumnCapacity"/> 以下であれば
         ///     成功する。<br/>
         ///     現在の行数・列数と一致しない場合エラーとしたい場合は、
-        ///     容量固定型にキャストしてから同メソッドを呼び出す。
+        ///     <see cref="ResetStrict"/> を利用する。
         /// </remarks>
         public IEnumerable<TFixedRowElement> Reset(
             IEnumerable<TRowElementSettings> settings
         );
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.Reset()"/>
+        /// <summary>
+        ///     要素を与えられた内容で一新する。
+        /// </summary>
+        /// <param name="settings">二次元リストに詰め直す要素</param>
+        /// <returns>新たに二次元リストに詰め直した要素</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合、
+        ///     または <paramref name="settings"/> に <see langword="null"/> 要素が含まれる場合。
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="settings"/> の行数が <see cref="RowCount"/>、
+        ///     列数が <see cref="ColumnCount"/> と異なる場合。
+        /// </exception>
+        public IEnumerable<TFixedRowElement> ResetStrict(
+            IEnumerable<TRowElementSettings> settings
+        );
+
+        /// <summary>
+        ///     要素をデフォルト値で一新する。
+        /// </summary>
         public IEnumerable<TFixedRowElement> Reset();
 
         /// <summary>
@@ -508,39 +686,64 @@ namespace WodiLib.Sys.Collections
 
         #region Validate
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.ValidateGetRow"/>
+        /// <summary>
+        ///     <see cref="GetRow"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="GetRow" path="param|exception"/>
         public void ValidateGetRow(int rowIndex);
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.ValidateGetRowRange"/>
+        /// <summary>
+        ///     <see cref="GetRowRange"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="GetRowRange" path="param|exception"/>
         public void ValidateGetRowRange(int rowIndex, int count);
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.ValidateGetColumn"/>
+        /// <summary>
+        ///     <see cref="GetColumn"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="GetColumn" path="param|exception"/>
         public void ValidateGetColumn(int columnIndex);
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.ValidateGetColumnRange"/>
+        /// <summary>
+        ///     <see cref="GetColumnRange"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="GetColumnRange" path="param|exception"/>
         public void ValidateGetColumnRange(int columnIndex, int count);
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.ValidateGetCell"/>
+        /// <summary>
+        ///     <see cref="GetCell"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="GetCell" path="param|exception"/>
         public void ValidateGetCell(int rowIndex, int columnIndex);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.ValidateSetRow"/>
+        /// <summary>
+        ///     <see cref="SetRow"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="SetRow" path="param|exception"/>
         public void ValidateSetRow(int rowIndex, TRowElementSettings settings);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.ValidateSetRowRange"/>
+        /// <summary>
+        ///     <see cref="SetRowRange"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="SetRowRange" path="param|exception"/>
         public void ValidateSetRowRange(int rowIndex, IEnumerable<TRowElementSettings> settings);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.ValidateSetColumn"/>
+        /// <summary>
+        ///     <see cref="SetColumn"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="SetColumn" path="param|exception"/>
         public void ValidateSetColumn(int columnIndex, IEnumerable<TListElementSettings> settings);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.ValidateSetColumnRange"/>
+        /// <summary>
+        ///     <see cref="SetColumnRange"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="SetColumnRange" path="param|exception"/>
         public void ValidateSetColumnRange(int columnIndex, IEnumerable<IEnumerable<TListElementSettings>> settings);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.ValidateSetCell"/>
+        /// <summary>
+        ///     <see cref="SetCell"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="SetCell" path="param|exception"/>
         public void ValidateSetCell(int rowIndex, int columnIndex, TListElementSettings settings);
 
         /// <summary>
@@ -573,12 +776,16 @@ namespace WodiLib.Sys.Collections
         /// <inheritdoc cref="OverwriteRow" path="param|exception"/>
         public void ValidateOverwriteRow(int rowIndex, IEnumerable<TRowElementSettings> settings);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.ValidateMoveRow"/>
+        /// <summary>
+        ///     <see cref="MoveRow"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="MoveRow" path="param|exception"/>
         public void ValidateMoveRow(int oldRowIndex, int newRowIndex);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.ValidateMoveRowRange"/>
+        /// <summary>
+        ///     <see cref="MoveRowRange"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="MoveRowRange" path="param|exception"/>
         public void ValidateMoveRowRange(int oldRowIndex, int newRowIndex, int count);
 
         /// <summary>
@@ -631,12 +838,16 @@ namespace WodiLib.Sys.Collections
         /// <inheritdoc cref="OverwriteColumn" path="param|exception"/>
         public void ValidateOverwriteColumn(int columnIndex, IEnumerable<IEnumerable<TListElementSettings>> settings);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.ValidateMoveColumn"/>
+        /// <summary>
+        ///     <see cref="MoveColumn"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="MoveColumn" path="param|exception"/>
         public void ValidateMoveColumn(int oldColumnIndex, int newColumnIndex);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.ValidateMoveColumnRange"/>
+        /// <summary>
+        ///     <see cref="MoveColumnRange"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="MoveColumnRange" path="param|exception"/>
         public void ValidateMoveColumnRange(int oldColumnIndex, int newColumnIndex, int count);
 
         /// <summary>
@@ -660,14 +871,22 @@ namespace WodiLib.Sys.Collections
         public void ValidateAdjustColumnLength(int length);
 
         /// <summary>
-        ///     <see
-        ///         cref="Reset(System.Collections.Generic.IEnumerable{TRowElementSettings})"/>
-        ///     メソッドの検証処理。
+        ///     <see cref="Reset(IEnumerable{TRowElementSettings})"/> メソッドの検証処理。
         /// </summary>
-        /// <inheritdoc
-        ///     cref="Reset(System.Collections.Generic.IEnumerable{TRowElementSettings})"
-        ///     path="param|exception"/>
+        /// <inheritdoc cref="Reset(IEnumerable{TRowElementSettings})" path="param|exception"/>
         public void ValidateReset(IEnumerable<TRowElementSettings> settings);
+
+        /// <summary>
+        ///     <see cref="ResetStrict"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="ResetStrict" path="param|exception"/>
+        public void ValidateResetStrict(IEnumerable<TRowElementSettings> settings);
+
+        /// <summary>
+        ///     <see cref="Reset()"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="Reset()" path="param|exception"/>
+        public void ValidateReset();
 
         /// <summary>
         ///     <see cref="Clear"/> メソッドの検証処理。
@@ -679,49 +898,74 @@ namespace WodiLib.Sys.Collections
 
         #region CRUD core
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.GetRowInternal"/>
+        /// <summary>
+        ///     <see cref="GetRow"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="GetRow" path="param"/>
         public TFixedRowElement GetRowInternal(int rowIndex);
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.GetRowRangeInternal"/>
+        /// <summary>
+        ///     <see cref="GetRowRange"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="GetRowRange" path="param"/>
         public IEnumerable<TFixedRowElement> GetRowRangeInternal(int rowIndex, int count);
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.GetColumnInternal"/>
-        public IEnumerable<TEditableListElement> GetColumnInternal(int columnIndex);
+        /// <summary>
+        ///     <see cref="GetColumn"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="GetColumn" path="param"/>
+        public IEnumerable<TListElementImpl> GetColumnInternal(int columnIndex);
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.GetColumnRangeInternal"/>
-        public IEnumerable<IEnumerable<TEditableListElement>> GetColumnRangeInternal(int columnIndex, int count);
+        /// <summary>
+        ///     <see cref="GetColumnRange"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="GetColumnRange" path="param"/>
+        public IEnumerable<IEnumerable<TListElementImpl>> GetColumnRangeInternal(int columnIndex, int count);
 
-        /// <inheritdoc cref="IReadOnly2DList{TReadOnlyRowElement, TReadOnlyListElement}.GetCellInternal"/>
-        public TEditableListElement GetCellInternal(int rowIndex, int columnIndex);
+        /// <summary>
+        ///     <see cref="GetCell"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="GetCell" path="param"/>
+        public TListElementImpl GetCellInternal(int rowIndex, int columnIndex);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.SetRowInternal"/>
+        /// <summary>
+        ///     <see cref="SetRow"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="SetRow" path="param"/>
         public TFixedRowElement SetRowInternal(int rowIndex, TRowElementSettings settings);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.SetRowRangeInternal"/>
+        /// <summary>
+        ///     <see cref="SetRowRange"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="SetRowRange" path="param"/>
         public IEnumerable<TFixedRowElement> SetRowRangeInternal(
             int rowIndex,
             IEnumerable<TRowElementSettings> settings
         );
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.SetColumnInternal"/>
-        public IEnumerable<TEditableListElement> SetColumnInternal(
+        /// <summary>
+        ///     <see cref="SetColumn"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="SetColumn" path="param"/>
+        public IEnumerable<TListElementImpl> SetColumnInternal(
             int columnIndex,
             IEnumerable<TListElementSettings> settings
         );
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.SetColumnRangeInternal"/>
-        public IEnumerable<IEnumerable<TEditableListElement>> SetColumnRangeInternal(
+        /// <summary>
+        ///     <see cref="SetColumnRange"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="SetColumnRange" path="param"/>
+        public IEnumerable<IEnumerable<TListElementImpl>> SetColumnRangeInternal(
             int columnIndex,
             IEnumerable<IEnumerable<TListElementSettings>> settings
         );
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.SetCellInternal"/>
-        public TEditableListElement SetCellInternal(int rowIndex, int columnIndex, TListElementSettings settings);
+        /// <summary>
+        ///     <see cref="SetCell"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="SetCell" path="param"/>
+        public TListElementImpl SetCellInternal(int rowIndex, int columnIndex, TListElementSettings settings);
 
         /// <summary>
         ///     <see cref="AddRow"/> メソッド処理中核。
@@ -759,12 +1003,16 @@ namespace WodiLib.Sys.Collections
             IEnumerable<TRowElementSettings> settings
         );
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.MoveRowInternal"/>
+        /// <summary>
+        ///     <see cref="MoveRow"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="MoveRow" path="param"/>
         public void MoveRowInternal(int oldRowIndex, int newRowIndex);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.MoveRowRangeInternal"/>
+        /// <summary>
+        ///     <see cref="MoveRowRange"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="MoveRowRange" path="param"/>
         public void MoveRowRangeInternal(int oldRowIndex, int newRowIndex, int count);
 
         /// <summary>
@@ -791,13 +1039,13 @@ namespace WodiLib.Sys.Collections
         ///     <see cref="AddColumn"/> メソッド処理中核。
         /// </summary>
         /// <inheritdoc cref="AddColumn" path="param|returns"/>
-        public IEnumerable<TEditableListElement> AddColumnInternal(IEnumerable<TListElementSettings> settings);
+        public IEnumerable<TListElementImpl> AddColumnInternal(IEnumerable<TListElementSettings> settings);
 
         /// <summary>
         ///     <see cref="AddColumnRange"/> メソッド処理中核。
         /// </summary>
         /// <inheritdoc cref="AddColumnRange" path="param|returns"/>
-        public IEnumerable<IEnumerable<TEditableListElement>> AddColumnRangeInternal(
+        public IEnumerable<IEnumerable<TListElementImpl>> AddColumnRangeInternal(
             IEnumerable<IEnumerable<TListElementSettings>> settings
         );
 
@@ -805,7 +1053,7 @@ namespace WodiLib.Sys.Collections
         ///     <see cref="InsertColumn"/> メソッド処理中核。
         /// </summary>
         /// <inheritdoc cref="InsertColumn" path="param|returns"/>
-        public IEnumerable<TEditableListElement> InsertColumnInternal(
+        public IEnumerable<TListElementImpl> InsertColumnInternal(
             int columnIndex,
             IEnumerable<TListElementSettings> settings
         );
@@ -814,7 +1062,7 @@ namespace WodiLib.Sys.Collections
         ///     <see cref="InsertColumnRange"/> メソッド処理中核。
         /// </summary>
         /// <inheritdoc cref="InsertColumnRange" path="param|returns"/>
-        public IEnumerable<IEnumerable<TEditableListElement>> InsertColumnRangeInternal(
+        public IEnumerable<IEnumerable<TListElementImpl>> InsertColumnRangeInternal(
             int columnIndex,
             IEnumerable<IEnumerable<TListElementSettings>> settings
         );
@@ -823,30 +1071,34 @@ namespace WodiLib.Sys.Collections
         ///     <see cref="OverwriteColumn"/> メソッド処理中核。
         /// </summary>
         /// <inheritdoc cref="OverwriteColumn" path="param|returns"/>
-        public IEnumerable<IEnumerable<TEditableListElement>> OverwriteColumnInternal(
+        public IEnumerable<IEnumerable<TListElementImpl>> OverwriteColumnInternal(
             int columnIndex,
             IEnumerable<IEnumerable<TListElementSettings>> settings
         );
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.MoveColumnInternal"/>
+        /// <summary>
+        ///     <see cref="MoveColumn"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="MoveColumn" path="param"/>
         public void MoveColumnInternal(int oldColumnIndex, int newColumnIndex);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.MoveColumnRangeInternal"/>
+        /// <summary>
+        ///     <see cref="MoveColumnRange"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="MoveColumnRange" path="param"/>
         public void MoveColumnRangeInternal(int oldColumnIndex, int newColumnIndex, int count);
 
         /// <summary>
         ///     <see cref="RemoveColumn"/> メソッド処理中核。
         /// </summary>
         /// <inheritdoc cref="RemoveColumn" path="param|returns"/>
-        public IEnumerable<TEditableListElement> RemoveColumnInternal(int columnIndex);
+        public IEnumerable<TListElementImpl> RemoveColumnInternal(int columnIndex);
 
         /// <summary>
         ///     <see cref="RemoveColumnRange"/> メソッド処理中核。
         /// </summary>
         /// <inheritdoc cref="RemoveColumnRange" path="param|returns"/>
-        public IEnumerable<IEnumerable<TEditableListElement>> RemoveColumnRangeInternal(int columnIndex, int count);
+        public IEnumerable<IEnumerable<TListElementImpl>> RemoveColumnRangeInternal(int columnIndex, int count);
 
         /// <summary>
         ///     <see cref="AdjustColumnLength"/>,
@@ -854,13 +1106,29 @@ namespace WodiLib.Sys.Collections
         ///     <see cref="AdjustColumnLengthIfLong"/> メソッド処理中核。
         /// </summary>
         /// <inheritdoc cref="AdjustColumnLength" path="param|returns"/>
-        public IEnumerable<IEnumerable<TEditableListElement>> AdjustColumnLengthInternal(int length);
+        public IEnumerable<IEnumerable<TListElementImpl>> AdjustColumnLengthInternal(int length);
 
-        /// <inheritdoc
-        ///     cref="IFixedLength2DList{TFixedRowElement,TReadOnlyRowElement,TRowElementSettings,TEditableListElement,TReadOnlyListElement,TListElementSettings}.ResetInternal(IEnumerable{TRowElementSettings})"/>
+        /// <summary>
+        ///     <see cref="Reset(IEnumerable{TRowElementSettings})"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="Reset(IEnumerable{TRowElementSettings})" path="param"/>
         public IEnumerable<TFixedRowElement> ResetInternal(
             IEnumerable<TRowElementSettings> settings
         );
+
+        /// <summary>
+        ///     <see cref="ResetStrict"/> メソッド処理中核。
+        /// </summary>
+        /// <inheritdoc cref="ResetStrict" path="param|returns"/>
+        public IEnumerable<TFixedRowElement> ResetStrictInternal(
+            IEnumerable<TRowElementSettings> settings
+        );
+
+        /// <summary>
+        ///     <see cref="Reset()"/> メソッドの検証処理。
+        /// </summary>
+        /// <inheritdoc cref="Reset()" path="param|exception"/>
+        public IEnumerable<TFixedRowElement> ResetInternal();
 
         /// <summary>
         ///     <see cref="Clear"/> メソッド処理中核。

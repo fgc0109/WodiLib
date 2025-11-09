@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
 using WodiLib.Sys.Collections;
@@ -13,29 +12,12 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.Sys.Collections
 {
     [TestFixture]
-    public class SimpleListTest
+    public class SimpleListTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
-        private static ConstructorTestHelper constructorTestHelper = null!;
-        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
-        private static ImpureActionTestHelper impureActionTestHelper = null!;
-        private static ImpureFunctionTestHelper impureFunctionTestHelper = null!;
-        private static ItemEqualsTestHelper itemEqualsTestHelper = null!;
-        private static DeepCloneTestHelper deepCloneTestHelper = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
-
-            constructorTestHelper = new ConstructorTestHelper(logger);
-            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
-            impureActionTestHelper = new ImpureActionTestHelper(logger);
-            impureFunctionTestHelper = new ImpureFunctionTestHelper(logger);
-            itemEqualsTestHelper = new ItemEqualsTestHelper(logger);
-            deepCloneTestHelper = new DeepCloneTestHelper(logger);
+            InitializeTestHelpers();
         }
 
         #region Meta

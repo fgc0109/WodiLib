@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace WodiLib.Sys.Collections
@@ -262,8 +263,11 @@ namespace WodiLib.Sys.Collections
 
             var isCountChange = Count != length;
 
+            // リセット後のインスタンス作成のためにリセット直前の情報を利用したい場合があるため、
+            // リセット後の要素を作成してから保持しているデータをクリアする。
+            var newItems = length.Iterate(i => ValueBuilder.Build(this, i)).ToArray();
             Items.Clear();
-            length.Times(i => Items.Add(ValueBuilder.Build(this, i)));
+            newItems.ForEach(item => { Items.Add(item); });
 
             if (isCountChange) OnPropertyChanged(PropertyChangedEventArgsCache.GetInstance(nameof(Count)));
 
@@ -274,6 +278,7 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <inheritdoc/>
+        [Pure]
         public bool ItemEquals(ISimpleList<T>? other)
         {
             if (ReferenceEquals(null, other)) return false;
@@ -283,6 +288,7 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <inheritdoc/>
+        [Pure]
         public bool ItemEquals(object? other)
         {
             if (other is SimpleList<T> castedSimpleList) return ItemEquals(castedSimpleList);

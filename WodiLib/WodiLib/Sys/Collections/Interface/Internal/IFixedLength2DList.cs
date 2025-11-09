@@ -27,12 +27,6 @@ namespace WodiLib.Sys.Collections
         TEditableListElement,
         out TReadOnlyListElement,
         in TListElementSettings>
-        where TFixedRowElement : TReadOnlyRowElement
-        where TReadOnlyRowElement : TRowElementSettings
-        where TRowElementSettings : notnull
-        where TEditableListElement : TReadOnlyListElement
-        where TReadOnlyListElement : TListElementSettings
-        where TListElementSettings : notnull
     {
         #region Properties
 

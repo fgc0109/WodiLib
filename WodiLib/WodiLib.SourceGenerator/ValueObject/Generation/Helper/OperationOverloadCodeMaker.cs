@@ -149,7 +149,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Helper
             => canOperate
                 ? new[]
                 {
-                    $"/// {Tag.Summary($"{ope} 演算子")}",
+                    $"/// {Tag.Summary($"{DocumentCommentHelper.EscapeOperatorMark(ope)} 演算子")}",
                     $"/// {Tag.Param(BinaryOperatorLeftArgName, "左項")}",
                     $"/// {Tag.Param(BinaryOperatorRightArgName, "右項")}",
                     $"/// {Tag.Returns("演算結果")}",

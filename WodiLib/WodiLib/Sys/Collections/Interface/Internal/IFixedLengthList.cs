@@ -24,8 +24,6 @@ namespace WodiLib.Sys.Collections
     /// <typeparam name="TReadOnlyElement">リスト要素読取専用型</typeparam>
     /// <typeparam name="TElementSettings">リスト要素設定DTO</typeparam>
     internal interface IFixedLengthList<TEditableElement, out TReadOnlyElement, in TElementSettings>
-        where TEditableElement : TReadOnlyElement
-        where TReadOnlyElement : TElementSettings
         where TElementSettings : notnull
     {
         #region Properties

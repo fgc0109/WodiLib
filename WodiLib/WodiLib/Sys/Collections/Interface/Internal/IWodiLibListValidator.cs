@@ -17,14 +17,15 @@ namespace WodiLib.Sys.Collections
     /// <remarks>
     ///     各種検証において不正な引数の場合例外を発生させる。
     /// </remarks>
+    /// <typeparam name="TListSettings">リストの入力パラメータ型</typeparam>
     /// <typeparam name="TElementSettings">リスト内包型の入力パラメータ型</typeparam>
-    internal interface IWodiLibListValidator<TElementSettings>
+    internal interface IWodiLibListValidator<TListSettings, TElementSettings>
     {
         /// <summary>
         ///     コンストラクタの検証処理
         /// </summary>
-        /// <param name="initItems">初期要素</param>
-        void Constructor(NamedValue<IEnumerable<TElementSettings>> initItems);
+        /// <param name="initSettings">初期要素</param>
+        void Constructor(NamedValue<TListSettings> initSettings);
 
         /// <summary>
         ///     GetRange メソッドの検証処理
@@ -107,8 +108,8 @@ namespace WodiLib.Sys.Collections
         /// </summary>
         /// <param name="validator">validator</param>
         /// <param name="index">インデックス</param>
-        public static void Get<T>(
-            this IWodiLibListValidator<T> validator,
+        public static void Get<TList, TElem>(
+            this IWodiLibListValidator<TList, TElem> validator,
             NamedValue<int> index
         )
             => validator.Get(index, ("count", 1));
@@ -119,10 +120,10 @@ namespace WodiLib.Sys.Collections
         /// <param name="validator">validator</param>
         /// <param name="index">更新開始インデックス</param>
         /// <param name="item">更新要素</param>
-        public static void Set<T>(
-            this IWodiLibListValidator<T> validator,
+        public static void Set<TList, TElem>(
+            this IWodiLibListValidator<TList, TElem> validator,
             NamedValue<int> index,
-            NamedValue<T> item
+            NamedValue<TElem> item
         )
             => validator.Set(index, (item.Name, new[] { item.Value }));
 
@@ -132,10 +133,10 @@ namespace WodiLib.Sys.Collections
         /// <param name="validator">validator</param>
         /// <param name="index">挿入先インデックス</param>
         /// <param name="item">挿入要素</param>
-        public static void Insert<T>(
-            this IWodiLibListValidator<T> validator,
+        public static void Insert<TList, TElem>(
+            this IWodiLibListValidator<TList, TElem> validator,
             NamedValue<int> index,
-            NamedValue<T> item
+            NamedValue<TElem> item
         )
             => validator.Insert(index, (item.Name, new[] { item.Value }));
 
@@ -145,8 +146,8 @@ namespace WodiLib.Sys.Collections
         /// <param name="validator">validator</param>
         /// <param name="oldIndex">移動する項目のインデックス開始位置</param>
         /// <param name="newIndex">移動先のインデックス開始位置</param>
-        public static void Move<T>(
-            this IWodiLibListValidator<T> validator,
+        public static void Move<TList, TElem>(
+            this IWodiLibListValidator<TList, TElem> validator,
             NamedValue<int> oldIndex,
             NamedValue<int> newIndex
         )
@@ -157,8 +158,8 @@ namespace WodiLib.Sys.Collections
         /// </summary>
         /// <param name="validator">validator</param>
         /// <param name="index">除去開始インデックス</param>
-        public static void Remove<T>(
-            this IWodiLibListValidator<T> validator,
+        public static void Remove<TList, TElem>(
+            this IWodiLibListValidator<TList, TElem> validator,
             NamedValue<int> index
         )
             => validator.Remove(index, ("count", 1));

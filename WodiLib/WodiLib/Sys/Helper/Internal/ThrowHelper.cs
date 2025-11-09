@@ -155,7 +155,11 @@ namespace WodiLib.Sys
         /// <exception cref="ArgumentException">
         ///     <paramref name="isThrow"/> が <see langword="true"/> の場合。
         /// </exception>
-        public static void ValidateArgumentPropertyNotNull([DoesNotReturnIf(true)] bool isThrow, string itemName, string propertyName)
+        public static void ValidateArgumentPropertyNotNull(
+            [DoesNotReturnIf(true)] bool isThrow,
+            string itemName,
+            string propertyName
+        )
         {
             if (!isThrow) return;
 
@@ -173,7 +177,11 @@ namespace WodiLib.Sys
         /// <exception cref="ArgumentNullException">
         ///     <paramref name="isThrow"/> が <see langword="true"/> の場合。
         /// </exception>
-        public static void ValidateArgumentPropertyItemsHasNotNull([DoesNotReturnIf(true)] bool isThrow, string itemName, string propertyName)
+        public static void ValidateArgumentPropertyItemsHasNotNull(
+            [DoesNotReturnIf(true)] bool isThrow,
+            string itemName,
+            string propertyName
+        )
         {
             if (!isThrow) return;
 
@@ -659,7 +667,7 @@ namespace WodiLib.Sys
 
         [DoesNotReturn]
         public static void ArgumentNotEmpty(string itemName, Exception? innerException = null)
-            => throw new ArgumentNullException(
+            => throw new ArgumentException(
                 ErrorMessage.NotNullInList(itemName),
                 innerException
             );

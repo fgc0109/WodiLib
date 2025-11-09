@@ -14,7 +14,7 @@ using WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize;
 namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.Attributes
 {
     /// <summary>
-    ///     容量固定クラスとして抽出する対象のメソッドに付与する属性
+    ///     容量固定クラスに抽出する対象のメソッドに付与する属性
     /// </summary>
     internal class FixedLengthListMethodAttribute : InitializeAttributeSourceAddable
     {
@@ -26,17 +26,9 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
 
         /// <inheritdoc/>
         public override string Summary
-            => "容量固定クラスとして抽出する対象のメソッドに付与する属性";
+            => "容量固定クラスに抽出する対象のメソッドに付与する属性";
 
         public override bool AllowMultiple => false;
-
-        public static readonly PropertyInfo ReturnType = new()
-        {
-            Name = nameof(ReturnType),
-            Type = typeof(Type).FullName!,
-            Summary = "メソッドが返す型。null の場合、元となるプロパティと同じ型を返す",
-            DefaultValue = "null",
-        };
 
         public static readonly PropertyInfo Accessibility = new()
         {
@@ -47,6 +39,14 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             DefaultValue = "\"public\"",
         };
 
+        public static readonly PropertyInfo ReturnType = new()
+        {
+            Name = nameof(ReturnType),
+            Type = typeof(Type).FullName!,
+            Summary = "メソッドが返す型。null の場合、元となるプロパティと同じ型を返す",
+            DefaultValue = "null",
+        };
+
         /// <inheritdoc/>
         public override AttributeTargets AttributeTargets
             => AttributeTargets.Method;
@@ -55,8 +55,8 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
         public override IEnumerable<PropertyInfo> Properties()
             => new[]
             {
-                ReturnType,
                 Accessibility,
+                ReturnType,
             };
 
         private FixedLengthListMethodAttribute()

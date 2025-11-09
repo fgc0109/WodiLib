@@ -6,6 +6,7 @@
 // see LICENSE file
 // ========================================
 
+using System.Collections.Generic;
 using System.Linq;
 
 namespace WodiLib.Sys
@@ -26,6 +27,9 @@ namespace WodiLib.Sys
 
         /// <summary>なし</summary>
         public static readonly IntOrStrType None;
+
+        /// <summary>全ての要素</summary>
+        public static IEnumerable<IntOrStrType> AllItems => EnumItems.AllEnums;
 
         static IntOrStrType()
         {

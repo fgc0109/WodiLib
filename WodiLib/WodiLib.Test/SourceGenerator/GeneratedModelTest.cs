@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Test.Tools;
 
@@ -11,37 +10,12 @@ namespace WodiLib.Test.SourceGenerator
      * 自動生成したモデルクラスの動作確認 兼 モデルクラスのテストケースサンプル
      */
     [TestFixture]
-    public class GeneratedModelTest
+    public class GeneratedModelTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
-        private static PropertyTestHelper propertyTestHelper = null!;
-        private static ConstructorTestHelper constructorTestHelper = null!;
-        private static PureActionTestHelper pureActionTestHelper = null!;
-        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
-        private static ImpureActionTestHelper impureActionTestHelper = null!;
-        private static ImpureFunctionTestHelper impureFunctionTestHelper = null!;
-        private static EqualsTestHelper equalsTestHelper = null!;
-        private static ItemEqualsTestHelper itemEqualsTestHelper = null!;
-        private static DeepCloneTestHelper deepCloneTestHelper = null!;
-        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
-
-            propertyTestHelper = new PropertyTestHelper(logger);
-            constructorTestHelper = new ConstructorTestHelper(logger);
-            pureActionTestHelper = new PureActionTestHelper(logger);
-            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
-            impureActionTestHelper = new ImpureActionTestHelper(logger);
-            impureFunctionTestHelper = new ImpureFunctionTestHelper(logger);
-            equalsTestHelper = new EqualsTestHelper(logger);
-            itemEqualsTestHelper = new ItemEqualsTestHelper(logger);
-            deepCloneTestHelper = new DeepCloneTestHelper(logger);
-            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
+            InitializeTestHelpers();
         }
 
         #region Properties
@@ -83,10 +57,8 @@ namespace WodiLib.Test.SourceGenerator
         public static void TagsGetTest_Success()
         {
             var instance = new StubModel();
-            instance.Tags.Add("test1");
-            instance.Tags.Add("test2");
 
-            var expected = new List<string> { "test1", "test2" };
+            var expected = new List<string> { "Tag1", "Tag2" };
 
             propertyTestHelper.PropertyGetSuccess(
                 instance,
@@ -154,7 +126,7 @@ namespace WodiLib.Test.SourceGenerator
         {
             constructorTestHelper.ConstructorSuccess(
                 factory: () => new StubModel(),
-                instanceVerifier: null
+                instanceVerifier: ValueVerifier<StubModel>.AreItemEquals(new StubModelSettings())
             );
         }
 
@@ -183,13 +155,13 @@ namespace WodiLib.Test.SourceGenerator
 
         #endregion
 
-        #region Copy
+        #region SettingsDto
 
         /// <summary>
         ///     コピーコンストラクタが正常に終了すること
         /// </summary>
         [Test]
-        public static void ConstructorTest_Copy_Success()
+        public static void ConstructorTest_SettingsDto_Success()
         {
             var settings = CreateSettingsDto(str: "stringValue");
             var src = new StubModel(settings);
@@ -312,7 +284,7 @@ namespace WodiLib.Test.SourceGenerator
         public static void ItemEqualsTest_ReadOnlyModel()
         {
             var left = new StubModel(CreateSettingsDto(str: "CompareTest"));
-            var right = new ReadOnlyStubModel(CreateSettingsDto(str: "CompareTest"));
+            var right = new ReadOnlyStubModel(new StubModel(CreateSettingsDto(str: "CompareTest")));
             itemEqualsTestHelper.ItemEquals(
                 left,
                 right,

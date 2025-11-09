@@ -56,6 +56,12 @@ namespace WodiLib.Sys
         /// <typeparam name="T">比較対象型</typeparam>
         /// <param name="funcCompare">比較処理</param>
         /// <returns>比較処理実装クラスインスタンス</returns>
+        /*
+         * Resharper にて MethodOverloadWithOptionalParameter 警告が表示されるが、
+         * IEqualityComparable{T} の実装有無によって明確に使い分けられるため問題ない。
+         * MethodOverloadWithOptionalParameter: "オプション パラメーターを持つメソッドはオーバーロードによって非表示になります"
+         */
+        // ReSharper disable once MethodOverloadWithOptionalParameter
         public static IEqualityComparer<T> Create<T>(Func<T, T, bool>? funcCompare = null)
         {
             return new AnonymousComparer<T>(funcCompare);

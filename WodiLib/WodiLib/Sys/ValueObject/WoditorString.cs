@@ -13,6 +13,9 @@ using System.Text;
 
 namespace WodiLib.Sys
 {
+    /*
+        TODO: 本当に必要か検討
+    */
     /// <summary>
     ///     ウディタ仕様の文字列
     /// </summary>

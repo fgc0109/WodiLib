@@ -6,6 +6,7 @@
 // see LICENSE file
 // ========================================
 
+using System.Linq;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
 using static WodiLib.SourceGenerator.Core.SourceBuilder.SourceConstants;
 
@@ -27,7 +28,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"/// </summary>",
                 $"{modelInfo.Accessibility} {modelInfo.AbstractKeyword}partial class {modelInfo.ReadOnlyListInfo.ReadOnlyListClassName} : ModelBase,",
                 $"{__}{modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword},",
-                $"{__}IReadOnlyList<{modelInfo.ReadOnlyElementType}>,",
+                $"{__}IEnumerable<{modelInfo.ReadOnlyElementType}>,",
                 $"{__}INotifyCollectionChanged,",
                 $"{__}IEqualityComparable<{modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}>,",
                 $"{__}IEqualityComparable<{modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword}>,",
@@ -39,19 +40,19 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"{__}IDeepCloneable<{modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}>",
                 $"{{",
                 // Constants
-                BuildReadOnlyListConstantsSource(modelInfo),
+                BuildReadOnlyClassConstantsSource(modelInfo),
                 SourceFormatTargetBlock.Empty,
                 // Events
-                BuildEventSource(modelInfo),
-                SourceFormatTargetBlock.Empty,
-                // Constructor
-                BuildReadOnlyListConstructorsSource(modelInfo),
+                BuildReadOnlyClassEventSource(modelInfo),
                 SourceFormatTargetBlock.Empty,
                 // Properties
-                BuildReadOnlyListPropertiesSource(modelInfo),
+                BuildReadOnlyClassPropertiesSource(modelInfo),
+                SourceFormatTargetBlock.Empty,
+                // Constructor
+                BuildReadOnlyClassConstructorsSource(modelInfo),
                 SourceFormatTargetBlock.Empty,
                 // Methods
-                BuildReadOnlyListMethodsSource(modelInfo),
+                BuildReadOnlyClassMethodsSource(modelInfo),
                 SourceFormatTargetBlock.Empty,
                 // ItemEquals
                 BuildReadOnlyClassItemEqualsSource(modelInfo),
@@ -59,43 +60,31 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 // DeepClone
                 BuildReadOnlyClassPropDeepCloneSource(modelInfo),
                 SourceFormatTargetBlock.Empty,
+                // SettingsInterface Implements
+                BuildReadOnlyClassSettingsInterfaceImplementsSource(modelInfo),
+                SourceFormatTargetBlock.Empty,
                 // Private Methods
-                BuildPrivateMethodSource(modelInfo),
+                BuildReadOnlyClassPrivateMethodSource(modelInfo),
+                SourceFormatTargetBlock.Empty,
+                // Implicit Type Conversion Operator
+                BuildReadOnlyClassImplicitTypeConversionOperatorSource(modelInfo),
                 // class end
                 $"}}"
             );
         }
 
-        private static SourceFormatTargetBlock BuildReadOnlyListConstantsSource(
-            ModelInformation modelInfo
+        private static SourceFormatTargetBlock BuildReadOnlyClassConstantsSource(
+            ModelInformation _
         )
         {
-            if (modelInfo.MaxCapacity == modelInfo.MinCapacity)
-            {
-                return SourceTextFormatter.Format(
-                    __,
-                    new[]
-                    {
-                        $"/// <summary>容量</summary>",
-                        $"public static int Capacity => {modelInfo.MaxCapacity};",
-                    }
-                );
-            }
-
             return SourceTextFormatter.Format(
-                __,
-                new[]
-                {
-                    $"/// <summary>容量最大値</summary>",
-                    $"public static int MaxCapacity => {modelInfo.MaxCapacity};",
-                    $"/// <summary>容量最小値</summary>",
-                    $"public static int MinCapacity => {modelInfo.MinCapacity};",
-                }
+                __
+                // 何も出力しない
             );
         }
 
-        private static SourceFormatTargetBlock BuildEventSource(
-            ModelInformation modelInfo
+        private static SourceFormatTargetBlock BuildReadOnlyClassEventSource(
+            ModelInformation _
         )
         {
             return SourceTextFormatter.Format(
@@ -103,36 +92,13 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"/// <inheritdoc/>",
                 $"public event NotifyCollectionChangedEventHandler? CollectionChanged",
                 $"{{",
-                $"{__}add => collectionChanged += value;",
-                $"{__}remove => collectionChanged -= value;",
-                $"}}",
-                $"",
-                $"private event NotifyCollectionChangedEventHandler? collectionChanged;"
-            );
-        }
-
-        private static SourceFormatTargetBlock BuildReadOnlyListConstructorsSource(
-            ModelInformation modelInfo
-        )
-        {
-            return SourceTextFormatter.Format(
-                __,
-                $"private protected {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword} settings, SimpleList<{modelInfo.ElementType}> itemsImpl)",
-                $"{{",
-                $"    Items = new ExtendedList<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}, {modelInfo.ElementSettingsType}>(",
-                $"        itemsImpl,",
-                $"        minCapacity: {modelInfo.MaxCapacity},",
-                $"        maxCapacity: {modelInfo.MinCapacity},",
-                $"        validator: BuildValidator(settings, itemsImpl),",
-                $"        buildItemFromSettings: BuildItemFromSettings",
-                $"    );",
-                $"    PropagatePropertyChangeEvent(Items);",
-                $"    PropagateCollectionChangeEvent(Items);",
+                $"{__}add => MutableInstance.CollectionChanged += value;",
+                $"{__}remove => MutableInstance.CollectionChanged -= value;",
                 $"}}"
             );
         }
 
-        private static SourceFormatTargetBlock BuildReadOnlyListPropertiesSource(
+        private static SourceFormatTargetBlock BuildReadOnlyClassPropertiesSource(
             ModelInformation modelInfo
         )
         {
@@ -142,50 +108,55 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"/// <param name=\"index\">[Range(0, <see cref=\"Count\"/> - 1)] インデックス</param>",
                 $"/// <returns>指定したインデックスの要素</returns>",
                 $"/// <exception cref=\"System.ArgumentOutOfRangeException\"><paramref name=\"index\"/>が指定範囲外の場合。</exception>",
-                $"public {modelInfo.ReadOnlyElementType} this[int index] => Get(index);",
+                $"[Pure]",
+                $"public {modelInfo.ReadOnlyElementType} this[int index] => MutableInstance[index];",
                 $"",
                 $"/// <summary>要素数</summary>",
-                $"public int Count => Items.Count;",
+                $"[Pure]",
+                $"public int Count => MutableInstance.Count;",
+                $"",
+                modelInfo.Members.ReadOnlyListProperties.SelectMany(p => p.ImplementationCode).ToArray(),
                 $"",
                 $"/// <inheritdoc/>",
-                $"public IReadOnlyList<{modelInfo.ElementSettingsType}> Settings => Items.Cast<{modelInfo.ElementSettingsType}>().ToList();",
+                $"[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]",
+                $"[Pure]",
+                $"public IList<{modelInfo.ElementSettingsType}> Settings => MutableInstance.Settings;",
                 $"",
-                $"private protected ExtendedList<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}, {modelInfo.ElementSettingsType}> Items {{ get; }}"
+                $"internal {modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword} MutableInstance {{ get; }}"
             );
         }
 
-        private static SourceFormatTargetBlock BuildReadOnlyListMethodsSource(
+        private static SourceFormatTargetBlock BuildReadOnlyClassConstructorsSource(
+            ModelInformation modelInfo
+        )
+        {
+            // 読取専用リスト単体ではインスタンス作成不可
+            return SourceTextFormatter.Format(
+                __,
+                $"internal {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}({modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword} mutableInstance)",
+                $"{{",
+                $"{__}MutableInstance = mutableInstance;",
+                $"{__}PropagatePropertyChangeEvent(MutableInstance);",
+                $"}}"
+            );
+        }
+
+        private static SourceFormatTargetBlock BuildReadOnlyClassMethodsSource(
             ModelInformation modelInfo
         )
         {
             return SourceTextFormatter.Format(
                 __,
-                SourceTextFormatter.If(
-                    modelInfo.MaxCapacity == modelInfo.MinCapacity,
-                    "",
-                    $"/// <summary>容量を取得する。</summary>",
-                    $"/// <returns>容量最大値</returns>",
-                    $"public int GetCapacity() => Capacity;"
-                ),
-                SourceTextFormatter.If(
-                    modelInfo.MaxCapacity != modelInfo.MinCapacity,
-                    "",
-                    $"/// <summary>容量最大値を取得する。</summary>",
-                    $"/// <returns>容量最大値</returns>",
-                    $"public int GetMaxCapacity() => MaxCapacity;",
-                    $"/// <summary>容量最小値を取得する。</summary>",
-                    $"/// <returns>容量最小値</returns>",
-                    $"public int GetMinCapacity() => MinCapacity;"
-                ),
                 $"/// <inheritdoc/>",
-                $"public IEnumerator<{modelInfo.ReadOnlyElementType}> GetEnumerator() => Items.GetEnumerator();",
+                $"public IEnumerator<{modelInfo.ReadOnlyElementType}> GetEnumerator() => MutableInstance.Select(item => item.Cast<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}>()).GetEnumerator();",
                 $"IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();",
                 $"",
                 $"/// <summary>指定インデックスの要素を取得する。</summary>",
                 $"/// <param name=\"index\">[Range(0, <see cref=\"Count\"/> - 1)] インデックス</param>",
                 $"/// <returns>指定範囲の要素簡易コピーリスト</returns>",
                 $"/// <exception cref=\"ArgumentOutOfRangeException\"><paramref name=\"index\"/> が指定範囲外の場合。</exception>",
-                $"public {modelInfo.ReadOnlyElementType} Get(int index) => Items.Get(index);",
+                $"[Pure]",
+                $"public {modelInfo.ReadOnlyElementType} Get(int index) => MutableInstance.Get(index);",
                 $"",
                 $"/// <summary>指定範囲の要素を簡易コピーしたリストを取得する。</summary>",
                 $"/// <param name=\"index\">[Range(0, <see cref=\"Count\"/> - 1)] インデックス</param>",
@@ -193,23 +164,28 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"/// <returns>指定範囲の要素簡易コピーリスト</returns>",
                 $"/// <exception cref=\"ArgumentOutOfRangeException\"><paramref name=\"index\"/>, <paramref name=\"count\"/>が指定範囲外の場合。</exception>",
                 $"/// <exception cref=\"ArgumentException\">有効な範囲外の要素を取得しようとした場合。</exception>",
-                $"public IEnumerable<{modelInfo.ReadOnlyElementType}> GetRange(int index, int count) => Items.GetRange(index, count);",
+                $"[Pure]",
+                $"public IEnumerable<{modelInfo.ReadOnlyElementType}> GetRange(int index, int count) => MutableInstance.GetRange(index, count).Select(item => item.Cast<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}>());",
                 $"",
                 $"/// <summary><see cref=\"Get\"/> メソッドの検証処理。</summary>",
                 $"/// <inheritdoc cref=\"Get\" path=\"param|exception\"/>",
-                $"public void ValidateGet(int index) => Items.ValidateGet(index);",
+                $"public void ValidateGet(int index) => MutableInstance.ValidateGet(index);",
                 $"",
                 $"/// <summary><see cref=\"GetRange\"/> メソッドの検証処理。</summary>",
                 $"/// <inheritdoc cref=\"GetRange\" path=\"param|exception\"/>",
-                $"public void ValidateGetRange(int index, int count) => Items.ValidateGetRange(index, count);",
+                $"public void ValidateGetRange(int index, int count) => MutableInstance.ValidateGetRange(index, count);",
                 $"",
                 $"/// <summary><see cref=\"Get\"/> メソッド処理中核。</summary>",
                 $"/// <inheritdoc cref=\"Get\" path=\"param\"/>",
-                $"public {modelInfo.ReadOnlyElementType} GetInternal(int index) => Items.GetInternal(index);",
+                $"[Pure]",
+                $"public {modelInfo.ReadOnlyElementType} GetInternal(int index) => MutableInstance.GetInternal(index);",
                 $"",
                 $"/// <summary><see cref=\"GetRange\"/> メソッド処理中核。</summary>",
                 $"/// <inheritdoc cref=\"GetRange\" path=\"param\"/>",
-                $"public IEnumerable<{modelInfo.ReadOnlyElementType}> GetRangeInternal(int index, int count) => Items.GetRangeInternal(index, count);"
+                $"[Pure]",
+                $"public IEnumerable<{modelInfo.ReadOnlyElementType}> GetRangeInternal(int index, int count) => MutableInstance.GetRangeInternal(index, count).Select(item => item.Cast<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}>());",
+                $"",
+                modelInfo.Members.ReadOnlyListMethods.SelectMany(x => x.ImplementationCode).ToArray()
             );
         }
 
@@ -227,18 +203,25 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
             return SourceTextFormatter.Format(
                 __,
                 $"/// <inheritdoc/>",
-                $"public bool ItemEquals({modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}? other) => ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});",
+                $"[Pure]",
+                $"public bool ItemEquals({modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}? other) => MutableInstance.ItemEquals(other);",
                 $"/// <inheritdoc/>",
-                $"public bool ItemEquals({modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword}? other) => ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});",
+                $"[Pure]",
+                $"public bool ItemEquals({modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword}? other) => MutableInstance.ItemEquals(other);",
                 SourceTextFormatter.If(
                     !modelInfo.IsFixed,
                     "",
                     $"/// <inheritdoc/>",
-                    $"public bool ItemEquals({modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword}? other) => ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});",
+                    $"[Pure]",
+                    $"public bool ItemEquals({modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword}? other) => MutableInstance.ItemEquals(other);",
                     $""
                 ),
                 $"/// <inheritdoc/>",
-                $"public bool {objectItemEqualsKeyword}ItemEquals(object? other) => ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});"
+                $"[Pure]",
+                $"public bool ItemEquals({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword}? other) => MutableInstance.ItemEquals(other);",
+                $"/// <inheritdoc/>",
+                $"[Pure]",
+                $"public bool {objectItemEqualsKeyword}ItemEquals(object? other) => MutableInstance.ItemEquals(other);"
             );
         }
 
@@ -250,28 +233,43 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 !modelInfo.IsAbstract,
                 __,
                 $"/// <inheritdoc/>",
-                $"public {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword} DeepClone() => new(this);",
+                $"[Pure]",
+                $"public {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword} DeepClone() => new(MutableInstance.DeepClone());",
                 $"object IDeepCloneable.DeepClone() => DeepClone();"
             );
         }
 
-        private static SourceFormatTargetBlock BuildPrivateMethodSource(
+        private static SourceFormatTargetBlock BuildReadOnlyClassSettingsInterfaceImplementsSource(
             ModelInformation modelInfo
         )
         {
-            return SourceTextFormatter.If(
-                !modelInfo.IsAbstract,
+            var targetProperties =
+                modelInfo.Members.SettingsProperties.Where(definition => definition.IsOverrideReturnType);
+
+            return SourceTextFormatter.Format(
                 __,
-                $"/// <summary>",
-                $"///     <see cref=\"ExtendedList{{TEditableElement, TReadOnlyElement, TElementSettings}}\"/> が通知した",
-                $"///     <see cref=\"INotifyCollectionChanged\"/> イベントを",
-                $"///     自身のイベントとして通知する。",
-                $"/// </summary>",
-                $"/// <param name=\"target\">対象</param>",
-                $"private void PropagateCollectionChangeEvent(ExtendedList<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}, {modelInfo.ElementSettingsType}> target)",
-                $"{{",
-                $"    target.CollectionChanged += (_, args) => {{ collectionChanged?.Invoke(this, args); }};",
-                $"}}"
+                targetProperties.Select(definition => definition.GetInterfaceImplementCode)
+                    .ToArray()
+            );
+        }
+
+        private static SourceFormatTargetBlock BuildReadOnlyClassPrivateMethodSource(
+            ModelInformation _
+        )
+        {
+            return SourceTextFormatter.Format(
+                __
+                // 何も出力しない
+            );
+        }
+
+        private static SourceFormatTargetBlock BuildReadOnlyClassImplicitTypeConversionOperatorSource(
+            ModelInformation _
+        )
+        {
+            return SourceTextFormatter.Format(
+                __
+                // 何も出力しない
             );
         }
     }

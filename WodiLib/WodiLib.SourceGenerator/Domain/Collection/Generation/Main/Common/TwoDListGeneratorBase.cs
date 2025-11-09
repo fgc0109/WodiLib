@@ -8,9 +8,9 @@
 
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using WodiLib.SourceGenerator.Core;
 using WodiLib.SourceGenerator.Core.Extensions;
 using WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
@@ -28,7 +28,13 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 ? RestrictedCapacity2DListImplementTemplateAttribute.Instance
                 : FixedLength2DListImplementTemplateAttribute.Instance;
 
-        private protected override SourceFormatTargetBlock GenerateTImportUsingSource(WorkState workState)
+        private protected override SourceFormatTargetBlock GenerateTImportUsingSource(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
             return new[]
             {
@@ -37,88 +43,30 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 "using System.Collections.Generic;", // IEnumerable<T> などのため
                 "using System.Collections.Specialized;", // INotifyCollectionChanged のため
                 "using System.ComponentModel;", // PropertyChangedEventHandler のため
+                "using System.Diagnostics.Contracts;", // PureAttribute 使用のため
                 "using System.Linq;", // IEnumerable<T> 拡張メソッド使用のため
                 "using WodiLib.Sys;", // EqualityComparerFactory 使用のため
-                "using WodiLib.Sys.Collections;", // TwoDimentionalList 使用のため
+                "using WodiLib.Sys.Collections;", // TwoDimensionalList 使用のため
             };
         }
 
-        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(WorkState workState)
+        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
             try
             {
-                var propertyValues = workState.PropertyValues;
-                var typeDefinitionInfo = workState.CurrentTypeDefinitionInfo;
-
-                var currentSymbol = workState.CurrentSymbol;
-                if (currentSymbol is null)
-                {
-                    return "";
-                }
-
                 var modelInfo = BuildClassInformation(
-                    workState,
-                    workState.CurrentSymbol!,
-                    restrictedCapacityListClassName: workState.Name.Replace("ReadOnly", ""),
-                    description: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.Description.Name]!,
-                    accessibility: AccessibilityConverter.ConvertSourceText(typeDefinitionInfo.Accessibility),
-                    isAbstract: typeDefinitionInfo.IsAbstract,
-                    maxRowCapacity: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.MaxRowCapacity
-                        .Name]!,
-                    minRowCapacity: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.MinRowCapacity
-                        .Name]!,
-                    maxColumnCapacity: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute
-                        .MaxColumnCapacity.Name]!,
-                    minColumnCapacity: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute
-                        .MinColumnCapacity.Name]!,
-                    rowType: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.RowElementType.Name]!,
-                    fixedLengthRowType: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute
-                                            .FixedRowElementType.Name]
-                                        ?? propertyValues[RestrictedCapacity2DListImplementTemplateAttribute
-                                            .RowElementType.Name]!,
-                    readOnlyRowType: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute
-                                         .ReadOnlyRowElementType.Name]
-                                     ?? propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.RowElementType
-                                         .Name]!,
-                    rowSettingsType: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.RowSettingsType
-                                         .Name]
-                                     ?? propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.RowElementType
-                                         .Name]!,
-                    elementType: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.CellElementType.Name]
-                    !,
-                    readOnlyElementType:
-                    propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.ReadOnlyCellElementType.Name]
-                    ?? propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.CellElementType.Name]!,
-                    elementSettingsType:
-                    propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.CellSettingsType.Name]
-                    ?? propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.CellElementType.Name]!,
-                    rowPhysicalName: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.RowPhysicalName
-                                         .Name]
-                                     ?? "Row",
-                    rowLogicalName: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.RowLogicalName
-                                        .Name]
-                                    ?? "行",
-                    columnPhysicalName: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute
-                                            .ColumnPhysicalName.Name]
-                                        ?? "Column",
-                    columnLogicalName: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute
-                                           .ColumnLogicalName.Name]
-                                       ?? "列",
-                    cellPhysicalName: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.CellPhysicalName
-                                          .Name]
-                                      ?? "Cell",
-                    cellLogicalName: propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.CellLogicalName
-                                         .Name]
-                                     ?? "セル",
-                    baseModelClass: GetBaseModelClassName(
-                        propertyValues[RestrictedCapacity2DListImplementTemplateAttribute.BaseModelClass.Name]
-                    )
+                    source,
+                    selfAttributeData
                 );
                 modelInfo.Members.Initialize(
-                    currentSymbol,
+                    source,
                     modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword,
-                    modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword,
-                    modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword,
                     modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword
                 );
 
@@ -150,56 +98,122 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
             }
         }
 
-        private static string? GetBaseModelClassName(string? originalValue)
-        {
-            if (originalValue is null)
-            {
-                return null;
-            }
-
-            if (originalValue.IndexOf('<') == -1)
-            {
-                // 総称型を使わない場合
-                //      名前空間を除去
-                return originalValue.Split('.').Last();
-            }
-
-            // 総称型を使う場合
-            //      クラス名部分と総称型部分に分割
-            //      クラス名部分は名前空間を除去
-            //      総称型部分はそのまま
-            var regex = new Regex("^([^<]*)(<.+)?");
-            var matchGroups = regex.Matches(originalValue)[0].Groups;
-            return $"{matchGroups[1].Value.Split('.').Last()}{matchGroups[2].Value}";
-        }
-
         private ModelInformation BuildClassInformation(
-            WorkState workState,
-            INamedTypeSymbol currentSymbol,
-            string restrictedCapacityListClassName,
-            string description,
-            string accessibility,
-            bool isAbstract,
-            string maxRowCapacity,
-            string minRowCapacity,
-            string maxColumnCapacity,
-            string minColumnCapacity,
-            string rowType,
-            string fixedLengthRowType,
-            string readOnlyRowType,
-            string rowSettingsType,
-            string elementType,
-            string readOnlyElementType,
-            string elementSettingsType,
-            string rowPhysicalName,
-            string rowLogicalName,
-            string columnPhysicalName,
-            string columnLogicalName,
-            string cellPhysicalName,
-            string cellLogicalName,
-            string? baseModelClass
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData
         )
         {
+            var restrictedCapacityListClassName = source.ClassName();
+            var accessibility = AccessibilityConverter.ConvertSourceText(source.DeclaredAccessibility);
+            var isAbstract = source.IsAbstract;
+
+            var description = selfAttributeData.GetPropertyDataRecursive<string?>(
+                                  RestrictedCapacity2DListImplementTemplateAttribute.Description.Name
+                              )
+                              ?? "";
+
+            var maxRowCapacity = selfAttributeData
+                .GetPropertyDataRecursive<object>(
+                    RestrictedCapacity2DListImplementTemplateAttribute.MaxRowCapacity.Name
+                )
+                ?.ToString()!;
+            var minRowCapacity = selfAttributeData
+                .GetPropertyDataRecursive<object>(
+                    RestrictedCapacity2DListImplementTemplateAttribute.MinRowCapacity.Name
+                )
+                ?.ToString()!;
+            var maxColumnCapacity = selfAttributeData
+                .GetPropertyDataRecursive<object>(
+                    RestrictedCapacity2DListImplementTemplateAttribute.MaxColumnCapacity.Name
+                )
+                ?.ToString()!;
+            var minColumnCapacity = selfAttributeData
+                .GetPropertyDataRecursive<object>(
+                    RestrictedCapacity2DListImplementTemplateAttribute.MinColumnCapacity.Name
+                )
+                ?.ToString()!;
+
+            var rowType = selfAttributeData
+                .GetPropertyDataRecursive<INamedTypeSymbol?>(
+                    RestrictedCapacity2DListImplementTemplateAttribute.RowElementType.Name
+                )
+                ?.FullName()!;
+            var fixedLengthRowType =
+                selfAttributeData.GetPropertyDataRecursive<INamedTypeSymbol?>(
+                        RestrictedCapacity2DListImplementTemplateAttribute.FixedRowElementType.Name
+                    )
+                    ?.FullName()
+                ?? rowType;
+            var readOnlyRowType =
+                selfAttributeData.GetPropertyDataRecursive<INamedTypeSymbol?>(
+                        RestrictedCapacity2DListImplementTemplateAttribute.ReadOnlyRowElementType.Name
+                    )
+                    ?.FullName()
+                ?? rowType;
+            var rowSettingsType =
+                selfAttributeData.GetPropertyDataRecursive<INamedTypeSymbol?>(
+                        RestrictedCapacity2DListImplementTemplateAttribute.RowSettingsType.Name
+                    )
+                    ?.FullName()
+                ?? rowType;
+            var elementType = selfAttributeData
+                .GetPropertyDataRecursive<INamedTypeSymbol?>(
+                    RestrictedCapacity2DListImplementTemplateAttribute.CellElementType.Name
+                )
+                ?.FullName()!;
+            var readOnlyElementType =
+                selfAttributeData.GetPropertyDataRecursive<INamedTypeSymbol?>(
+                        RestrictedCapacity2DListImplementTemplateAttribute.ReadOnlyCellElementType.Name
+                    )
+                    ?.FullName()
+                ?? elementType;
+            var elementSettingsType =
+                selfAttributeData.GetPropertyDataRecursive<INamedTypeSymbol?>(
+                        RestrictedCapacity2DListImplementTemplateAttribute.CellSettingsType.Name
+                    )
+                    ?.FullName()
+                ?? elementType;
+
+            var rowPhysicalName =
+                selfAttributeData
+                    .GetPropertyDataRecursive<string?>(
+                        RestrictedCapacity2DListImplementTemplateAttribute.RowPhysicalName.Name
+                    )
+                ?? "Row";
+            var rowLogicalName = selfAttributeData
+                                     .GetPropertyDataRecursive<string?>(
+                                         RestrictedCapacity2DListImplementTemplateAttribute.RowLogicalName.Name
+                                     )
+                                 ?? "行";
+            var columnPhysicalName =
+                selfAttributeData.GetPropertyDataRecursive<string?>(
+                    RestrictedCapacity2DListImplementTemplateAttribute.ColumnPhysicalName.Name
+                )
+                ?? "Column";
+            var columnLogicalName =
+                selfAttributeData.GetPropertyDataRecursive<string?>(
+                    RestrictedCapacity2DListImplementTemplateAttribute.ColumnLogicalName.Name
+                )
+                ?? "列";
+            var cellPhysicalName =
+                selfAttributeData
+                    .GetPropertyDataRecursive<string?>(
+                        RestrictedCapacity2DListImplementTemplateAttribute.CellPhysicalName.Name
+                    )
+                ?? "Cell";
+            var cellLogicalName =
+                selfAttributeData
+                    .GetPropertyDataRecursive<string?>(
+                        RestrictedCapacity2DListImplementTemplateAttribute.CellLogicalName.Name
+                    )
+                ?? "セル";
+
+            var baseModelClass = selfAttributeData
+                .GetPropertyDataRecursive<INamedTypeSymbol?>(
+                    RestrictedCapacity2DListImplementTemplateAttribute.BaseModelClass.Name
+                )
+                ?.FullName();
+
             var baseModelClassNoGeneric = baseModelClass?.Split('<')[0];
 
             var isExtendClass = baseModelClass is not null;
@@ -221,11 +235,11 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
 
             var settingsDtoName = dtoNameBase;
 
-            var baseSettingsParameterTypes = workState.CurrentSymbol?.BaseType is not null
-                                             && workState.CurrentSymbol.BaseType.FullName()
+            var baseSettingsParameterTypes = source.BaseType is not null
+                                             && source.BaseType.FullName()
                                                  .StartsWith("WodiLib.Sys.BaseModel")
                 ? null
-                : workState.CurrentSymbol!.BaseType!.TypeParameters.Select(t =>
+                : source.BaseType!.TypeParameters.Select(t =>
                         {
                             var keyword = t.Variance switch
                             {
@@ -264,7 +278,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
             // 設定DTOに同じ内容で実装する。
             // ターゲットとなるItemEqualsメソッドが未実装の場合、NotImplementedException を投げるようにする
             var settingsInterfaceCompareCode =
-                GetSettingsInterfaceItemEqualsMethodBody(currentSymbol, settingsInterfaceName);
+                GetSettingsInterfaceItemEqualsMethodBody(source, settingsInterfaceName);
 
             return new ModelInformation(
                 !IsRestrictedCapacityList,
@@ -332,7 +346,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 .FirstOrDefault(m =>
                     m.Name == "ItemEquals"
                     && m.Parameters.Length == 1
-                    && m.Parameters[0].Type.ToString() == $"{settingsInterfaceName}?" // nullable
+                    && m.Parameters[0].Type.ToDisplayString().EndsWith($"{settingsInterfaceName}?") // nullable
                     && m.ReturnType.SpecialType == SpecialType.System_Boolean
                 );
 

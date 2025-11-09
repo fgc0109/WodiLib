@@ -8,15 +8,17 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace WodiLib.Sys.Collections
 {
     /// <summary>
     ///     容量固定リスト編集メソッドの引数汎用検証処理実施クラス
     /// </summary>
+    /// <typeparam name="TListSettings">リストの入力パラメータ型</typeparam>
     /// <typeparam name="TElementSettings">リスト内包型の入力パラメータ型</typeparam>
-    internal class FixedLengthListValidator<TElementSettings> : StandardListValidator<TElementSettings>
+    internal class FixedLengthListValidator<TListSettings, TElementSettings> :
+        StandardListValidator<TListSettings, TElementSettings>
+        where TListSettings : IListSettings<TElementSettings>
     {
         public delegate int GetMaxCapacityDelegate();
 
@@ -35,7 +37,7 @@ namespace WodiLib.Sys.Collections
             MinCapacityGetter = minCapacityGetter;
         }
 
-        public override void Constructor(NamedValue<IEnumerable<TElementSettings>> initItems)
+        public override void Constructor(NamedValue<TListSettings> initItems)
         {
             base.Constructor(initItems);
 
@@ -56,7 +58,7 @@ namespace WodiLib.Sys.Collections
 #endif
 
             RestrictedCapacityListValidationHelper.ArgumentItemsCount(
-                initItems.Value.Count(),
+                initItems.Value.Settings.Count,
                 minCapacity,
                 maxCapacity
             );

@@ -8,9 +8,9 @@
 
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using WodiLib.SourceGenerator.Core;
 using WodiLib.SourceGenerator.Core.Extensions;
 using WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
@@ -28,7 +28,13 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 ? RestrictedCapacityListImplementTemplateAttribute.Instance
                 : FixedLengthListImplementTemplateAttribute.Instance;
 
-        private protected override SourceFormatTargetBlock GenerateTImportUsingSource(WorkState workState)
+        private protected override SourceFormatTargetBlock GenerateTImportUsingSource(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
             return new[]
             {
@@ -36,50 +42,30 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 "using System.Collections;", // IEnumerable のため
                 "using System.Collections.Generic;", // IEnumerable<T> などのため
                 "using System.Collections.Specialized;", // INotifyCollectionChanged のため
+                "using System.Diagnostics.Contracts;", // PureAttribute 使用のため
                 "using System.Linq;", // IEnumerable<T> 拡張メソッド使用のため
                 "using WodiLib.Sys;", // EqualityComparerFactory 使用のため
                 "using WodiLib.Sys.Collections;", // ExtendedList 使用のため
             };
         }
 
-        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(WorkState workState)
+        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
             try
             {
-                var propertyValues = workState.PropertyValues;
-                var typeDefinitionInfo = workState.CurrentTypeDefinitionInfo;
-
-                var currentSymbol = workState.CurrentSymbol;
-                if (currentSymbol is null)
-                {
-                    return "";
-                }
-
                 var modelInfo = BuildClassInformation(
-                    workState,
-                    workState.CurrentSymbol!,
-                    restrictedCapacityListClassName: workState.Name.Replace("ReadOnly", ""),
-                    description: propertyValues[RestrictedCapacityListImplementTemplateAttribute.Description.Name]!,
-                    isAbstract: typeDefinitionInfo.IsAbstract,
-                    accessibility: AccessibilityConverter.ConvertSourceText(typeDefinitionInfo.Accessibility),
-                    maxCapacity: propertyValues[RestrictedCapacityListImplementTemplateAttribute.MaxCapacity.Name]!,
-                    minCapacity: propertyValues[RestrictedCapacityListImplementTemplateAttribute.MinCapacity.Name]!,
-                    elementType: propertyValues[RestrictedCapacityListImplementTemplateAttribute.ElementType.Name]!,
-                    readOnlyElementType:
-                    propertyValues[RestrictedCapacityListImplementTemplateAttribute.ReadOnlyElementType.Name]
-                    ?? propertyValues[RestrictedCapacityListImplementTemplateAttribute.ElementType.Name]!,
-                    settingsType:
-                    propertyValues[RestrictedCapacityListImplementTemplateAttribute.SettingsType.Name]
-                    ?? propertyValues[RestrictedCapacityListImplementTemplateAttribute.ElementType.Name]!,
-                    baseModelClass: GetBaseModelClassName(
-                        propertyValues[RestrictedCapacityListImplementTemplateAttribute.BaseModelClass.Name]
-                    )
+                    source,
+                    selfAttributeData
                 );
                 modelInfo.Members.Initialize(
-                    currentSymbol,
+                    source,
                     modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword,
-                    modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword,
-                    modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword,
                     modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword
                 );
 
@@ -111,44 +97,52 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
             }
         }
 
-        private static string? GetBaseModelClassName(string? originalValue)
-        {
-            if (originalValue is null)
-            {
-                return null;
-            }
-
-            if (originalValue.IndexOf('<') == -1)
-            {
-                // 総称型を使わない場合
-                //      名前空間を除去
-                return originalValue.Split('.').Last();
-            }
-
-            // 総称型を使う場合
-            //      クラス名部分と総称型部分に分割
-            //      クラス名部分は名前空間を除去
-            //      総称型部分はそのまま
-            var regex = new Regex("^([^<]*)(<.+)?");
-            var matchGroups = regex.Matches(originalValue)[0].Groups;
-            return $"{matchGroups[1].Value.Split('.').Last()}{matchGroups[2].Value}";
-        }
-
         private ModelInformation BuildClassInformation(
-            WorkState workState,
-            INamedTypeSymbol currentSymbol,
-            string restrictedCapacityListClassName,
-            string description,
-            string accessibility,
-            bool isAbstract,
-            string maxCapacity,
-            string minCapacity,
-            string elementType,
-            string readOnlyElementType,
-            string settingsType,
-            string? baseModelClass
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData
         )
         {
+            var restrictedCapacityListClassName = source.ClassName();
+            var accessibility = AccessibilityConverter.ConvertSourceText(source.DeclaredAccessibility);
+            var isAbstract = source.IsAbstract;
+
+            var description = selfAttributeData.GetPropertyDataRecursive<string?>(
+                                  RestrictedCapacity2DListImplementTemplateAttribute.Description.Name
+                              )
+                              ?? "";
+
+            var maxCapacity = selfAttributeData
+                .GetPropertyDataRecursive<object>(RestrictedCapacityListImplementTemplateAttribute.MaxCapacity.Name)
+                ?.ToString()!;
+            var minCapacity = selfAttributeData
+                .GetPropertyDataRecursive<object>(RestrictedCapacityListImplementTemplateAttribute.MinCapacity.Name)
+                ?.ToString()!;
+
+            var elementType = selfAttributeData
+                .GetPropertyDataRecursive<INamedTypeSymbol?>(
+                    RestrictedCapacityListImplementTemplateAttribute.ElementType.Name
+                )
+                ?.FullName()!;
+            var readOnlyElementType =
+                selfAttributeData.GetPropertyDataRecursive<INamedTypeSymbol?>(
+                        RestrictedCapacityListImplementTemplateAttribute.ReadOnlyElementType.Name
+                    )
+                    ?.FullName()
+                ?? elementType;
+            var settingsType =
+                selfAttributeData
+                    .GetPropertyDataRecursive<INamedTypeSymbol?>(
+                        RestrictedCapacityListImplementTemplateAttribute.SettingsType.Name
+                    )
+                    ?.FullName()
+                ?? elementType;
+
+            var baseModelClass = selfAttributeData
+                .GetPropertyDataRecursive<INamedTypeSymbol?>(
+                    RestrictedCapacityListImplementTemplateAttribute.BaseModelClass.Name
+                )
+                ?.FullName();
+
             var baseModelClassNoGeneric = baseModelClass?.Split('<')[0];
 
             var isExtendClass = baseModelClass is not null;
@@ -170,11 +164,11 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
 
             var settingsDtoName = dtoNameBase;
 
-            var baseSettingsParameterTypes = workState.CurrentSymbol?.BaseType is not null
-                                             && workState.CurrentSymbol.BaseType.FullName()
+            var baseSettingsParameterTypes = source.BaseType is not null
+                                             && source.BaseType.FullName()
                                                  .StartsWith("WodiLib.Sys.BaseModel")
                 ? null
-                : workState.CurrentSymbol!.BaseType!.TypeParameters.Select(t =>
+                : source.BaseType!.TypeParameters.Select(t =>
                         {
                             var keyword = t.Variance switch
                             {
@@ -213,7 +207,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
             // 設定DTOに同じ内容で実装する。
             // ターゲットとなるItemEqualsメソッドが未実装の場合、NotImplementedException を投げるようにする
             var settingsInterfaceCompareCode =
-                GetSettingsInterfaceItemEqualsMethodBody(currentSymbol, settingsInterfaceName);
+                GetSettingsInterfaceItemEqualsMethodBody(source, settingsInterfaceName);
 
             return new ModelInformation(
                 !IsRestrictedCapacityList,
@@ -269,7 +263,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 .FirstOrDefault(m =>
                     m.Name == "ItemEquals"
                     && m.Parameters.Length == 1
-                    && m.Parameters[0].Type.ToString() == $"{settingsInterfaceName}?" // nullable
+                    && m.Parameters[0].Type.ToDisplayString().EndsWith($"{settingsInterfaceName}?") // nullable
                     && m.ReturnType.SpecialType == SpecialType.System_Boolean
                 );
 

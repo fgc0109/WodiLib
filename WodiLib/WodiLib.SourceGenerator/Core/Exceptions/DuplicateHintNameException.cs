@@ -15,33 +15,10 @@ namespace WodiLib.SourceGenerator.Core.Exceptions
     /// </summary>
     internal class DuplicateHintNameException : Exception
     {
-        private ArgumentException Original { get; }
-
-        public DuplicateHintNameException(ArgumentException original, string hintName) : base(
-            ErrorMessage(
-                original,
-                hintName
-            )
+        public DuplicateHintNameException(string hintName) : base(
+            $"名前の重複が見つかりました。 (hintName: {hintName})"
         )
         {
-            Original = original;
-        }
-
-        private static string ErrorMessage(ArgumentException original, string hintName)
-            => $"{original.Message} (hintName: {hintName})";
-
-        public override string StackTrace => Original.StackTrace;
-
-        public override string Source
-        {
-            get => Original.Source;
-            set => Original.Source = value;
-        }
-
-        public override string HelpLink
-        {
-            get => Original.HelpLink;
-            set => Original.HelpLink = value;
         }
     }
 }

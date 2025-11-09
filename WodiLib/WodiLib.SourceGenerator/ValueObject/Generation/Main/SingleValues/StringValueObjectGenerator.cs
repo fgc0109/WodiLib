@@ -8,6 +8,10 @@
 
 using System;
 using System.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using WodiLib.SourceGenerator.Core;
+using WodiLib.SourceGenerator.Core.Extensions;
 using WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
 using WodiLib.SourceGenerator.Core.Templates.FromAttribute;
@@ -31,24 +35,38 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
         private protected sealed override Type WrapType => typeof(string);
 
         /// <inheritdoc/>
-        private protected override bool IsImplementFormattable(WorkState workState)
+        private protected override bool IsImplementFormattable(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
             => false;
 
         /// <inheritdoc/>
-        private protected override bool ParentIsImplementFormattable(WorkState workState)
+        private protected override bool ParentIsImplementFormattable(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
             => false;
 
         private protected override SourceFormatTargetBlock SourceFormatTargetsPublicStaticProperties(
-            WorkState workState
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
         )
         {
-            var workResult = workState.PropertyValues;
-
-            var isValidatePattern = IsValidatePattern(workState);
-            var isValidateSafetyPattern = IsValidateSafetyPattern(workState);
+            var isValidatePattern = IsValidatePattern(selfAttributeData);
+            var isValidateSafetyPattern = IsValidateSafetyPattern(selfAttributeData);
             var isValidateAnyPattern = isValidatePattern || isValidateSafetyPattern;
-            var isValidateByteLength = IsValidateByteLength(workState);
-            var isValidateLength = IsValidateLength(workState);
+            var isValidateByteLength = IsValidateByteLength(selfAttributeData);
+            var isValidateLength = IsValidateLength(selfAttributeData);
 
             if (new[]
                 {
@@ -63,66 +81,43 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
                     isValidatePattern,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_String(
                         MyAttr.Pattern,
-                        workResult,
-                        workState
+                        selfAttributeData
                     )
                 ),
                 SourceTextFormatter.If(
                     isValidateSafetyPattern,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_String(
                         MyAttr.SafetyPattern,
-                        workResult,
-                        workState
+                        selfAttributeData
                     )
                 ),
                 SourceTextFormatter.If(
                     isValidateAnyPattern,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Enum(
                         MyAttr.PatternOption,
-                        workResult,
-                        workState,
-                        workState.IsAnyPropertyOverwritten(
-                            MyAttr.Pattern.Name,
-                            MyAttr.SafetyPattern.Name,
-                            MyAttr.PatternOption.Name
-                        )
+                        selfAttributeData
                     )
                 ),
                 SourceTextFormatter.If(
                     isValidateByteLength,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.ByteMaxLength,
-                        workResult,
-                        workState,
-                        "int.MaxValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.ByteMaxLength.Name, MyAttr.ByteMinLength.Name)
+                        selfAttributeData
                     ),
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.ByteMinLength,
-                        workResult,
-                        workState,
-                        "0",
-                        workState.IsAnyPropertyOverwritten(MyAttr.ByteMaxLength.Name, MyAttr.ByteMinLength.Name)
+                        selfAttributeData
                     )
                 ),
                 SourceTextFormatter.If(
                     isValidateLength,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.MaxLength,
-                        workResult,
-                        workState,
-                        "int.MaxValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.MaxLength.Name, MyAttr.MinLength.Name)
+                        selfAttributeData
                     ),
-                    SourceFormatTargetHelper.SourceFormatTargetsClassConstant(
+                    SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.MinLength,
-                        workResult,
-                        workState,
-                        "0",
-                        isOverwrittenProperty: workState.IsAnyPropertyOverwritten(
-                            MyAttr.MaxLength.Name,
-                            MyAttr.MinLength.Name
-                        )
+                        selfAttributeData
                     )
                 )
             );
@@ -130,49 +125,60 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
 
         /// <inheritdoc/>
         private protected override SourceFormatTargetBlock SourceFormatTargetsConstructorException(
-            WorkState workState
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
         )
         {
             return SourceTextFormatter.Format(
                 "",
                 SourceFormatTargetsConstructorArgumentNullException(),
-                SourceFormatTargetsConstructorArgumentOutOfRangeException(workState),
-                SourceFormatTargetsConstructorArgumentException(workState)
+                SourceFormatTargetsConstructorArgumentOutOfRangeException(selfAttributeData),
+                SourceFormatTargetsConstructorArgumentException(selfAttributeData)
             );
         }
 
         /// <inheritdoc/>
         private protected override SourceFormatTargetBlock SourceFormatTargetsConstructorBody(
-            WorkState workState
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
         )
         {
             return SourceTextFormatter.Format(
                 "",
                 SourceFormatTargetsValidateNotNull(),
-                SourceFormatTargetsValidateNotEmpty(workState),
-                SourceFormatTargetsValidatePattern(workState),
-                SourceFormatTargetsValidateNewLine(workState),
-                SourceFormatTargetsValidateByteLength(workState),
-                SourceFormatTargetsValidateLength(workState),
+                SourceFormatTargetsValidateNotEmpty(selfAttributeData),
+                SourceFormatTargetsValidatePattern(selfAttributeData),
+                SourceFormatTargetsValidateNewLine(selfAttributeData),
+                SourceFormatTargetsValidateByteLength(selfAttributeData),
+                SourceFormatTargetsValidateLength(selfAttributeData),
                 new SourceFormatTarget[]
                 {
                     // DoConstructorExpansion メソッドで RawValue を更新する可能性があるので RawValue の初期化を先に行う
-                    $"{workState.PropertyValues[MyAttr.PropertyName.Name]} = value;",
+                    $"{selfAttributeData.GetPropertyDataRecursive<string>(MyAttr.PropertyName.Name)} = value;",
                     $"DoConstructorExpansion(value);",
                 }
             );
         }
 
         /// <inheritdoc/>
-        private protected override SourceFormatTargetBlock SourceFormatTargetsExtendBody(WorkState workState)
+        private protected override SourceFormatTargetBlock SourceFormatTargetsExtendBody(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
-            var workResult = workState.PropertyValues;
-            var typeDef = workState.ResolveTypeDefinitionInfo(workState.FullName);
-
             var operationOverloadCodeMaker = new OperationOverloadCodeMaker(
-                workResult.Name,
-                workResult.Namespace,
-                workResult[MyAttr.PropertyName.Name]!,
+                typeSymbol.Name,
+                typeSymbol.Namespace(),
+                selfAttributeData.GetPropertyDataRecursive<string>(MyAttr.PropertyName.Name)!,
                 WrapType.FullName!
             );
 
@@ -180,8 +186,8 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
                 "",
                 operationOverloadCodeMaker.BinaryOperatorNewInstance(
                     "+",
-                    new[] { workResult.FullName },
-                    !typeDef.IsAbstract
+                    new[] { typeSymbol.FullName() },
+                    !typeSymbol.IsAbstract
                 ),
                 new SourceFormatTarget[]
                 {
@@ -194,60 +200,76 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
         public static StringValueObjectGenerator Instance { get; } = new();
 
         /// <returns>空文字チェックを行う場合<see langword="true"/></returns>
-        private static bool IsValidateEmpty(WorkState workState)
+        private static bool IsValidateEmpty(
+            AttributeData selfAttributeData
+        )
         {
-            return bool.Parse(workState.PropertyValues[MyAttr.IsAllowEmpty.Name]!) == false;
+            return selfAttributeData.GetPropertyDataRecursive<bool?>(MyAttr.IsAllowEmpty.Name) == false;
         }
 
         /// <returns>改行チェックを行う場合<see langword="true"/></returns>
-        private static bool IsValidateNewLine(WorkState workState)
+        private static bool IsValidateNewLine(
+            AttributeData selfAttributeData
+        )
         {
-            return bool.Parse(workState.PropertyValues[MyAttr.IsAllowNewLine.Name]!) == false;
+            return selfAttributeData.GetPropertyDataRecursive<bool?>(MyAttr.IsAllowNewLine.Name) == false;
         }
 
         /// <returns>正規表現による必須または安全パターチェックを行う場合<see langword="true"/></returns>
-        private static bool IsValidateAnyPattern(WorkState workState)
+        private static bool IsValidateAnyPattern(
+            AttributeData selfAttributeData
+        )
         {
-            return IsValidatePattern(workState) || IsValidateSafetyPattern(workState);
+            return IsValidatePattern(selfAttributeData) || IsValidateSafetyPattern(selfAttributeData);
         }
 
         /// <returns>正規表現によるパターチェックを行う場合<see langword="true"/></returns>
-        private static bool IsValidatePattern(WorkState workState)
+        private static bool IsValidatePattern(
+            AttributeData selfAttributeData
+        )
         {
-            return workState.PropertyValues[MyAttr.Pattern.Name] is not null;
+            return selfAttributeData.GetPropertyDataRecursive<string?>(MyAttr.Pattern.Name) is not null;
         }
 
         /// <returns>正規表現による安全パターチェックを行う場合<see langword="true"/></returns>
-        private static bool IsValidateSafetyPattern(WorkState workState)
+        private static bool IsValidateSafetyPattern(
+            AttributeData selfAttributeData
+        )
         {
-            return workState.PropertyValues[MyAttr.SafetyPattern.Name] is not null;
+            return selfAttributeData.GetPropertyDataRecursive<string?>(MyAttr.SafetyPattern.Name) is not null;
         }
 
         /// <returns>範囲チェックを行う場合 <see langword="true"/></returns>
-        private static bool IsValidateOutOfRange(WorkState workState)
-            => IsValidateByteLength(workState) || IsValidateLength(workState);
+        private static bool IsValidateOutOfRange(
+            AttributeData selfAttributeData
+        )
+            => IsValidateByteLength(selfAttributeData) || IsValidateLength(selfAttributeData);
 
         /// <returns>バイトサイズの範囲チェックを行う場合 <see langword="true"/></returns>
-        private static bool IsValidateByteLength(WorkState workState)
+        private static bool IsValidateByteLength(
+            AttributeData selfAttributeData
+        )
         {
             var isDefaultByteMax = ToInt32FromIntString((string)MyAttr.ByteMaxLength.DefaultValue!)
                 .ToString()
                 .Equals(
-                    workState.PropertyValues[MyAttr.ByteMaxLength.Name]
+                    selfAttributeData.GetPropertyDataRecursive<int?>(MyAttr.ByteMaxLength.Name).ToString()
                 );
             var isDefaultByteMin = ((int)MyAttr.ByteMinLength.DefaultValue!).ToString()
-                .Equals(workState.PropertyValues[MyAttr.ByteMinLength.Name]);
+                .Equals(selfAttributeData.GetPropertyDataRecursive<int?>(MyAttr.ByteMinLength.Name).ToString());
             return !isDefaultByteMax || !isDefaultByteMin;
         }
 
         /// <returns>文字列長の範囲チェックを行う場合 <see langword="true"/></returns>
-        private static bool IsValidateLength(WorkState workState)
+        private static bool IsValidateLength(
+            AttributeData selfAttributeData
+        )
         {
             var isDefaultMaxLength = ToInt32FromIntString((string)MyAttr.MaxLength.DefaultValue!)
                 .ToString()
-                .Equals(workState.PropertyValues[MyAttr.MaxLength.Name]);
+                .Equals(selfAttributeData.GetPropertyDataRecursive<int?>(MyAttr.MaxLength.Name).ToString());
             var isDefaultMinLength = ((int)MyAttr.MinLength.DefaultValue!).ToString()
-                .Equals(workState.PropertyValues[MyAttr.MinLength.Name]);
+                .Equals(selfAttributeData.GetPropertyDataRecursive<int?>(MyAttr.MinLength.Name).ToString());
             return !isDefaultMaxLength || !isDefaultMinLength;
         }
 
@@ -267,7 +289,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
 
         /// <returns><see cref="ArgumentOutOfRangeException"/> ドキュメントコメント文字列パート</returns>
         private static SourceFormatTargetBlock SourceFormatTargetsConstructorArgumentOutOfRangeException(
-            WorkState workState
+            AttributeData selfAttributeData
         )
         {
             return SourceTextFormatter.Format(
@@ -276,14 +298,14 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
                         $"/// {__}",
                         "、または",
                         SourceTextFormatter.If(
-                            IsValidateByteLength(workState),
+                            IsValidateByteLength(selfAttributeData),
                             new SourceFormatTarget[]
                             {
                                 $"{Sentence.ErrorDesc.OutOfRange($"{Tag.ParamRef("value")} のデータサイズ", Tag.See.Cref(MyAttr.ByteMinLength.Name), Tag.See.Cref(MyAttr.ByteMaxLength.Name))}",
                             }
                         ),
                         SourceTextFormatter.If(
-                            IsValidateOutOfRange(workState),
+                            IsValidateOutOfRange(selfAttributeData),
                             new SourceFormatTarget[]
                             {
                                 $"{Sentence.ErrorDesc.OutOfRange($"{Tag.ParamRef("value")} の文字列長", Tag.See.Cref(MyAttr.MinLength.Name), Tag.See.Cref(MyAttr.MaxLength.Name))}",
@@ -299,7 +321,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
 
         /// <returns><see cref="ArgumentException"/> ドキュメントコメント文字列パート</returns>
         private static SourceFormatTargetBlock SourceFormatTargetsConstructorArgumentException(
-            WorkState workState
+            AttributeData selfAttributeData
         )
         {
             return SourceTextFormatter.Format(
@@ -308,21 +330,21 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
                         $"/// {__}",
                         "、または",
                         SourceTextFormatter.If(
-                            IsValidateEmpty(workState),
+                            IsValidateEmpty(selfAttributeData),
                             new SourceFormatTarget[]
                             {
                                 $"{Tag.ParamRef("value")} が 空文字 の場合",
                             }
                         ),
                         SourceTextFormatter.If(
-                            IsValidateNewLine(workState),
+                            IsValidateNewLine(selfAttributeData),
                             new SourceFormatTarget[]
                             {
                                 $"{Tag.ParamRef("value")} に改行コードが含まれる場合",
                             }
                         ),
                         SourceTextFormatter.If(
-                            IsValidatePattern(workState),
+                            IsValidatePattern(selfAttributeData),
                             new SourceFormatTarget[]
                             {
                                 $"{Tag.ParamRef("value")} が {Tag.See.Cref(MyAttr.Pattern.Name)} を満たさない場合",
@@ -349,9 +371,11 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
             );
 
         /// <returns>非空文字チェックソースコード文字列パート</returns>
-        private static SourceFormatTargetBlock SourceFormatTargetsValidateNotEmpty(WorkState workState)
+        private static SourceFormatTargetBlock SourceFormatTargetsValidateNotEmpty(
+            AttributeData selfAttributeData
+        )
             => SourceTextFormatter.If(
-                IsValidateEmpty(workState),
+                IsValidateEmpty(selfAttributeData),
                 new SourceFormatTarget[]
                 {
                     $"{{   // Validate NotEmpty",
@@ -361,28 +385,32 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
             );
 
         /// <returns>文字列パターンチェックソースコード文字列パート</returns>
-        private static SourceFormatTargetBlock SourceFormatTargetsValidatePattern(WorkState workState)
+        private static SourceFormatTargetBlock SourceFormatTargetsValidatePattern(
+            AttributeData selfAttributeData
+        )
             => SourceTextFormatter.If(
-                IsValidateAnyPattern(workState),
+                IsValidateAnyPattern(selfAttributeData),
                 new SourceFormatTarget[]
                 {
                     $"{{   // Validate for Pattern",
                     ($"    var requireRegex = new System.Text.RegularExpressions.Regex({MyAttr.Pattern.Name}, (System.Text.RegularExpressions.RegexOptions) {MyAttr.PatternOption.Name});",
-                        IsValidatePattern(workState)),
+                        IsValidatePattern(selfAttributeData)),
                     ($@"    if (!requireRegex.IsMatch(value)) throw new System.ArgumentException(""No match pattern."", nameof(value));",
-                        IsValidatePattern(workState)),
+                        IsValidatePattern(selfAttributeData)),
                     ($"    var safetyRegex = new System.Text.RegularExpressions.Regex({MyAttr.SafetyPattern.Name}, (System.Text.RegularExpressions.RegexOptions) {MyAttr.PatternOption.Name});",
-                        IsValidateSafetyPattern(workState)),
+                        IsValidateSafetyPattern(selfAttributeData)),
                     ($"    if (!safetyRegex.IsMatch(value)) WodiLib.Sys.Cmn.WodiLibLogger.GetInstance().Warning(WodiLib.Sys.WarningMessage.NotMatchRegex(value, safetyRegex));",
-                        IsValidateSafetyPattern(workState)),
+                        IsValidateSafetyPattern(selfAttributeData)),
                     $"}}",
                 }
             );
 
         /// <returns>改行チェックソースコード文字列パート</returns>
-        private static SourceFormatTargetBlock SourceFormatTargetsValidateNewLine(WorkState workState)
+        private static SourceFormatTargetBlock SourceFormatTargetsValidateNewLine(
+            AttributeData selfAttributeData
+        )
             => SourceTextFormatter.If(
-                IsValidateNewLine(workState),
+                IsValidateNewLine(selfAttributeData),
                 new SourceFormatTarget[]
                 {
                     $"{{   // Validate NewLine",
@@ -392,13 +420,15 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
             );
 
         /// <returns>バイトサイズチェックソースコード文字列パート</returns>
-        private static SourceFormatTargetBlock SourceFormatTargetsValidateByteLength(WorkState workState)
+        private static SourceFormatTargetBlock SourceFormatTargetsValidateByteLength(
+            AttributeData selfAttributeData
+        )
             => SourceTextFormatter.If(
-                IsValidateByteLength(workState),
+                IsValidateByteLength(selfAttributeData),
                 new SourceFormatTarget[]
                 {
                     $"{{   // Validate for ByteLength",
-                    $@"    var encoding = System.Text.Encoding.GetEncoding(""{workState.PropertyValues[MyAttr.ByteLengthEncoding.Name]}"");",
+                    $@"    var encoding = System.Text.Encoding.GetEncoding(""{selfAttributeData.GetPropertyDataRecursive<string>(MyAttr.ByteLengthEncoding.Name)}"");",
                     $"    var byteLength = encoding.GetByteCount(value);",
                     $@"    if (byteLength < {MyAttr.ByteMinLength.Name} || {MyAttr.ByteMaxLength.Name} < byteLength) throw new System.ArgumentException($""string byteLength between {MyAttr.ByteMinLength.Name} and {MyAttr.ByteMaxLength.Name}"");",
                     $"}}",
@@ -406,9 +436,11 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
             );
 
         /// <returns>文字列長チェックソースコード文字列パート</returns>
-        private static SourceFormatTargetBlock SourceFormatTargetsValidateLength(WorkState workState)
+        private static SourceFormatTargetBlock SourceFormatTargetsValidateLength(
+            AttributeData selfAttributeData
+        )
             => SourceTextFormatter.If(
-                IsValidateLength(workState),
+                IsValidateLength(selfAttributeData),
                 new SourceFormatTarget[]
                 {
                     $"{{   // Validate for Length",

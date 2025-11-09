@@ -7,6 +7,7 @@
 // ========================================
 
 using System;
+using System.Collections.Generic;
 
 namespace WodiLib.Sys
 {
@@ -20,6 +21,9 @@ namespace WodiLib.Sys
 
         /// <summary>リトルエンディアン</summary>
         public static readonly Endian Little;
+
+        /// <summary>全ての要素</summary>
+        public static IEnumerable<Endian> AllItems => EnumItems.AllEnums;
 
         static Endian()
         {

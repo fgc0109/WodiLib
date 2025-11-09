@@ -7,13 +7,9 @@
 // ========================================
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 
 namespace WodiLib.Sys
 {
@@ -38,7 +34,7 @@ namespace WodiLib.Sys
 
             // 暗黙または明示的変換演算子を探す
             var op = FindUserDefinedConversion(sourceType, targetType)
-                ?? FindUserDefinedConversion(targetType, sourceType);
+                     ?? FindUserDefinedConversion(targetType, sourceType);
 
             if (op is not null)
             {
@@ -47,7 +43,7 @@ namespace WodiLib.Sys
                 return Expression.Lambda<Func<TSource, TTarget>>(body, param).Compile();
             }
 
-            return new Func<TSource, TTarget>(_ => throw new InvalidCastException());
+            return _ => throw new InvalidCastException();
         }
 
         private static MethodInfo? FindUserDefinedConversion(Type from, Type to)
@@ -55,10 +51,11 @@ namespace WodiLib.Sys
             return from.GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .Concat(to.GetMethods(BindingFlags.Public | BindingFlags.Static))
                 .FirstOrDefault(m =>
-                    (m.Name == "op_Implicit" || m.Name == "op_Explicit") &&
-                    m.ReturnType == to &&
-                    m.GetParameters().Length == 1 &&
-                    m.GetParameters()[0].ParameterType == from);
+                    (m.Name == "op_Implicit" || m.Name == "op_Explicit")
+                    && m.ReturnType == to
+                    && m.GetParameters().Length == 1
+                    && m.GetParameters()[0].ParameterType == from
+                );
         }
     }
 

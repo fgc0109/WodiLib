@@ -9,7 +9,9 @@
 using System;
 using System.Linq;
 using System.Text;
-using WodiLib.SourceGenerator.Core.Dtos;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using WodiLib.SourceGenerator.Core;
 using WodiLib.SourceGenerator.Core.Extensions;
 using WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
@@ -17,7 +19,6 @@ using WodiLib.SourceGenerator.Core.Templates.FromAttribute;
 using WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Enums;
 using MyAttr =
     WodiLib.SourceGenerator.Operation.Generation.PostInitAction.Attributes.BinaryOperateAttribute;
-using static WodiLib.SourceGenerator.Core.SourceBuilder.SourceConstants;
 
 namespace WodiLib.SourceGenerator.Operation.Generation.Main.Binary
 {
@@ -25,13 +26,22 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Binary
     {
         public override InitializeAttributeSourceAddable TargetAttribute => MyAttr.Instance;
 
-        /// <inheritDoc/>
-        private protected override string HintName(WorkState workState)
+        private protected override string HintName(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
-            var propValues = new PropertyValueResolver(workState.PropertyValues);
+            var otherTypesChars = selfAttributeData.GetArrayPropertyData(MyAttr.OtherTypes.Name)
+                                      ?
+                                      .SelectMany(type => type.ToArray())
+                                  ?? Array.Empty<char>();
+            var operation = selfAttributeData.GetPropertyData<int>(MyAttr.Operation.Name);
+            var isLeft = selfAttributeData.GetPropertyData<int>(MyAttr.OtherPosition.Name)
+                         == BinaryOperateOtherPosition.Code_Left;
 
-            var otherTypesChars = propValues.OtherTypes
-                .SelectMany(type => type.ToArray());
             var bytes = new byte[4];
             var idx = 0;
             foreach (var c in otherTypesChars)
@@ -42,48 +52,50 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Binary
 
             var otherTypesCode = BitConverter.ToInt32(bytes, 0);
 
-            var operationCodeHex = $"{int.Parse(propValues.OperationCode):X}";
+            var operationCodeHex = $"{operation:X}";
 
-            var toFrom = propValues.IsLeft
+            var toFrom = isLeft
                 ? "to"
                 : "from";
 
             return
-                $"{workState.FullName.CompressNameSpace()}.BinaryOperation0x{operationCodeHex}_{toFrom}_{otherTypesCode}";
+                $"{source.FullName().CompressNameSpace()}.BinaryOperation0x{operationCodeHex}_{toFrom}_{otherTypesCode}";
         }
 
-        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(WorkState workState)
+        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
-            var thisType = workState.PropertyValues.TargetSymbol?.Name ?? "";
-            var defInfo = workState.CurrentTypeDefinitionInfo;
+            var thisTypeName = source.ClassName();
 
-            var propValues = workState.PropertyValues;
-            var operation = propValues[MyAttr.Operation.Name]!;
-            var otherTypes = propValues.GetArrayValue(MyAttr.OtherTypes.Name)!;
-            var innerCastType = propValues[MyAttr.InnerCastType.Name]!;
-            var returnType = propValues.GetOrDefault(MyAttr.ReturnType.Name, thisType);
-            var targetClassIsLeft =
-                propValues[MyAttr.OtherPosition.Name]!.Equals(BinaryOperateOtherPosition.Code_Right.ToString());
-            var returnTypeCode = int.Parse(propValues[MyAttr.ReturnCodeType.Name]!);
+            var operation = selfAttributeData.GetPropertyData<int>(MyAttr.Operation.Name).ToString();
+            var otherTypes = selfAttributeData.GetArrayPropertyData(MyAttr.OtherTypes.Name)!;
+            var innerCastType = selfAttributeData.GetPropertyData<INamedTypeSymbol>(MyAttr.InnerCastType.Name)!;
+            var returnType = selfAttributeData.GetPropertyData<INamedTypeSymbol>(MyAttr.ReturnType.Name)!;
+            var targetClassIsLeft = selfAttributeData.GetPropertyData<int>(MyAttr.OtherPosition.Name)
+                                    == BinaryOperateOtherPosition.Code_Right;
+            var returnTypeCode = selfAttributeData.GetPropertyData<int>(MyAttr.ReturnCodeType.Name);
 
             var codeMaker =
                 new OperationCodeMaker(
-                    thisType,
+                    thisTypeName,
                     otherTypes,
-                    innerCastType,
-                    returnType,
+                    innerCastType.FullName(),
+                    returnType.FullName(),
                     targetClassIsLeft,
                     returnTypeCode
                 );
-
             return SourceTextFormatter.Format(
-                "",
                 new SourceFormatTarget[]
                 {
-                    $"{DefinitionSource(defInfo)} {thisType}",
+                    $"{DefinitionSource(source)} {thisTypeName}",
                     $"{{",
                 },
-                SourceTextFormatter.Format(IndentSpace, OperationBlock(codeMaker, operation)),
+                SourceTextFormatter.Format(SourceConstants.IndentSpace, OperationBlock(codeMaker, operation)),
                 new SourceFormatTarget[]
                 {
                     $"}}",
@@ -94,22 +106,23 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Binary
         /// <summary>
         ///     定義宣言部のソースを生成する。
         /// </summary>
-        /// <param name="typeDefinitionInfo">型定義情報</param>
+        /// <param name="thisType">型定義情報</param>
         /// <returns>ソースコード文字列</returns>
-        private static string DefinitionSource(TypeDefinitionInfo typeDefinitionInfo)
+        private static string DefinitionSource(INamedTypeSymbol thisType)
         {
             var resultBuilder = new StringBuilder();
 
-            var accessibility = AccessibilityConverter.ConvertSourceText(typeDefinitionInfo.Accessibility);
+            var accessibility = AccessibilityConverter.ConvertSourceText(thisType.DeclaredAccessibility);
             resultBuilder.Append(accessibility);
             resultBuilder.Append(" partial ");
-            if (typeDefinitionInfo.IsClass)
-            {
-                resultBuilder.Append("class");
-            }
-            else if (typeDefinitionInfo.IsRecord)
+
+            if (thisType.IsRecord)
             {
                 resultBuilder.Append("record");
+            }
+            else if (thisType.TypeKind == TypeKind.Class)
+            {
+                resultBuilder.Append("class");
             }
             else
             {

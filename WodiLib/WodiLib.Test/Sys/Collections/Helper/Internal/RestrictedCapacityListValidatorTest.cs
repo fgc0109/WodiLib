@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Commons;
+using System.Linq;
 using NUnit.Framework;
 using WodiLib.Sys;
 using WodiLib.Sys.Collections;
@@ -9,19 +9,12 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.Sys.Collections
 {
     [TestFixture]
-    public class RestrictedCapacityListValidatorTest
+    public class RestrictedCapacityListValidatorTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
-        private static PureActionTestHelper pureActionTestHelper = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
-
-            pureActionTestHelper = new PureActionTestHelper(logger);
+            InitializeTestHelpers();
         }
 
         #region Methods
@@ -36,10 +29,12 @@ namespace WodiLib.Test.Sys.Collections
         [TestCase(TestData.MAX_CAPACITY)]
         public static void ConstructorTest_Success(int initItemsLength)
         {
-            var initItems = initItemsLength.Iterate(i => new StubModel(i.ToString()));
+            var initSettings = new StubRestrictedCapacityListSettings(
+                initItemsLength.Iterate<IStubModelSettings>(i => new StubModel(i.ToString())).ToList()
+            );
             pureActionTestHelper.PureActionSuccess(
                 instance: GetTestInstance(),
-                execAction: instance => instance.Constructor((nameof(initItems), initItems))
+                execAction: instance => instance.Constructor((nameof(initSettings), initSettings))
             );
         }
 
@@ -50,11 +45,11 @@ namespace WodiLib.Test.Sys.Collections
         [Test]
         public static void ConstructorTest_Failure_ArgumentNull()
         {
-            IEnumerable<IStubModelSettings> initItems = null!;
+            IStubRestrictedCapacityListSettings initSettings = null!;
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
-                execAction: instance => instance.Constructor((nameof(initItems), initItems)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+                execAction: instance => instance.Constructor((nameof(initSettings), initSettings)),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
             );
         }
 
@@ -65,11 +60,13 @@ namespace WodiLib.Test.Sys.Collections
         [Test]
         public static void ConstructorTest_Failure_ShorterItem()
         {
-            var initItems = (TestData.MIN_CAPACITY - 1).Iterate(i => new StubModel(i.ToString()));
+            var initSettings = new StubRestrictedCapacityListSettings(
+                (TestData.MIN_CAPACITY - 1).Iterate<IStubModelSettings>(i => new StubModel(i.ToString())).ToList()
+            );
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
-                execAction: instance => instance.Constructor((nameof(initItems), initItems)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                execAction: instance => instance.Constructor((nameof(initSettings), initSettings)),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -80,11 +77,13 @@ namespace WodiLib.Test.Sys.Collections
         [Test]
         public static void ConstructorTest_Failure_LongerItem()
         {
-            var initItems = (TestData.MAX_CAPACITY + 1).Iterate(i => new StubModel(i.ToString()));
+            var initSettings = new StubRestrictedCapacityListSettings(
+                (TestData.MAX_CAPACITY + 1).Iterate<IStubModelSettings>(i => new StubModel(i.ToString())).ToList()
+            );
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
-                execAction: instance => instance.Constructor((nameof(initItems), initItems)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                execAction: instance => instance.Constructor((nameof(initSettings), initSettings)),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -120,7 +119,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Get((nameof(index), index), (nameof(count), count)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
             );
         }
 
@@ -136,7 +135,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Get((nameof(index), index), (nameof(count), count)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
             );
         }
 
@@ -151,7 +150,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Get((nameof(index), index), (nameof(count), count)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -188,7 +187,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Set((nameof(index), index), (nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
             );
         }
 
@@ -204,7 +203,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Set((nameof(index), index), (nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
             );
         }
 
@@ -220,7 +219,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Set((nameof(index), index), (nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -257,7 +256,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Insert((nameof(index), index), (nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
             );
         }
 
@@ -273,7 +272,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Insert((nameof(index), index), (nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
             );
         }
 
@@ -291,7 +290,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Insert((nameof(index), index), (nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -328,7 +327,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Overwrite((nameof(index), index), (nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
             );
         }
 
@@ -344,7 +343,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Overwrite((nameof(index), index), (nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
             );
         }
 
@@ -360,7 +359,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Overwrite((nameof(index), index), (nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -407,7 +406,7 @@ namespace WodiLib.Test.Sys.Collections
                     (nameof(newIndex), newIndex),
                     (nameof(count), count)
                 ),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
             );
         }
 
@@ -428,7 +427,7 @@ namespace WodiLib.Test.Sys.Collections
                     (nameof(newIndex), newIndex),
                     (nameof(count), count)
                 ),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
             );
         }
 
@@ -449,7 +448,7 @@ namespace WodiLib.Test.Sys.Collections
                     (nameof(newIndex), newIndex),
                     (nameof(count), count)
                 ),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
             );
         }
 
@@ -469,7 +468,7 @@ namespace WodiLib.Test.Sys.Collections
                     (nameof(newIndex), newIndex),
                     (nameof(count), count)
                 ),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -489,7 +488,7 @@ namespace WodiLib.Test.Sys.Collections
                     (nameof(newIndex), newIndex),
                     (nameof(count), count)
                 ),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -525,7 +524,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Remove((nameof(index), index), (nameof(count), count)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
             );
         }
 
@@ -541,7 +540,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Remove((nameof(index), index), (nameof(count), count)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
             );
         }
 
@@ -557,7 +556,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Remove((nameof(index), index), (nameof(count), count)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -590,7 +589,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.AdjustLength((nameof(length), length)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
             );
         }
 
@@ -626,7 +625,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Reset((nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
             );
         }
 
@@ -641,7 +640,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Reset((nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -656,7 +655,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Reset((nameof(items), items)),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -691,7 +690,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Reset((nameof(items), items), canChangeSize),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
             );
         }
 
@@ -708,7 +707,7 @@ namespace WodiLib.Test.Sys.Collections
             pureActionTestHelper.PureActionFailure(
                 instance: GetTestInstance(),
                 execAction: target => target.Reset((nameof(items), items), canChangeSize),
-                verifyException: ExceptionVerifier.IsType(typeof(ArgumentException))
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
             );
         }
 
@@ -752,20 +751,21 @@ namespace WodiLib.Test.Sys.Collections
 
         #region TestClass
 
-        private static RestrictedCapacityListValidator<IStubModelSettings> GetTestInstance(
-            int count = TestData.INIT_LENGTH,
-            int maxCapacity = TestData.MAX_CAPACITY,
-            int minCapacity = TestData.MIN_CAPACITY
-        )
+        private static RestrictedCapacityListValidator<IStubRestrictedCapacityListSettings, IStubModelSettings>
+            GetTestInstance(
+                int count = TestData.INIT_LENGTH,
+                int maxCapacity = TestData.MAX_CAPACITY,
+                int minCapacity = TestData.MIN_CAPACITY
+            )
         {
-            return new RestrictedCapacityListValidator<IStubModelSettings>(
+            return new RestrictedCapacityListValidator<IStubRestrictedCapacityListSettings, IStubModelSettings>(
                 countGetter: () => count,
                 maxCapacityGetter: () => maxCapacity,
                 minCapacityGetter: () => minCapacity
             );
         }
 
-        private class TestData
+        private static class TestData
         {
             public const int MAX_CAPACITY = 10;
             public const int MIN_CAPACITY = 3;

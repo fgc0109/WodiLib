@@ -6,7 +6,7 @@
 // see LICENSE file
 // ========================================
 
-using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace WodiLib.Sys
@@ -71,10 +71,10 @@ namespace WodiLib.Sys
         ///     ウディタ文字列のbyte配列に変換する。
         /// </summary>
         /// <returns>ウディタ文字列のbyte配列</returns>
-        public static IEnumerable<byte> ToWoditorStringBytes(this string src)
+        public static byte[] ToWoditorStringBytes(this string src)
         {
             var woditorStr = new WoditorString(src);
-            return woditorStr.StringByte;
+            return woditorStr.StringByte.ToArray();
         }
     }
 }

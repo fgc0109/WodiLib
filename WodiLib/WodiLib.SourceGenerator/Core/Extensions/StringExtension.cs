@@ -27,10 +27,6 @@ namespace WodiLib.SourceGenerator.Core.Extensions
         private static bool HasNewLine(this string src)
             => src.Any(c => c == '\n');
 
-        /// <returns>先頭および末尾にダブルクォートを付与した文字列</returns>
-        public static string ToWrappedDoubleQuote(this string src)
-            => $"\"{src}\"";
-
         /// <returns>改行コードと半角スベースを除去した結果空文字である場合<see langword="true"/></returns>
         public static bool IsEmpty(this string src)
             => src.HasNewLine()

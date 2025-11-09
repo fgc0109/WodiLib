@@ -19,7 +19,7 @@ namespace WodiLib.Sys
     internal static class ReflectionHelper
     {
         /// <summary>
-        ///     呼び出し元メソッドに付与された <see cref="ObsoleteAttribute"/> の <see cref="ObsoleteAttribute.Message"/> を取得する。
+        ///     呼び出し元メソッドに付与された ObsoleteAttribute の Message を取得する。
         /// </summary>
         /// <param name="caller">呼び出し元クラス</param>
         /// <param name="targetName">対象メソッド名</param>

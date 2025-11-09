@@ -24,6 +24,19 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
         /// <inheritdoc/>
         private protected override Type WrapType => typeof(int);
 
+        private protected override string GetMinDefaultValue()
+            => (string)IntValueObjectAttribute.MinValue.DefaultValue!;
+
+        private protected override string GetMaxDefaultValue()
+            => (string)IntValueObjectAttribute.MaxValue.DefaultValue!;
+
+        private protected override string GetSafetyMinDefaultValue()
+            => (string)IntValueObjectAttribute.SafetyMinValue.DefaultValue!;
+
+        private protected override string GetSafetyMaxDefaultValue()
+            => (string)IntValueObjectAttribute.SafetyMaxValue.DefaultValue!;
+
+
         /// <summary>インスタンス（シングルトン）</summary>
         public static IntValueObjectGenerator Instance { get; } = new();
     }

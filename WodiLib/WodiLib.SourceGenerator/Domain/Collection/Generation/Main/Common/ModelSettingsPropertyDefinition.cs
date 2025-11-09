@@ -16,9 +16,14 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
     /// </summary>
     internal class ModelSettingsPropertyDefinition
     {
+        /// <summary>
+        ///     実装クラスと設定DTOで戻り値が異なるか
+        /// </summary>
+        public bool IsOverrideReturnType { get; }
+
         public string[] InterfaceDefinitionCode => new[]
         {
-            $"/// <inheritdoc cref=\"{immutableModelClassName}.{Name}\" />",
+            $"/// <inheritdoc cref=\"{mutableModelClassName}.{Name}\" />",
             $"{ReturnTypeName}{NullableMark} {Name} {{ get; }}",
         };
 
@@ -40,6 +45,9 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                     $"public {ExtendKeyword}{ReturnTypeName}{NullableMark} {Name} => {defaultValue};",
                 };
 
+        public string GetInterfaceImplementCode =>
+            $"{ReturnTypeName} {interfaceName}.{Name} => {Name};";
+
         private string? SetterKeyword =>
             setterAccessibility == "public"
                 ? "set;"
@@ -49,7 +57,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
 
         private readonly IPropertySymbol propertySymbol;
         private readonly ITypeSymbol returnType;
-        private readonly string immutableModelClassName;
+        private readonly string mutableModelClassName;
         private readonly string interfaceName;
         private readonly string defaultValue;
         private readonly bool forceAbstract;
@@ -75,7 +83,8 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
         public ModelSettingsPropertyDefinition(
             IPropertySymbol propertySymbol,
             ITypeSymbol returnType,
-            string immutableModelClassName,
+            bool isOverrideReturnType,
+            string mutableModelClassName,
             string interfaceName,
             string defaultValue,
             bool forceAbstract,
@@ -85,7 +94,8 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
         {
             this.propertySymbol = propertySymbol;
             this.returnType = returnType;
-            this.immutableModelClassName = immutableModelClassName;
+            IsOverrideReturnType = isOverrideReturnType;
+            this.mutableModelClassName = mutableModelClassName;
             this.interfaceName = interfaceName;
             this.defaultValue = defaultValue;
             this.forceAbstract = forceAbstract;

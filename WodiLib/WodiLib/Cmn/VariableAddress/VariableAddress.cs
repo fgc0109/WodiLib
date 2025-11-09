@@ -79,12 +79,14 @@ namespace WodiLib.Cmn
         /// <summary>++ 演算子</summary>
         /// <param name="src"/>
         /// <returns>演算結果</returns>
-        public static VariableAddress operator ++(VariableAddress src) => src.RawValue++;
+        public static VariableAddress operator ++(VariableAddress src)
+            => VariableAddressFactory.Create(src.RawValue + 1);
 
         /// <summary>-- 演算子</summary>
         /// <param name="src"/>
         /// <returns>演算結果</returns>
-        public static VariableAddress operator --(VariableAddress src) => src.RawValue--;
+        public static VariableAddress operator --(VariableAddress src)
+            => VariableAddressFactory.Create(src.RawValue - 1);
 
         #endregion
 

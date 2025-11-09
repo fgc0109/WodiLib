@@ -6,8 +6,9 @@
 // see LICENSE file
 // ========================================
 
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using WodiLib.SourceGenerator.Core;
-using WodiLib.SourceGenerator.Core.Dtos;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
 
 namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstract
@@ -22,23 +23,25 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
             /// <summary>
             ///     object 型のインスタンスとの比較コード
             /// </summary>
-            /// <param name="workResult"></param>
-            /// <param name="typeDefinitionInfoResolver"></param>
             /// <returns></returns>
             SourceFormatTarget SourceFormatTargetEqualsObject(
-                PropertyValues workResult,
-                ITypeDefinitionInfoResolver typeDefinitionInfoResolver
+                SemanticModel semanticModel,
+                BaseTypeDeclarationSyntax typeDecl,
+                INamedTypeSymbol source,
+                AttributeData selfAttributeData,
+                ILogger logger
             );
 
             /// <summary>
             ///     同じ型のインスタンスとの比較コード
             /// </summary>
-            /// <param name="workResult"></param>
-            /// <param name="typeDefinitionInfoResolver"></param>
             /// <returns></returns>
             SourceFormatTarget SourceFormatTargetEqualsOther(
-                PropertyValues workResult,
-                ITypeDefinitionInfoResolver typeDefinitionInfoResolver
+                SemanticModel semanticModel,
+                BaseTypeDeclarationSyntax typeDecl,
+                INamedTypeSymbol source,
+                AttributeData selfAttributeData,
+                ILogger logger
             );
         }
     }

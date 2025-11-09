@@ -91,26 +91,6 @@ namespace WodiLib.SourceGenerator.Core.Dtos
             );
         }
 
-        /// <returns>デフォルト値（プロパティデフォルト値ディクショナリ用）</returns>
-        public string? DefaultValueForDict()
-        {
-            if (DefaultValue is null) return null;
-
-            if (DefaultValue is bool bValue)
-            {
-                return bValue
-                    ? "true"
-                    : "false";
-            }
-
-            if (DefaultValueAsSourceCode) return $"{DefaultValue}";
-
-            var isStringValue = RegexTypeIsString.IsMatch(Type);
-            return isStringValue
-                ? $@"""{DefaultValue}"""
-                : $"{DefaultValue}";
-        }
-
         /// <returns>Summaryタグ部</returns>
         private SourceFormatTargetBlock SourceFormatTargetSummaryBody()
             => new SourceFormatTarget[]

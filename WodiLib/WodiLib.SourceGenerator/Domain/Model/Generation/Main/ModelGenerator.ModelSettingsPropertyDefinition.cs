@@ -18,6 +18,11 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
         /// </summary>
         public class ModelSettingsPropertyDefinition
         {
+            /// <summary>
+            ///     実装クラスと設定DTOで戻り値が異なるか
+            /// </summary>
+            public bool IsOverrideReturnType { get; }
+
             public string[] InterfaceDefinitionCode => new[]
             {
                 $"/// <inheritdoc cref=\"{immutableModelClassName}.{Name}\" />",
@@ -41,6 +46,9 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
                         $"/// <inheritdoc cref=\"{interfaceName}.{Name}\" path=\"summary|remarks\" />",
                         $"public {ExtendKeyword}{ReturnTypeName}{NullableMark} {Name} => {defaultValue};",
                     };
+
+            public string GetInterfaceImplementCode =>
+                $"{ReturnTypeName} {interfaceName}.{Name} => {Name};";
 
             private string? SetterKeyword =>
                 setterAccessibility == "public"
@@ -77,6 +85,7 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
             public ModelSettingsPropertyDefinition(
                 IPropertySymbol propertySymbol,
                 ITypeSymbol returnType,
+                bool isOverrideReturnType,
                 string immutableModelClassName,
                 string interfaceName,
                 string defaultValue,
@@ -87,6 +96,7 @@ namespace WodiLib.SourceGenerator.Domain.Model.Generation.Main
             {
                 this.propertySymbol = propertySymbol;
                 this.returnType = returnType;
+                IsOverrideReturnType = isOverrideReturnType;
                 this.immutableModelClassName = immutableModelClassName;
                 this.interfaceName = interfaceName;
                 this.defaultValue = defaultValue;

@@ -14,7 +14,7 @@ namespace WodiLib.Test.Tools
         /// <inheritdoc cref="ValueVerifier{T}.AreEquals"/>
         public static ValueVerifier<T> AreEquals<T>(
             T expected,
-            ValueVerifier<T>.MakeEqualsCustomMessage? customMessage = null
+            ValueVerifier<T?>.MakeEqualsCustomMessage? customMessage = null
         )
             => new(actual => Assert.AreEqual(expected, actual, customMessage?.Invoke(expected, actual)));
 
@@ -81,6 +81,13 @@ namespace WodiLib.Test.Tools
         /// <returns></returns>
         public static ValueVerifier<IEnumerable> IsEmpty()
             => new(Assert.IsEmpty);
+
+        /// <summary>
+        ///     要素が null であることを検証する。
+        /// </summary>
+        /// <returns></returns>
+        public static ValueVerifier<object?> IsNull()
+            => new(Assert.IsNull);
     }
 
     /// <summary>
@@ -89,13 +96,15 @@ namespace WodiLib.Test.Tools
     /// <typeparam name="T">検証する値の型</typeparam>
     internal class ValueVerifier<T>
     {
-        internal delegate string MakeEqualsCustomMessage(T expected, T actual);
+        internal delegate string MakeEqualsCustomMessage(T? expected, T? actual);
 
-        internal delegate string MakeItemEqualsCustomMessage<in TVal>(TVal expected, T actual);
+        internal delegate string MakeItemEqualsCustomMessage<in TVal>(TVal? expected, T? actual);
 
-        internal delegate string MakeReferenceEqualsCustomMessage(T expected, T actual);
+        internal delegate string MakeReferenceEqualsCustomMessage(T? expected, T? actual);
 
-        internal delegate string MakeIsTypeCustomMessage(Type expected, T actual);
+        internal delegate string MakeIsTypeCustomMessage(Type? expected, T? actual);
+
+        internal delegate string MakeIsNullCustomMessage(T? actual);
 
         /// <summary>
         ///     値を引数で指定した処理で検証する。
@@ -187,6 +196,14 @@ namespace WodiLib.Test.Tools
         /// <returns></returns>
         public static ValueVerifier<T> IsType(Type expected, MakeIsTypeCustomMessage? customMessage = null)
             => new(actual => Assert.AreEqual(expected, actual?.GetType(), customMessage?.Invoke(expected, actual)));
+
+        /// <summary>
+        ///     値がnullであることを検証する。
+        /// </summary>
+        /// <param name="customMessage">値がnullではなかった場合のカスタムメッセージ</param>
+        /// <returns></returns>
+        public static ValueVerifier<T> IsNull(MakeIsNullCustomMessage? customMessage = null)
+            => new(actual => Assert.IsNull(actual, customMessage?.Invoke(actual)));
 
         private readonly Action<T>? verifier;
 

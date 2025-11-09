@@ -43,8 +43,7 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
         /// <summary><see cref="System.FlagsAttribute"/> 付与フラグ</summary>
         public virtual bool IsFlags => false;
 
-        /// <inheritDoc/>
-        public void AddSource(GeneratorPostInitializationContext context)
+        public void Emit(IncrementalGeneratorPostInitializationContext context, ILogger logger)
         {
             try
             {
@@ -52,7 +51,7 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
             }
             catch (Exception ex)
             {
-                context.AddSource(HintName(), ex.ToString());
+                context.AddSource($"{HintName()}_Error.log", ex.ToString());
             }
         }
 

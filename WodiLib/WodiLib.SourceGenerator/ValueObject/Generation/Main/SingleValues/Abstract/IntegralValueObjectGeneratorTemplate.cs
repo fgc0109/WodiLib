@@ -9,8 +9,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WodiLib.SourceGenerator.Core.Dtos;
-using WodiLib.SourceGenerator.Core.Enums;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using WodiLib.SourceGenerator.Core;
+using WodiLib.SourceGenerator.Core.Extensions;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
 using WodiLib.SourceGenerator.Core.Templates.FromAttribute;
 using WodiLib.SourceGenerator.ValueObject.Generation.Helper;
@@ -28,31 +30,70 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
     internal abstract class IntegralValueObjectGeneratorTemplate : SingleValueObjectGeneratorTemplate
     {
         /// <inheritdoc/>
-        private protected override bool IsImplementEquatable(WorkState workState)
-            => !workState.CurrentTypeDefinitionInfo.ObjectType.Equals(ObjectType.Record);
+        private protected override bool IsImplementEquatable(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
+            => !typeSymbol.IsRecord;
 
         /// <inheritdoc/>
-        private protected sealed override bool IsImplementFormattable(WorkState workState)
-            => bool.Parse(workState.PropertyValues[MyAttr.IsUseBasicFormattable.Name]!);
+        private protected sealed override bool IsImplementFormattable(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
+            => selfAttributeData.GetPropertyDataRecursive<bool?>(MyAttr.IsUseBasicFormattable.Name) ?? false;
 
-        private protected sealed override bool ParentIsImplementFormattable(WorkState workState)
-            => bool.Parse(workState.GetOrDefaultParentPropertyValue(MyAttr.IsUseBasicFormattable.Name, "false"));
+        private protected sealed override bool ParentIsImplementFormattable(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
+            => typeSymbol.IsExtended();
 
         /// <inheritdoc/>
-        private protected sealed override bool ParentIsImplementComparable(WorkState workState)
-            => IntegralNumericOperation.CanCompare(workState.GetParentPropertyValue(MyAttr.Operations.Name));
+        private protected sealed override bool ParentIsImplementComparable(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
+            => IntegralNumericOperation.CanCompare(
+                selfAttributeData.GetParentPropertyDataRecursive<int?>(MyAttr.Operations.Name)?.ToString()
+            );
 
         /// <inheritdoc/>
         private protected override SourceFormatTargetBlock SourceFormatTargetsPublicStaticProperties(
-            WorkState workState
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
         )
         {
-            var workResult = workState.PropertyValues;
-
-            var isValidateRange = IsValidateRange(workState);
-            var isValidateSafetyRange = IsValidateSafetyRange(workState);
+            var isValidateRange = IsValidateRange(selfAttributeData);
+            var isValidateSafetyRange = IsValidateSafetyRange(
+                selfAttributeData
+            );
 
             if (!isValidateRange && !isValidateSafetyRange) return Array.Empty<SourceFormatTarget>();
+
+            var isNewMaxMinValue = typeSymbol.IsParentImplementsPropertyRecursive(MyAttr.MaxValue, selfAttributeData)
+                                   || typeSymbol.IsParentImplementsPropertyRecursive(
+                                       MyAttr.MinValue,
+                                       selfAttributeData
+                                   );
+            var isNewSafetyMaxMinValue =
+                typeSymbol.IsParentImplementsPropertyRecursive(MyAttr.SafetyMaxValue, selfAttributeData)
+                || typeSymbol.IsParentImplementsPropertyRecursive(MyAttr.SafetyMinValue, selfAttributeData);
 
             return SourceTextFormatter.Format(
                 "",
@@ -60,34 +101,26 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
                     isValidateRange,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.MaxValue,
-                        workResult,
-                        workState,
-                        "int.MaxValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.MaxValue.Name, MyAttr.MinValue.Name)
+                        selfAttributeData,
+                        isOverwrittenProperty: isNewMaxMinValue
                     ),
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.MinValue,
-                        workResult,
-                        workState,
-                        "int.MinValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.MaxValue.Name, MyAttr.MinValue.Name)
+                        selfAttributeData,
+                        isOverwrittenProperty: isNewMaxMinValue
                     )
                 ),
                 SourceTextFormatter.If(
                     isValidateSafetyRange,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.SafetyMaxValue,
-                        workResult,
-                        workState,
-                        "int.MaxValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.SafetyMaxValue.Name, MyAttr.SafetyMinValue.Name)
+                        selfAttributeData,
+                        isOverwrittenProperty: isNewSafetyMaxMinValue
                     ),
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.SafetyMinValue,
-                        workResult,
-                        workState,
-                        "int.MinValue",
-                        workState.IsAnyPropertyOverwritten(MyAttr.SafetyMaxValue.Name, MyAttr.SafetyMinValue.Name)
+                        selfAttributeData,
+                        isOverwrittenProperty: isNewSafetyMaxMinValue
                     )
                 )
             );
@@ -95,10 +128,15 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
 
         /// <inheritdoc/>
         private protected override SourceFormatTargetBlock SourceFormatTargetsConstructorException(
-            WorkState workState
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
         )
         {
-            if (!IsValidateRange(workState)) return Array.Empty<SourceFormatTarget>();
+            if (!IsValidateRange(selfAttributeData))
+                return Array.Empty<SourceFormatTarget>();
 
             return SourceTextFormatter.Format(
                 "",
@@ -113,12 +151,16 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
 
         /// <inheritdoc/>
         private protected override SourceFormatTargetBlock SourceFormatTargetsConstructorBody(
-            WorkState workState
-        )
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
+        ) // => throw new Exception(typeSymbol.BaseType.SpecialType.ToString());
             => SourceTextFormatter.Format(
                 "",
                 SourceTextFormatter.If(
-                    IsValidateRange(workState),
+                    IsValidateRange(selfAttributeData),
                     new SourceFormatTarget[]
                     {
                         $"{{   // value range",
@@ -127,7 +169,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
                     }
                 ),
                 SourceTextFormatter.If(
-                    IsValidateSafetyRange(workState),
+                    IsValidateSafetyRange(selfAttributeData),
                     new SourceFormatTarget[]
                     {
                         $"{{   // safety value range",
@@ -135,42 +177,62 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
                         $"}}",
                     }
                 ),
-                new SourceFormatTarget[]
+                SourceTextFormatter.If(
+                    // Rootクラスのみ
+                    !typeSymbol.IsExtended(),
+                    new SourceFormatTarget[]
+                    {
+                        // DoConstructorExpansion メソッドで RawValue を更新する可能性があるので RawValue の初期化を先に行う
+                        $"{selfAttributeData.GetPropertyDataRecursive<string>(MyAttr.PropertyName.Name)} = value;",
+                    }
+                ),
+                new[]
                 {
-                    // DoConstructorExpansion メソッドで RawValue を更新する可能性があるので RawValue の初期化を先に行う
-                    $"{workState.PropertyValues[MyAttr.PropertyName.Name]} = value;",
                     $"DoConstructorExpansion(value);",
                 }
             );
 
         /// <inheritdoc/>
         private protected sealed override SourceFormatTargetBlock SourceFormatTargetsExtendBody(
-            WorkState workState
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            AttributeData selfAttributeData,
+            ILogger logger
         )
         {
-            var workResult = workState.PropertyValues;
+            var fullName = typeSymbol.FullName();
 
-            var fullName = workState.FullName;
-
-            var operations = workResult[MyAttr.Operations.Name];
+            var operations = selfAttributeData.GetPropertyDataRecursive<int?>(MyAttr.Operations.Name).ToString();
             var canIncreaseAndDecrease = IntegralNumericOperation.CanIncreaseAndDecrease(operations);
-            var addAndSubtractableTypes = AddAndSubtractableTypes(workResult, fullName).ToArray();
-            var multipleAndDividableTypes = MultipleAndDividableTypes(workResult, fullName).ToArray();
+            var addAndSubtractableTypes = AddAndSubtractableTypes(
+                    selfAttributeData,
+                    fullName
+                )
+                .ToArray();
+            var multipleAndDividableTypes = MultipleAndDividableTypes(
+                    selfAttributeData,
+                    fullName
+                )
+                .ToArray();
             var canModulo = IntegralNumericOperation.CanModulo(operations);
             var canComplement = IntegralNumericOperation.CanComplement(operations);
             var canShift = IntegralNumericOperation.CanShift(operations);
             var canAnd = IntegralNumericOperation.CanAnd(operations);
             var canOr = IntegralNumericOperation.CanOr(operations);
             var canXor = IntegralNumericOperation.CanXor(operations);
-            var comparableTypes = ComparableTypes(workResult, fullName).ToArray();
+            var comparableTypes = ComparableTypes(
+                    selfAttributeData,
+                    fullName
+                )
+                .ToArray();
 
             var operationOverloadCodeMaker = new OperationOverloadCodeMaker(
-                workResult.Name,
-                workResult.Namespace,
-                workResult[MyAttr.PropertyName.Name]!,
+                typeSymbol.Name,
+                typeSymbol.Namespace(),
+                selfAttributeData.GetPropertyDataRecursive<string>(MyAttr.PropertyName.Name)!,
                 WrapType.FullName!
             );
-
             return SourceTextFormatter.Format(
                 "",
                 operationOverloadCodeMaker.UnaryOperatorIncrement(canIncreaseAndDecrease),
@@ -198,35 +260,72 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
         }
 
         /// <returns>範囲チェックを行う場合 <see langword="true"/> </returns>
-        private static bool IsValidateRange(WorkState workState)
-            => workState.IsAnyPropertyInitialized(MyAttr.MaxValue.Name, MyAttr.MinValue.Name);
+        private bool IsValidateRange(
+            AttributeData selfAttributeData
+        )
+        {
+            var settedMinValue = selfAttributeData.GetPropertyDataRecursive<int?>(MyAttr.MinValue.Name).ToString();
+            var settedMaxValue = selfAttributeData.GetPropertyDataRecursive<int?>(MyAttr.MaxValue.Name).ToString();
+            var defaultMinValue = ToInt32FromIntString(GetMinDefaultValue()).ToString();
+            var defaultMaxValue = ToInt32FromIntString(GetMaxDefaultValue()).ToString();
+
+            return settedMinValue != defaultMinValue
+                   || settedMaxValue != defaultMaxValue;
+        }
+
+        private protected abstract string GetMinDefaultValue();
+        private protected abstract string GetMaxDefaultValue();
 
         /// <returns>安全範囲チェックを行う場合 <see langword="true"/> </returns>
-        private static bool IsValidateSafetyRange(WorkState workState)
-            => workState.IsAnyPropertyInitialized(MyAttr.SafetyMaxValue.Name, MyAttr.SafetyMinValue.Name);
+        private bool IsValidateSafetyRange(
+            AttributeData selfAttributeData
+        )
+        {
+            var settedMinValue =
+                selfAttributeData.GetPropertyDataRecursive<int?>(MyAttr.SafetyMinValue.Name).ToString();
+            var settedMaxValue =
+                selfAttributeData.GetPropertyDataRecursive<int?>(MyAttr.SafetyMaxValue.Name).ToString();
+            var defaultMinValue = ToInt32FromIntString(GetSafetyMinDefaultValue()).ToString();
+            var defaultMaxValue = ToInt32FromIntString(GetSafetyMaxDefaultValue()).ToString();
+
+            return settedMinValue != defaultMinValue
+                   || settedMaxValue != defaultMaxValue;
+        }
+
+        private protected abstract string GetSafetyMinDefaultValue();
+        private protected abstract string GetSafetyMaxDefaultValue();
 
         /// <returns>加減算可能な右項型の一覧</returns>
-        private static IEnumerable<string> AddAndSubtractableTypes(PropertyValues workResult, string fullName)
+        private static IEnumerable<string> AddAndSubtractableTypes(
+            AttributeData selfAttributeData,
+            string fullName
+        )
             => OperationRightTypes(
-                workResult,
+                selfAttributeData,
                 fullName,
                 IntegralNumericOperation.CanAddAndSubtract,
                 MyAttr.AddAndSubtractTypes.Name
             );
 
-        /// <returns>加減算可能な右項型の一覧</returns>
-        private static IEnumerable<string> MultipleAndDividableTypes(PropertyValues workResult, string fullName)
+        /// <returns>乗除算可能な右項型の一覧</returns>
+        private static IEnumerable<string> MultipleAndDividableTypes(
+            AttributeData selfAttributeData,
+            string fullName
+        )
             => OperationRightTypes(
-                workResult,
+                selfAttributeData,
                 fullName,
                 IntegralNumericOperation.CanMultipleAndDivide,
                 MyAttr.MultipleAndDivideOtherTypes.Name
             );
 
         /// <returns>比較可能な右項型の一覧</returns>
-        private static IEnumerable<string> ComparableTypes(PropertyValues workResult, string fullName)
+        private static IEnumerable<string> ComparableTypes(
+            AttributeData selfAttributeData,
+            string fullName
+        )
             => OperationRightTypes(
-                workResult,
+                selfAttributeData,
                 fullName,
                 IntegralNumericOperation.CanCompare,
                 MyAttr.CompareOtherTypes.Name
@@ -234,20 +333,23 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
 
         /// <returns>演算可能な右項型の一覧</returns>
         private static IEnumerable<string> OperationRightTypes(
-            PropertyValues workResult,
+            AttributeData selfAttributeData,
             string fullName,
             Func<string, bool> funcOperateSameType,
             string getTypesPropertyName
         )
         {
-            var operateSameType = funcOperateSameType(workResult.GetOrDefault(MyAttr.Operations.Name, "0"));
-            var isInitializedTypes = workResult[getTypesPropertyName] is not null;
-            if (!operateSameType && !isInitializedTypes) return Array.Empty<string>();
+            var operateSameType = funcOperateSameType(
+                (selfAttributeData.GetPropertyDataRecursive<int?>(MyAttr.Operations.Name) ?? 0).ToString()
+            );
+            var typedConstantList = selfAttributeData.GetArrayPropertyDataRecursive(getTypesPropertyName);
+            if (!operateSameType && (typedConstantList is null || typedConstantList.Length == 0))
+                return Array.Empty<string>();
 
             var result = new List<string>();
-            if (isInitializedTypes)
+            if (typedConstantList is not null)
             {
-                result = new List<string>(GetTypeNameList(workResult, getTypesPropertyName));
+                result.AddRange(typedConstantList);
             }
 
             if (operateSameType && !result.Contains(fullName))
@@ -258,9 +360,21 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
             return result;
         }
 
-        private static IEnumerable<string> GetTypeNameList(PropertyValues workResult, string propertyName)
-            => workResult[propertyName] == null
-                ? Array.Empty<string>()
-                : workResult[propertyName]!.Split(',').Select(s => s.Trim()).ToArray();
+        /// <summary>
+        ///     int 文字列を int に変換する。
+        /// </summary>
+        /// <param name="src">変換対象</param>
+        /// <returns>変換結果</returns>
+        private static int ToInt32FromIntString(string src)
+        {
+            return src switch
+            {
+                "int.MaxValue" => int.MaxValue,
+                "int.MinValue" => int.MinValue,
+                "byte.MaxValue" => byte.MaxValue,
+                "byte.MinValue" => byte.MinValue,
+                _ => int.Parse(src),
+            };
+        }
     }
 }

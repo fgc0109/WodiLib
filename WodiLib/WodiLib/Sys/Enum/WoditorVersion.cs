@@ -7,6 +7,7 @@
 // ========================================
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace WodiLib.Sys
@@ -82,6 +83,9 @@ namespace WodiLib.Sys
 
         /// <summary>最新バージョン</summary>
         public static WoditorVersion Latest => Ver2_24;
+
+        /// <summary>全ての要素</summary>
+        public static IEnumerable<WoditorVersion> AllItems => EnumItems.AllEnums;
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Public Property

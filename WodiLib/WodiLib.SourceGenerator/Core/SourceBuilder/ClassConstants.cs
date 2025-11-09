@@ -32,6 +32,16 @@ namespace WodiLib.SourceGenerator.Core.SourceBuilder
                 new[]
                 {
                     $"/// <summary>{info.Summary}</summary>",
+                },
+                SourceTextFormatter.If(
+                    info.Remarks is not null,
+                    new[]
+                    {
+                        $"/// <remarks>{info.Remarks}</remarks>",
+                    }
+                ),
+                new[]
+                {
                     $"public static {newModifier}{info.Type} {info.Name} => {info.Value};",
                     SourceFormatTarget.Empty,
                 }

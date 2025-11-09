@@ -17,15 +17,16 @@ namespace WodiLib.Sys.Collections
     /// <remarks>
     ///     各種検証において不正な引数の場合例外を発生させる。
     /// </remarks>
+    /// <typeparam name="TListSettings">リストの入力パラメータ型</typeparam>
     /// <typeparam name="TRowElementSettings">行要素設定型</typeparam>
     /// <typeparam name="TListElementSettings">リスト要素設定型</typeparam>
-    internal interface IWodiLib2DListValidator<TRowElementSettings, TListElementSettings>
+    internal interface IWodiLib2DListValidator<TListSettings, TRowElementSettings, TListElementSettings>
     {
         /// <summary>
         ///     コンストラクタの検証処理
         /// </summary>
-        /// <param name="initItems">初期要素</param>
-        void Constructor(NamedValue<IEnumerable<TRowElementSettings>> initItems);
+        /// <param name="initSettings">初期要素</param>
+        void Constructor(NamedValue<TListSettings> initSettings);
 
         /// <summary>
         ///     GetRowRange メソッドの検証処理
@@ -181,8 +182,8 @@ namespace WodiLib.Sys.Collections
         /// </summary>
         /// <param name="validator">validator</param>
         /// <param name="rowIndex">行インデックス</param>
-        public static void GetRow<TRow, TList>(
-            this IWodiLib2DListValidator<TRow, TList> validator,
+        public static void GetRow<TList, TRow, TElem>(
+            this IWodiLib2DListValidator<TList, TRow, TElem> validator,
             NamedValue<int> rowIndex
         )
             => validator.GetRow(rowIndex, ("count", 1));
@@ -193,8 +194,8 @@ namespace WodiLib.Sys.Collections
         /// <param name="validator">validator</param>
         /// <param name="rowIndex">更新行インデックス</param>
         /// <param name="settings">更新行要素</param>
-        public static void SetRow<TRow, TList>(
-            this IWodiLib2DListValidator<TRow, TList> validator,
+        public static void SetRow<TList, TRow, TElem>(
+            this IWodiLib2DListValidator<TList, TRow, TElem> validator,
             NamedValue<int> rowIndex,
             NamedValue<TRow> settings
         )
@@ -205,8 +206,8 @@ namespace WodiLib.Sys.Collections
         /// </summary>
         /// <param name="validator">validator</param>
         /// <param name="columnIndex">列インデックス</param>
-        public static void GetColumn<TRow, TList>(
-            this IWodiLib2DListValidator<TRow, TList> validator,
+        public static void GetColumn<TList, TRow, TElem>(
+            this IWodiLib2DListValidator<TList, TRow, TElem> validator,
             NamedValue<int> columnIndex
         )
             => validator.GetColumn(columnIndex, ("count", 1));
@@ -217,12 +218,15 @@ namespace WodiLib.Sys.Collections
         /// <param name="validator">validator</param>
         /// <param name="columnIndex">更新列インデックス</param>
         /// <param name="settings">更新列要素</param>
-        public static void SetColumn<TRow, TList>(
-            this IWodiLib2DListValidator<TRow, TList> validator,
+        public static void SetColumn<TList, TRow, TElem>(
+            this IWodiLib2DListValidator<TList, TRow, TElem> validator,
             NamedValue<int> columnIndex,
-            NamedValue<IEnumerable<TList>> settings
+            NamedValue<IEnumerable<TElem>> settings
         )
-            => validator.SetColumn(columnIndex, (settings.Name, new[] { settings.Value }));
+            => validator.SetColumn(
+                columnIndex,
+                new NamedValue<IEnumerable<IEnumerable<TElem>>>(settings.Name, new[] { settings.Value })
+            );
 
         /// <summary>
         ///     AddRow, InsertRow メソッドの検証処理
@@ -230,8 +234,8 @@ namespace WodiLib.Sys.Collections
         /// <param name="validator">validator</param>
         /// <param name="rowIndex">挿入先行インデックス</param>
         /// <param name="settings">挿入行要素</param>
-        public static void InsertRow<TRow, TList>(
-            this IWodiLib2DListValidator<TRow, TList> validator,
+        public static void InsertRow<TList, TRow, TElem>(
+            this IWodiLib2DListValidator<TList, TRow, TElem> validator,
             NamedValue<int> rowIndex,
             NamedValue<TRow> settings
         )
@@ -243,10 +247,10 @@ namespace WodiLib.Sys.Collections
         /// <param name="validator">validator</param>
         /// <param name="columnIndex">挿入先列インデックス</param>
         /// <param name="settings">挿入列要素</param>
-        public static void InsertColumn<TRow, TList>(
-            this IWodiLib2DListValidator<TRow, TList> validator,
+        public static void InsertColumn<TList, TRow, TElem>(
+            this IWodiLib2DListValidator<TList, TRow, TElem> validator,
             NamedValue<int> columnIndex,
-            NamedValue<IEnumerable<TList>> settings
+            NamedValue<IEnumerable<TElem>> settings
         )
             => validator.InsertColumn(columnIndex, (settings.Name, new[] { settings.Value }));
 
@@ -256,8 +260,8 @@ namespace WodiLib.Sys.Collections
         /// <param name="validator">validator</param>
         /// <param name="oldRowIndex">移動する行のインデックス位置</param>
         /// <param name="newRowIndex">移動先の行インデックス位置</param>
-        public static void MoveRow<TRow, TList>(
-            this IWodiLib2DListValidator<TRow, TList> validator,
+        public static void MoveRow<TList, TRow, TElem>(
+            this IWodiLib2DListValidator<TList, TRow, TElem> validator,
             NamedValue<int> oldRowIndex,
             NamedValue<int> newRowIndex
         )
@@ -269,8 +273,8 @@ namespace WodiLib.Sys.Collections
         /// <param name="validator">validator</param>
         /// <param name="oldColumnIndex">移動する列のインデックス位置</param>
         /// <param name="newColumnIndex">移動先の列インデックス位置</param>
-        public static void MoveColumn<TRow, TList>(
-            this IWodiLib2DListValidator<TRow, TList> validator,
+        public static void MoveColumn<TList, TRow, TElem>(
+            this IWodiLib2DListValidator<TList, TRow, TElem> validator,
             NamedValue<int> oldColumnIndex,
             NamedValue<int> newColumnIndex
         )
@@ -281,8 +285,8 @@ namespace WodiLib.Sys.Collections
         /// </summary>
         /// <param name="validator">validator</param>
         /// <param name="rowIndex">除去行インデックス</param>
-        public static void RemoveRow<TRow, TList>(
-            this IWodiLib2DListValidator<TRow, TList> validator,
+        public static void RemoveRow<TList, TRow, TElem>(
+            this IWodiLib2DListValidator<TList, TRow, TElem> validator,
             NamedValue<int> rowIndex
         )
             => validator.RemoveRow(rowIndex, ("count", 1));
@@ -292,8 +296,8 @@ namespace WodiLib.Sys.Collections
         /// </summary>
         /// <param name="validator">validator</param>
         /// <param name="columnIndex">除去列インデックス</param>
-        public static void RemoveColumn<TRow, TList>(
-            this IWodiLib2DListValidator<TRow, TList> validator,
+        public static void RemoveColumn<TList, TRow, TElem>(
+            this IWodiLib2DListValidator<TList, TRow, TElem> validator,
             NamedValue<int> columnIndex
         )
             => validator.RemoveColumn(columnIndex, ("count", 1));

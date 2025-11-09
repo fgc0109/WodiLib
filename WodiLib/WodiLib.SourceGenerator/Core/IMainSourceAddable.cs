@@ -7,31 +7,24 @@
 // ========================================
 
 using Microsoft.CodeAnalysis;
-using WodiLib.SourceGenerator.Core.Dtos;
-using WodiLib.SourceGenerator.Core.Exceptions;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace WodiLib.SourceGenerator.Core
 {
-    /// <summary>
-    ///     <see cref="GeneratorExecutionContext"/> に自動生成クラスのソースを追加できることを示すインタフェース
-    /// </summary>
     internal interface IMainSourceAddable
     {
-        /// <summary>ロガー</summary>
-        ILogger? Logger { get; }
+        /// <summary>SourceGenerator 対象に付与する Attribute のフルネーム</summary>
+        public string TargetAttributeFullName { get; }
 
         /// <summary>
-        ///     ソースコードを追加する。
+        ///     自動生成したソースファイル出力処理
         /// </summary>
-        /// <param name="context">ソースコード追加先</param>
-        /// <param name="typeDefinitionInfoResolver">型情報解決処理</param>
-        /// <exception cref="DuplicateHintNameException">ソースコード登録時にHintNameが重複した場合</exception>
-        void AddSource(GeneratorExecutionContext context, ITypeDefinitionInfoResolver typeDefinitionInfoResolver);
-
-        /// <summary>
-        ///     構文処理結果をセットする。
-        /// </summary>
-        /// <param name="workResult">構文処理結果</param>
-        void PutSyntaxWorkResult(SyntaxWorkResult workResult);
+        public void EmitGeneratedSource(
+            SourceProductionContext context,
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol typeSymbol,
+            ILogger logger
+        );
     }
 }

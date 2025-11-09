@@ -1,5 +1,4 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
 using WodiLib.Test.Tools;
@@ -7,15 +6,12 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.Sys
 {
     [TestFixture]
-    public class PublisherTest
+    public class PublisherTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
         [Test]

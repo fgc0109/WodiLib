@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
 using WodiLib.Test.Tools;
@@ -8,22 +7,19 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.Sys
 {
     [TestFixture]
-    public class TwoDimensionalArrayExtensionTest
+    public class TwoDimensionalArrayExtensionTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
         private static readonly object[] ToTransposedArrayTestCaseSource =
         {
-            new object[] { (int[][])Array.Empty<int[]>() },
-            new object[] { (int[][])new[] { Array.Empty<int>() } },
-            new object[] { (int[][])new[] { Array.Empty<int>(), Array.Empty<int>() } },
+            new object[] { Array.Empty<int[]>() },
+            new object[] { new[] { Array.Empty<int>() } },
+            new object[] { new[] { Array.Empty<int>(), Array.Empty<int>() } },
             new object[] { new[] { new[] { 1, 2, 3 } } },
             new object[] { new[] { new[] { 1 }, new[] { 2 } } },
             new object[] { new[] { new[] { 1, 2, 3, 4 }, new[] { 11, 12, 13, 14 } } },

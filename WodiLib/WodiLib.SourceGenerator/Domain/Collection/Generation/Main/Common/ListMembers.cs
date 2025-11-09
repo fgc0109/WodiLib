@@ -17,34 +17,24 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
 {
     internal class ListMembers
     {
-        public readonly List<MethodDefinition> RestrictedListMethods = new();
-        public readonly List<PropertyDefinition> RestrictedListProperties = new();
-        public readonly List<ConstructorDefinition> RestrictedListConstructors = new();
+        public readonly List<MethodDefinition> ReadOnlyListMethods = new();
+        public readonly List<ModelPropertyDefinition> ReadOnlyListProperties = new();
 
         public readonly List<MethodDefinition> FixedLengthListMethods = new();
-        public readonly List<PropertyDefinition> FixedLengthListProperties = new();
-        public readonly List<ConstructorDefinition> FixedLengthListConstructors = new();
+        public readonly List<ModelPropertyDefinition> FixedLengthListProperties = new();
 
         public readonly List<ModelSettingsPropertyDefinition> SettingsProperties = new();
 
-        public ListMembers()
-        {
-        }
-
         public void Initialize(
             INamedTypeSymbol currentSymbol,
-            string restrictedCapacityListClassNameWithoutInOutKeyword,
-            string fixedLengthListClassNameWithoutInOutKeyword,
-            string readOnlyListClassNameWithoutInOutKeyword,
+            string listClassNameWithoutInOutKeyword,
             string settingsInterfaceNameWithoutInOutKeyword
         )
         {
-            RestrictedListMethods.Clear();
-            RestrictedListProperties.Clear();
-            RestrictedListConstructors.Clear();
+            ReadOnlyListMethods.Clear();
+            ReadOnlyListProperties.Clear();
             FixedLengthListMethods.Clear();
             FixedLengthListProperties.Clear();
-            FixedLengthListConstructors.Clear();
             SettingsProperties.Clear();
 
             foreach (var member in currentSymbol.GetMembers())
@@ -55,36 +45,21 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 {
                     case IMethodSymbol methodSymbol:
                     {
-                        // MutableMethodAttribute 探索
+                        // ImmutableMethodAttribute 探索
                         var findMutableMethodAttrResult = methodSymbol.GetAttributes()
                             .FirstOrDefault(attr => attr.AttributeClass?.FullName()
-                                                    == MutableMethodAttribute.Instance.TypeFullName
+                                                    == ImmutableMethodAttribute.Instance.TypeFullName
                             );
                         if (findMutableMethodAttrResult is not null)
                         {
                             var accessibility =
                                 findMutableMethodAttrResult.GetPropertyData<string>(
-                                    nameof(MutableMethodAttribute.Accessibility)
+                                    nameof(ImmutableMethodAttribute.Accessibility)
                                 )!;
-                            this.RestrictedListMethods.Add(
+                            this.ReadOnlyListMethods.Add(
                                 new MethodDefinition(
                                     methodSymbol,
                                     accessibility
-                                )
-                            );
-                        }
-
-                        // MutableConstructorAttribute 探索
-                        var findMutableConstantAttrResult = methodSymbol.GetAttributes()
-                            .FirstOrDefault(attr => attr.AttributeClass?.FullName()
-                                                    == MutableConstructorAttribute.Instance.TypeFullName
-                            );
-                        if (findMutableConstantAttrResult is not null)
-                        {
-                            this.RestrictedListConstructors.Add(
-                                new ConstructorDefinition(
-                                    methodSymbol,
-                                    restrictedCapacityListClassNameWithoutInOutKeyword
                                 )
                             );
                         }
@@ -108,47 +83,33 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                             );
                         }
 
-                        // FixedLengthListConstructorAttribute 探索
-                        var findFixedConstantAttrResult = methodSymbol.GetAttributes()
-                            .FirstOrDefault(attr => attr.AttributeClass?.FullName()
-                                                    == FixedLengthListConstructorAttribute.Instance.TypeFullName
-                            );
-                        if (findFixedConstantAttrResult is not null)
-                        {
-                            this.FixedLengthListConstructors.Add(
-                                new ConstructorDefinition(
-                                    methodSymbol,
-                                    fixedLengthListClassNameWithoutInOutKeyword
-                                )
-                            );
-                        }
-
                         break;
                     }
                     case IPropertySymbol propertySymbol:
                     {
-                        // MutablePropertyAttribute 探索
+                        // ImmutablePropertyAttribute 探索
                         var findImmutablePropertyAttrResult = propertySymbol.GetAttributes()
                             .FirstOrDefault(attr => attr.AttributeClass?.FullName()
-                                                    == MutablePropertyAttribute.Instance.TypeFullName
+                                                    == ImmutablePropertyAttribute.Instance.TypeFullName
                             );
                         if (findImmutablePropertyAttrResult is not null)
                         {
                             // 戻り値の型情報
                             var returnType =
                                 findImmutablePropertyAttrResult.GetPropertyData<INamedTypeSymbol?>(
-                                    nameof(MutablePropertyAttribute.ReturnType)
+                                    nameof(ImmutablePropertyAttribute.ReturnType)
                                 );
-                            // setter アクセシビリティ
-                            var setterAccessibility =
+                            // アクセシビリティ
+                            var accessibility =
                                 findImmutablePropertyAttrResult.GetPropertyData<string>(
-                                    nameof(MutablePropertyAttribute.Accessibility)
+                                    nameof(ImmutablePropertyAttribute.Accessibility)
                                 )!;
-                            this.RestrictedListProperties.Add(
-                                new PropertyDefinition(
+                            this.ReadOnlyListProperties.Add(
+                                new ModelPropertyDefinition(
                                     propertySymbol,
                                     returnType,
-                                    setterAccessibility
+                                    accessibility,
+                                    setterAccessibility: "NONE"
                                 )
                             );
                         }
@@ -165,15 +126,21 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                                 findFixedPropertyAttrResult.GetPropertyData<INamedTypeSymbol?>(
                                     nameof(FixedLengthListPropertyAttribute.ReturnType)
                                 );
-                            // setter アクセシビリティ
-                            var setterAccessibility =
+                            // アクセシビリティ
+                            var accessibility =
                                 findFixedPropertyAttrResult.GetPropertyData<string>(
                                     nameof(FixedLengthListPropertyAttribute.Accessibility)
                                 )!;
+                            // setter アクセシビリティ
+                            var setterAccessibility =
+                                findFixedPropertyAttrResult.GetPropertyData<string>(
+                                    nameof(FixedLengthListPropertyAttribute.SetterAccessibility)
+                                )!;
                             this.FixedLengthListProperties.Add(
-                                new PropertyDefinition(
+                                new ModelPropertyDefinition(
                                     propertySymbol,
                                     returnType,
+                                    accessibility,
                                     setterAccessibility
                                 )
                             );
@@ -216,7 +183,8 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                                 new ModelSettingsPropertyDefinition(
                                     propertySymbol,
                                     returnType ?? propertySymbol.Type,
-                                    readOnlyListClassNameWithoutInOutKeyword,
+                                    returnType is not null,
+                                    listClassNameWithoutInOutKeyword,
                                     settingsInterfaceNameWithoutInOutKeyword,
                                     defaultValue,
                                     forceAbstract,

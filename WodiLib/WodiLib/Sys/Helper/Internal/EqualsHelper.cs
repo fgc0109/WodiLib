@@ -24,7 +24,7 @@ namespace WodiLib.Sys
         ///     <ul>
         ///         <li>
         ///             <typeparamref name="T"/> が <see cref="IEqualityComparable{T}"/> を実装していれば
-        ///             <see cref="IEqualityComparable{T}.ItemEquals(T?)"/> による比較を行う
+        ///             <see cref="IEqualityComparable{T}.ItemEquals(T)"/> による比較を行う
         ///         </li>
         ///         <li>
         ///             <typeparamref name="T"/> が <see cref="IEqualityComparable"/> を実装していれば

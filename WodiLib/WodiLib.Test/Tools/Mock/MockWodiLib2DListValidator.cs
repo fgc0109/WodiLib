@@ -13,15 +13,15 @@ using WodiLib.Sys.Collections;
 namespace WodiLib.Test.Tools
 {
     /// <summary>
-    ///     <see cref="IWodiLib2DListValidator{TRowElementSettings,TListElementSettings}"/> モック用
+    ///     <see cref="IWodiLib2DListValidator{TListSettings,TRowElementSettings,TListElementSettings}"/> モック用
     /// </summary>
-    internal class MockWodiLib2DListValidator<TRowElementSettings, TListElementSettings> :
-        MockBase<IWodiLib2DListValidator<TRowElementSettings, TListElementSettings>>,
-        IWodiLib2DListValidator<TRowElementSettings, TListElementSettings>
+    internal class MockWodiLib2DListValidator<TListSettings, TRowElementSettings, TListElementSettings> :
+        MockBase<IWodiLib2DListValidator<TListSettings, TRowElementSettings, TListElementSettings>>,
+        IWodiLib2DListValidator<TListSettings, TRowElementSettings, TListElementSettings>
     {
-        public void Constructor(NamedValue<IEnumerable<TRowElementSettings>> initItems)
+        public void Constructor(NamedValue<TListSettings> initSettings)
         {
-            AddCalledHistory(nameof(Constructor), initItems.Value);
+            AddCalledHistory(nameof(Constructor), initSettings.Value!);
         }
 
         public void GetRow(NamedValue<int> rowIndex, NamedValue<int> count)

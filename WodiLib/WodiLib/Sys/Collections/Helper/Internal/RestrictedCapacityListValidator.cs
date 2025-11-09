@@ -15,8 +15,11 @@ namespace WodiLib.Sys.Collections
     /// <summary>
     ///     容量制限ありリスト編集メソッドの引数汎用検証処理実施クラス
     /// </summary>
+    /// <typeparam name="TListSettings">リストの入力パラメータ型</typeparam>
     /// <typeparam name="TElementSettings">リスト内包型の入力パラメータ型</typeparam>
-    internal class RestrictedCapacityListValidator<TElementSettings> : StandardListValidator<TElementSettings>
+    internal class RestrictedCapacityListValidator<TListSettings, TElementSettings> :
+        StandardListValidator<TListSettings, TElementSettings>
+        where TListSettings : IListSettings<TElementSettings>
     {
         public delegate int GetMaxCapacityDelegate();
 
@@ -37,9 +40,9 @@ namespace WodiLib.Sys.Collections
             MinCapacityGetter = minCapacityGetter;
         }
 
-        public override void Constructor(NamedValue<IEnumerable<TElementSettings>> initItems)
+        public override void Constructor(NamedValue<TListSettings> initSettings)
         {
-            base.Constructor(initItems);
+            base.Constructor(initSettings);
 
             var maxCapacity = MaxCapacityGetter.Invoke();
             var minCapacity = MinCapacityGetter.Invoke();
@@ -58,7 +61,7 @@ namespace WodiLib.Sys.Collections
 #endif
 
             RestrictedCapacityListValidationHelper.ArgumentItemsCount(
-                initItems.Value.Count(),
+                initSettings.Value.Settings.Count,
                 minCapacity,
                 maxCapacity
             );

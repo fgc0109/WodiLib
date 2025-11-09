@@ -13,14 +13,14 @@ using WodiLib.Sys.Collections;
 namespace WodiLib.Test.Tools
 {
     /// <summary>
-    ///     <see cref="IWodiLibListValidator{T}"/> モック用
+    ///     <see cref="IWodiLibListValidator{TListSettings,TElementSettings}"/> モック用
     /// </summary>
-    internal class MockWodiLibListValidator<T> : MockBase<IWodiLibListValidator<T>>,
-        IWodiLibListValidator<T>
+    internal class MockWodiLibListValidator<TList, TElem> : MockBase<IWodiLibListValidator<TList, TElem>>,
+        IWodiLibListValidator<TList, TElem>
     {
-        public void Constructor(NamedValue<IEnumerable<T>> initItems)
+        public void Constructor(NamedValue<TList> initItems)
         {
-            AddCalledHistory(nameof(Constructor), initItems.Value);
+            AddCalledHistory(nameof(Constructor), initItems.Value!);
         }
 
         public void Get(NamedValue<int> index, NamedValue<int> count)
@@ -28,17 +28,17 @@ namespace WodiLib.Test.Tools
             AddCalledHistory(nameof(Get), index.Value, count.Value);
         }
 
-        public void Set(NamedValue<int> index, NamedValue<IEnumerable<T>> items)
+        public void Set(NamedValue<int> index, NamedValue<IEnumerable<TElem>> items)
         {
             AddCalledHistory(nameof(Set), index.Value, items.Value);
         }
 
-        public void Insert(NamedValue<int> index, NamedValue<IEnumerable<T>> items)
+        public void Insert(NamedValue<int> index, NamedValue<IEnumerable<TElem>> items)
         {
             AddCalledHistory(nameof(Insert), index.Value, items.Value);
         }
 
-        public void Overwrite(NamedValue<int> index, NamedValue<IEnumerable<T>> items)
+        public void Overwrite(NamedValue<int> index, NamedValue<IEnumerable<TElem>> items)
         {
             AddCalledHistory(nameof(Overwrite), index.Value, items.Value);
         }
@@ -58,7 +58,7 @@ namespace WodiLib.Test.Tools
             AddCalledHistory(nameof(AdjustLength), length.Value);
         }
 
-        public void Reset(NamedValue<IEnumerable<T>> settings, bool canChangeSize = true)
+        public void Reset(NamedValue<IEnumerable<TElem>> settings, bool canChangeSize = true)
         {
             AddCalledHistory(nameof(Reset), settings.Value, canChangeSize);
         }

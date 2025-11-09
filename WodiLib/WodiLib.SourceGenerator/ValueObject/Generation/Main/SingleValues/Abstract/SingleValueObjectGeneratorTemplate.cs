@@ -7,7 +7,10 @@
 // ========================================
 
 using System;
-using WodiLib.SourceGenerator.Core.Dtos;
+using System.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using WodiLib.SourceGenerator.Core;
 using WodiLib.SourceGenerator.Core.Extensions;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
 using WodiLib.SourceGenerator.Core.Templates.FromAttribute;
@@ -31,28 +34,47 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
 
         /// <inheritdoc/>
         private protected sealed override SourceFormatTargetBlock GenerateTypeDefinitionSource(
-            WorkState workState
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
         )
         {
-            var typeDefinitionInfo = workState.ResolveTypeDefinitionInfo(workState.FullName);
-            var workResult = workState.PropertyValues;
+            var thisTypeName = source.ClassName();
+            var accessibility = AccessibilityConverter.ConvertSourceText(source.DeclaredAccessibility);
+            var isExtended = source.IsExtended();
 
-            var className = workResult.Name;
-            var propertyName = workResult[MyAttr.PropertyName.Name];
-            var castType = workResult[MyAttr.CastType.Name]!;
-            var isExtended = workState.IsExtended;
+            var propertyName = selfAttributeData.GetPropertyDataRecursive<string>(MyAttr.PropertyName.Name);
+            var castType = selfAttributeData.GetPropertyDataRecursive<int?>(MyAttr.CastType.Name).ToString();
 
-            var implInterfaces = GetImplementInterfaceSentence(className, workState);
+            var implInterfaces = GetImplementInterfaceSentence(
+                thisTypeName,
+                semanticModel,
+                typeDecl,
+                source,
+                selfAttributeData,
+                logger
+            );
             var canOperation = CastType.CanOperation(castType);
             var castOperation = CastType.ToSourceText(castType);
 
-            var sourceCustomizer = GetSourceCustomizer(typeDefinitionInfo);
+            var classOrRecordOrStruct = source.IsRecord
+                ? "record"
+                : source.TypeKind == TypeKind.Class
+                    ? "class"
+                    : "struct";
 
-            var isExtendedRawValue = workState.GetParentPropertyValue(MyAttr.PropertyName.Name)?.Equals(propertyName)
-                                     ?? false;
-            var newModifierRawValue = isExtendedRawValue
+            var sourceCustomizer = GetSourceCustomizer(source);
+
+            var parentPropertyName =
+                selfAttributeData.GetParentPropertyDataRecursive<string?>(MyAttr.PropertyName.Name);
+            var newModifierRawValue = isExtended
                 ? "new "
                 : "";
+            var rawValueBody = isExtended
+                ? $"=> base.{parentPropertyName};"
+                : "{ get; }";
 
             var wrapTypeIsClass = WrapType.IsClass;
 
@@ -60,32 +82,50 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
                 "",
                 new SourceFormatTarget[]
                 {
-                    $"{ClassDefinitionSource(typeDefinitionInfo)} {className} {implInterfaces.PrefixIfNotEmpty(" : ")}",
+                    $"{accessibility} partial {classOrRecordOrStruct} {thisTypeName} {implInterfaces.PrefixIfNotEmpty(" : ")}",
                     $"{{",
                 },
                 SourceTextFormatter.Format(
                         IndentSpace,
-                        SourceFormatTargetsPublicStaticProperties(workState),
+                        SourceFormatTargetsPublicStaticProperties(
+                            semanticModel,
+                            typeDecl,
+                            source,
+                            selfAttributeData,
+                            logger
+                        ),
                         new[]
                         {
                             $"/// <summary>{WrapType}値</summary>",
-                            $"public {newModifierRawValue}{WrapType} {propertyName} {{ get; private set; }}",
+                            $"public {newModifierRawValue}{WrapType} {propertyName} {rawValueBody}",
                             SourceFormatTarget.Empty,
                             $"/// <summary>",
                             $"/// {__}コンストラクタ",
                             $"/// </summary>",
                             $"/// {Tag.Param("value", "設定値")}",
                         },
-                        SourceFormatTargetsConstructorException(workState),
+                        SourceFormatTargetsConstructorException(
+                            semanticModel,
+                            typeDecl,
+                            source,
+                            selfAttributeData,
+                            logger
+                        ),
                         new SourceFormatTarget[]
                         {
-                            ($"public {className}({WrapType} value)", !isExtended),
-                            ($"public {className}({WrapType} value) : base(value)", isExtended),
+                            ($"public {thisTypeName}({WrapType} value)", !isExtended),
+                            ($"public {thisTypeName}({WrapType} value) : base(value)", isExtended),
                             $"{{",
                         },
                         SourceTextFormatter.Format(
                             IndentSpace,
-                            SourceFormatTargetsConstructorBody(workState)
+                            SourceFormatTargetsConstructorBody(
+                                semanticModel,
+                                typeDecl,
+                                source,
+                                selfAttributeData,
+                                logger
+                            )
                         ),
                         new[]
                         {
@@ -93,7 +133,7 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
                             SourceFormatTarget.Empty,
                         },
                         SourceTextFormatter.If(
-                            IsOverrideBasicMethods(workState),
+                            IsOverrideBasicMethods(semanticModel, typeDecl, source, selfAttributeData, logger),
                             new[]
                             {
                                 $"/// {Tag.InheritDoc()}",
@@ -101,8 +141,11 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
                                 SourceFormatTarget.Empty,
                                 $"/// {Tag.InheritDoc()}",
                                 sourceCustomizer.SourceFormatTargetEqualsObject(
-                                    workResult,
-                                    workState.TypeDefinitionInfoResolver
+                                    semanticModel,
+                                    typeDecl,
+                                    source,
+                                    selfAttributeData,
+                                    logger
                                 ),
                                 SourceFormatTarget.Empty,
                                 $"/// {Tag.InheritDoc()}",
@@ -111,33 +154,42 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
                             }
                         ),
                         SourceTextFormatter.If(
-                            IsImplementEquatable(workState),
+                            IsImplementEquatable(semanticModel, typeDecl, source, selfAttributeData, logger),
                             new[]
                             {
                                 $"/// {Tag.InheritDoc("System.IEquatable{T}.Equals(T)")}",
                                 sourceCustomizer.SourceFormatTargetEqualsOther(
-                                    workResult,
-                                    workState.TypeDefinitionInfoResolver
+                                    semanticModel,
+                                    typeDecl,
+                                    source,
+                                    selfAttributeData,
+                                    logger
                                 ),
                                 SourceFormatTarget.Empty,
                                 $"/// {Tag.Summary("== 演算子")}",
                                 $"/// {Tag.Param("left", "左項")}",
                                 $"/// {Tag.Param("right", "右項")}",
                                 $"/// {Tag.Returns($"{Tag.ParamRef("left")} と {Tag.ParamRef("right")} が同一要素である場合 {Tag.See.Langword_True}")}",
-                                $"public static bool operator ==({className}? left, {className}? right) => Equals(left, right);",
+                                $"public static bool operator ==({thisTypeName}? left, {thisTypeName}? right) => Equals(left, right);",
                                 $"/// {Tag.Summary("!= 演算子")}",
                                 $"/// {Tag.Param("left", "左項")}",
                                 $"/// {Tag.Param("right", "右項")}",
                                 $"/// {Tag.Returns($"{Tag.ParamRef("left")} と {Tag.ParamRef("right")} が同一要素ではない場合 {Tag.See.Langword_True}")}",
-                                $"public static bool operator !=({className}? left, {className}? right) => !Equals(left, right);",
+                                $"public static bool operator !=({thisTypeName}? left, {thisTypeName}? right) => !Equals(left, right);",
                                 SourceFormatTarget.Empty,
                             }
                         ),
                         SourceTextFormatter.If(
-                            IsImplementFormattable(workState),
+                            IsImplementFormattable(semanticModel, typeDecl, source, selfAttributeData, logger),
                             () =>
                             {
-                                var needNewModifier = ParentIsImplementFormattable(workState);
+                                var needNewModifier = ParentIsImplementFormattable(
+                                    semanticModel,
+                                    typeDecl,
+                                    source,
+                                    selfAttributeData,
+                                    logger
+                                );
                                 var newModifierStr = needNewModifier
                                     ? "new "
                                     : "";
@@ -157,13 +209,13 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
                             }
                         ),
                         SourceTextFormatter.If(
-                            IsImplementComparable(workState),
+                            IsImplementComparable(semanticModel, typeDecl, source, selfAttributeData, logger),
                             () =>
                             {
                                 return new[]
                                 {
                                     $"/// {Tag.InheritDoc($"System.IComparable{{T}}.CompareTo")}",
-                                    $"public int CompareTo({className}? other) => {propertyName}.CompareTo(other?.{propertyName});",
+                                    $"public int CompareTo({thisTypeName}? other) => {propertyName}.CompareTo(other?.{propertyName});",
                                     SourceFormatTarget.Empty,
                                 };
                             }
@@ -172,20 +224,20 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
                             canOperation,
                             new[]
                             {
-                                ($"/// {Tag.Summary($"{WrapType} から {className} への {CastType.ToDocumentText(castType)}な型変換")}",
-                                    !typeDefinitionInfo.IsAbstract),
-                                ($"/// {Tag.Param("value", "変換対象")}", !typeDefinitionInfo.IsAbstract),
-                                ($"/// {Tag.Returns("変換結果")}", !typeDefinitionInfo.IsAbstract),
+                                ($"/// {Tag.Summary($"{WrapType} から {thisTypeName} への {CastType.ToDocumentText(castType)}な型変換")}",
+                                    !source.IsAbstract),
+                                ($"/// {Tag.Param("value", "変換対象")}", !source.IsAbstract),
+                                ($"/// {Tag.Returns("変換結果")}", !source.IsAbstract),
                                 ($@"[return: System.Diagnostics.CodeAnalysis.NotNullIfNotNull(""value"")]",
-                                    !typeDefinitionInfo.IsAbstract),
-                                ($"public static {castOperation} operator {className}?({WrapType}? value) => value is null ? null : new {className}(({WrapType}) value);",
-                                    !typeDefinitionInfo.IsAbstract),
-                                ($"", !typeDefinitionInfo.IsAbstract),
-                                $"/// {Tag.Summary($"{className} から {WrapType} への {CastType.ToDocumentText(castType)}な型変換")}",
+                                    !source.IsAbstract),
+                                ($"public static {castOperation} operator {thisTypeName}?({WrapType}? value) => value is null ? null : new {thisTypeName}(({WrapType}) value);",
+                                    !source.IsAbstract),
+                                ($"", !source.IsAbstract),
+                                $"/// {Tag.Summary($"{thisTypeName} から {WrapType} への {CastType.ToDocumentText(castType)}な型変換")}",
                                 $"/// {Tag.Param("value", "変換対象")}",
                                 $"/// {Tag.Returns("変換結果")}",
                                 $@"[return: System.Diagnostics.CodeAnalysis.NotNullIfNotNull(""value"")]",
-                                $"public static {castOperation} operator {WrapType}?({className}? value) => value?.{propertyName};",
+                                $"public static {castOperation} operator {WrapType}?({thisTypeName}? value) => value?.{propertyName};",
                                 SourceFormatTarget.Empty,
                             }
                         ),
@@ -194,21 +246,21 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
                             // 構造体の場合のみ、nullable ではいない場合のキャストを別途定義
                             new[]
                             {
-                                ($"/// {Tag.Summary($"{WrapType} から {className} への {CastType.ToDocumentText(castType)}な型変換")}",
-                                    !typeDefinitionInfo.IsAbstract),
-                                ($"/// {Tag.Param("value", "変換対象")}", !typeDefinitionInfo.IsAbstract),
-                                ($"/// {Tag.Returns("変換結果")}", !typeDefinitionInfo.IsAbstract),
-                                ($"public static {castOperation} operator {className}({WrapType} value) => new {className}(value);",
-                                    !typeDefinitionInfo.IsAbstract),
-                                ($"", !typeDefinitionInfo.IsAbstract),
-                                $"/// {Tag.Summary($"{className} から {WrapType} への {CastType.ToDocumentText(castType)}な型変換")}",
+                                ($"/// {Tag.Summary($"{WrapType} から {thisTypeName} への {CastType.ToDocumentText(castType)}な型変換")}",
+                                    !source.IsAbstract),
+                                ($"/// {Tag.Param("value", "変換対象")}", !source.IsAbstract),
+                                ($"/// {Tag.Returns("変換結果")}", !source.IsAbstract),
+                                ($"public static {castOperation} operator {thisTypeName}({WrapType} value) => new {thisTypeName}(value);",
+                                    !source.IsAbstract),
+                                ($"", !source.IsAbstract),
+                                $"/// {Tag.Summary($"{thisTypeName} から {WrapType} への {CastType.ToDocumentText(castType)}な型変換")}",
                                 $"/// {Tag.Param("value", "変換対象")}",
                                 $"/// {Tag.Returns("変換結果")}",
-                                $"public static {castOperation} operator {WrapType}({className} value) => value.{propertyName};",
+                                $"public static {castOperation} operator {WrapType}({thisTypeName} value) => value.{propertyName};",
                                 SourceFormatTarget.Empty,
                             }
                         ),
-                        SourceFormatTargetsExtendBody(workState)
+                        SourceFormatTargetsExtendBody(semanticModel, typeDecl, source, selfAttributeData, logger)
                     )
                     .TrimLastEmptyLine(),
                 new SourceFormatTarget[]
@@ -221,100 +273,150 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
         /// <summary>
         ///     <see cref="IEquatable{T}"/> 実装可否
         /// </summary>
-        /// <param name="workState">ワーク状態</param>
         /// <returns><see cref="IEquatable{T}"/> を実装する場合 <see langword="true"/></returns>
-        private protected virtual bool IsImplementEquatable(WorkState workState)
-            => !workState.CurrentTypeDefinitionInfo.IsRecord
-               && bool.Parse(workState.PropertyValues[MyAttr.ImplementEquatable.Name]!);
+        private protected virtual bool IsImplementEquatable(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
+            => !source.IsRecord
+               && (selfAttributeData.GetPropertyDataRecursive<bool?>(MyAttr.ImplementEquatable.Name)! ?? false);
 
         /// <summary>
         ///     <see cref="IFormattable"/> 実装可否
         /// </summary>
-        /// <param name="workState">ワーク状態</param>
         /// <returns><see cref="IFormattable"/> を実装する場合 <see langword="true"/></returns>
-        private protected abstract bool IsImplementFormattable(WorkState workState);
+        private protected abstract bool IsImplementFormattable(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        );
 
         /// <summary>
         ///     親クラスが <see cref="IFormattable"/> を継承しているかどうかを返す。
         /// </summary>
-        /// <param name="workState">ワーク状態</param>
-        private protected abstract bool ParentIsImplementFormattable(WorkState workState);
+        private protected abstract bool ParentIsImplementFormattable(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        );
 
         /// <summary>
         ///     <see cref="IComparable{T}"/> 実装可否
         /// </summary>
-        /// <param name="workState">ワーク状態</param>
         /// <returns><see cref="IComparable{T}"/> を実装する場合 <see langword="true"/></returns>
-        private protected virtual bool IsImplementComparable(WorkState workState)
-            => bool.Parse(workState.PropertyValues[MyAttr.IsComparable.Name]!);
+        private protected virtual bool IsImplementComparable(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
+            => selfAttributeData.GetPropertyDataRecursive<bool?>(MyAttr.IsComparable.Name) ?? false;
 
         /// <summary>
         ///     親クラスが <see cref="IComparable{T}"/> を継承しているかどうかを返す。
         /// </summary>
-        /// <param name="workState">ワーク状態</param>
-        private protected virtual bool ParentIsImplementComparable(WorkState workState)
-            => bool.Parse(
-                workState.GetOrDefaultParentPropertyValue(
-                    MyAttr.IsComparable.Name,
-                    MyAttr.IsComparable.DefaultValue!.ToString()
-                )
+        private protected virtual bool ParentIsImplementComparable(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
+        {
+            if (!source.IsExtended())
+            {
+                return false;
+            }
+
+            // 親クラスが IComparable を継承しているかどうかを調べる。
+            var baseType = source.BaseType!;
+            return baseType.AllInterfaces.Any(x =>
+                x.ToDisplayString() == "System.IComparable"
+                || x.OriginalDefinition.ToDisplayString() == "System.IComparable<T>"
             );
+        }
 
         /// <summary>
         ///     コンストラクタ XML ドキュメント例外説明
         /// </summary>
-        /// <param name="workState">ワーク状態</param>
         /// <returns>コード文字列情報</returns>
         private protected abstract SourceFormatTargetBlock SourceFormatTargetsConstructorException(
-            WorkState workState
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
         );
 
         /// <summary>
         ///     コンストラクタ本体ソースコード
         /// </summary>
-        /// <param name="workState">ワーク状態</param>
         /// <returns>コード文字列情報</returns>
         private protected abstract SourceFormatTargetBlock SourceFormatTargetsConstructorBody(
-            WorkState workState
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
         );
 
         /// <summary>
         ///     Object 基本メソッドオーバーライド要否
         /// </summary>
-        /// <param name="workState">ワーク状態</param>
         /// <returns><see cref="object"/> の基本メソッドを継承する場合 <see langword="true"/></returns>
-        private protected virtual bool IsOverrideBasicMethods(WorkState workState)
-            => !workState.CurrentTypeDefinitionInfo.IsRecord
-               && bool.Parse(workState.PropertyValues[MyAttr.OverrideBasicMethods.Name]!);
+        private protected virtual bool IsOverrideBasicMethods(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
+            => !source.IsRecord
+               && (selfAttributeData.GetPropertyDataRecursive<bool?>(MyAttr.OverrideBasicMethods.Name) ?? false);
 
         /// <summary>
         ///     public static property 定義コード
         /// </summary>
-        /// <param name="workState">ワーク状態</param>
         /// <returns>ソースコード文字列情報</returns>
         private protected virtual SourceFormatTargetBlock SourceFormatTargetsPublicStaticProperties(
-            WorkState workState
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
         )
             => Array.Empty<SourceFormatTarget>();
 
         /// <summary>
         ///     クラス定義本体拡張コード
         /// </summary>
-        /// <param name="workState">ワーク状態</param>
         /// <returns>ソースコード文字列情報</returns>
         private protected virtual SourceFormatTargetBlock SourceFormatTargetsExtendBody(
-            WorkState workState
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
         )
             => Array.Empty<SourceFormatTarget>();
 
         /// <summary>
         ///     ソースコードカスタマイズ用処理を取得する。
         /// </summary>
-        /// <param name="typeDefinitionInfo">型定義情報</param>
         /// <returns><see cref="ISourceCustomizer"/> インスタンス</returns>
-        private static ISourceCustomizer GetSourceCustomizer(TypeDefinitionInfo typeDefinitionInfo)
+        private static ISourceCustomizer GetSourceCustomizer(
+            INamedTypeSymbol source
+        )
         {
-            if (typeDefinitionInfo.IsStruct)
+            if (source.TypeKind == TypeKind.Struct)
             {
                 return StructCustomize.Instance;
             }
@@ -325,20 +427,25 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues.Abstr
         /// <summary>
         ///     実装インタフェース宣言ソース文字列を取得する。
         /// </summary>
-        /// <param name="className">クラス名</param>
-        /// <param name="workState">ワーク情報</param>
         /// <returns>ソースコード文字列</returns>
-        private string GetImplementInterfaceSentence(string className, WorkState workState)
+        private string GetImplementInterfaceSentence(
+            string className,
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
             return new[]
             {
-                IsImplementEquatable(workState)
+                IsImplementEquatable(semanticModel, typeDecl, source, selfAttributeData, logger)
                     ? $"System.IEquatable<{className}>"
                     : null,
-                IsImplementFormattable(workState)
+                IsImplementFormattable(semanticModel, typeDecl, source, selfAttributeData, logger)
                     ? "System.IFormattable"
                     : null,
-                IsImplementComparable(workState)
+                IsImplementComparable(semanticModel, typeDecl, source, selfAttributeData, logger)
                     ? $"System.IComparable<{className}?>"
                     : null,
             }.JoinWithoutEmpty(",");

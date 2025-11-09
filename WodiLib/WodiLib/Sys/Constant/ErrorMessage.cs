@@ -7,6 +7,7 @@
 // ========================================
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace WodiLib.Sys
@@ -76,7 +77,7 @@ namespace WodiLib.Sys
         /// <returns>エラーメッセージ</returns>
         public static string NotMatch(string itemName, IntOrStr item)
         {
-            return $"{itemName}は {item} と一致する必要があります。";
+            return $"{itemName}は {item.ToValueString()} と一致する必要があります。";
         }
 
         /// <summary>
@@ -87,7 +88,7 @@ namespace WodiLib.Sys
         /// <returns>エラーメッセージ</returns>
         public static string NotMatch(string itemName, IEnumerable<IntOrStr> items)
         {
-            return $"{itemName}は [{string.Join(", ", items)}] のいずれかと一致する必要があります。";
+            return $"{itemName}は [{string.Join(", ", items.Select(item => item.ToValueString()))}] のいずれかと一致する必要があります。";
         }
 
         /// <summary>

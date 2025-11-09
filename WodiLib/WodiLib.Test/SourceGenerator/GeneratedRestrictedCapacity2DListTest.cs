@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
 using WodiLib.Test.Tools;
@@ -18,29 +17,12 @@ namespace WodiLib.Test.SourceGenerator
      * でテストを行う。自動生成した個別のクラスでは行わない。
      */
     [TestFixture]
-    public class GenerateRestrictedCapacity2DListTest
+    public class GenerateRestrictedCapacity2DListTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
-        private static PropertyTestHelper propertyTestHelper = null!;
-        private static ConstructorTestHelper constructorTestHelper = null!;
-        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
-        private static ImpureActionTestHelper impureActionTestHelper = null!;
-        private static ItemEqualsTestHelper itemEqualsTestHelper = null!;
-        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
-
-            propertyTestHelper = new PropertyTestHelper(logger);
-            constructorTestHelper = new ConstructorTestHelper(logger);
-            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
-            impureActionTestHelper = new ImpureActionTestHelper(logger);
-            itemEqualsTestHelper = new ItemEqualsTestHelper(logger);
-            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
+            InitializeTestHelpers();
         }
 
         #region Constants
@@ -153,13 +135,13 @@ namespace WodiLib.Test.SourceGenerator
 
         #endregion
 
-        #region Copy
+        #region SettingsDto
 
         /// <summary>
         ///     コピーコンストラクタが正常に終了すること
         /// </summary>
         [Test]
-        public static void ConstructorTest_Copy_Success()
+        public static void ConstructorTest_SettingsDto_Success()
         {
             var settings = CreateSettingsDto(3, 5);
             var src = new StubRestrictedCapacity2DList(settings);
@@ -284,7 +266,7 @@ namespace WodiLib.Test.SourceGenerator
         public static void ItemEqualsTest_ReadOnlyModel()
         {
             var left = new StubRestrictedCapacity2DList(CreateSettingsDto());
-            var right = new ReadOnlyStubRestrictedCapacity2DList(CreateSettingsDto());
+            var right = new ReadOnlyStubRestrictedCapacity2DList(new StubRestrictedCapacity2DList(CreateSettingsDto()));
             itemEqualsTestHelper.ItemEquals(
                 left,
                 right,
@@ -297,13 +279,13 @@ namespace WodiLib.Test.SourceGenerator
         #region FixedLengthList
 
         /// <summary>
-        ///     読取専用クラスとの比較処理が実装されていること。
+        ///     容量固定クラスとの比較処理が実装されていること。
         /// </summary>
         [Test]
         public static void ItemEqualsTest_FixedLengthList()
         {
             var left = new StubRestrictedCapacity2DList(CreateSettingsDto());
-            var right = new FixedStubRestrictedCapacity2DList(CreateSettingsDto());
+            var right = new FixedStubRestrictedCapacity2DList(new StubRestrictedCapacity2DList(CreateSettingsDto()));
             itemEqualsTestHelper.ItemEquals(
                 left,
                 right,
@@ -588,7 +570,7 @@ namespace WodiLib.Test.SourceGenerator
             };
         }
 
-        private static StubRestrictedCapacityListSettings CreateRowSettingsDto(int rowIndex, int columnLength)
+        private static IStubRestrictedCapacityListSettings CreateRowSettingsDto(int rowIndex, int columnLength)
         {
             return new StubRestrictedCapacityListSettings(
                 columnLength.Iterate(colIndex => CreateItemSettingsDto(rowIndex, colIndex)
@@ -600,7 +582,7 @@ namespace WodiLib.Test.SourceGenerator
             };
         }
 
-        private static StubModelSettings CreateItemSettingsDto(int rowIndex, int columnIndex)
+        private static IStubModelSettings CreateItemSettingsDto(int rowIndex, int columnIndex)
         {
             return new StubModelSettings()
             {

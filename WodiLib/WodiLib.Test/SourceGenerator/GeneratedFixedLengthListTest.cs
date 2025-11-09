@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
 using WodiLib.Test.Tools;
@@ -16,29 +15,12 @@ namespace WodiLib.Test.SourceGenerator
      * でテストを行う。自動生成した個別のクラスでは行わない。
      */
     [TestFixture]
-    public class GenerateFixedLengthListTest
+    public class GenerateFixedLengthListTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
-        private static PropertyTestHelper propertyTestHelper = null!;
-        private static ConstructorTestHelper constructorTestHelper = null!;
-        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
-        private static ImpureActionTestHelper impureActionTestHelper = null!;
-        private static ItemEqualsTestHelper itemEqualsTestHelper = null!;
-        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
-
-            propertyTestHelper = new PropertyTestHelper(logger);
-            constructorTestHelper = new ConstructorTestHelper(logger);
-            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
-            impureActionTestHelper = new ImpureActionTestHelper(logger);
-            itemEqualsTestHelper = new ItemEqualsTestHelper(logger);
-            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
+            InitializeTestHelpers();
         }
 
         #region Constants
@@ -79,7 +61,7 @@ namespace WodiLib.Test.SourceGenerator
             propertyTestHelper.PropertyGetSuccess(
                 instance,
                 getter: x => x.Tags,
-                getValueVerifier: new ValueVerifier<IList<string>>(actual =>
+                getValueVerifier: new ValueVerifier<IReadOnlyList<string>>(actual =>
                     {
                         CustomAssert.AreSequenceEquals(expected, actual);
                     }
@@ -147,15 +129,15 @@ namespace WodiLib.Test.SourceGenerator
 
         #endregion
 
-        #region Copy
+        #region SettingsDto
 
         /// <summary>
         ///     コピーコンストラクタが正常に終了すること
         /// </summary>
         [Test]
-        public static void ConstructorTest_Copy_Success()
+        public static void ConstructorTest_SettingsDto_Success()
         {
-            var settings = CreateSettingsDto(length: 3);
+            var settings = CreateSettingsDto();
             var src = new StubFixedLengthList(settings);
             constructorTestHelper.ConstructorSuccess(
                 factory: () => new StubFixedLengthList(src),
@@ -181,7 +163,7 @@ namespace WodiLib.Test.SourceGenerator
         [Test]
         public static void ToJsonStringTest_Success()
         {
-            var instance = new StubFixedLengthList(length: 1);
+            var instance = new StubFixedLengthList(length: 5);
             const string expected = "JSON RESULT";
             pureFunctionTestHelper.PureFuncSuccess(
                 instance,
@@ -201,7 +183,7 @@ namespace WodiLib.Test.SourceGenerator
         [Test]
         public static void SetNowStringValue_Success()
         {
-            var instance = new StubFixedLengthList(length: 3);
+            var instance = new StubFixedLengthList(length: 5);
             impureActionTestHelper.ImpureActionSuccess(
                 instance,
                 target => target.SetNowStringValue(),
@@ -223,8 +205,8 @@ namespace WodiLib.Test.SourceGenerator
         [Test]
         public static void ItemEqualsTest_Settings_True_EqualityObject()
         {
-            var left = new StubFixedLengthList(CreateSettingsDto(length: 3));
-            var right = CreateSettingsDto(length: 3);
+            var left = new StubFixedLengthList(CreateSettingsDto());
+            var right = CreateSettingsDto();
             itemEqualsTestHelper.ItemEquals(
                 left,
                 right,
@@ -253,14 +235,14 @@ namespace WodiLib.Test.SourceGenerator
         [Test]
         public static void ItemEqualsTest_Settings_False_DifferElement()
         {
-            var left = new StubFixedLengthList(CreateSettingsDto(length: 3))
+            var left = new StubFixedLengthList(CreateSettingsDto())
             {
                 [1] =
                 {
                     StringValue = "Diff Value",
                 },
             };
-            IStubFixedLengthListSettings right = CreateSettingsDto(length: 3);
+            IStubFixedLengthListSettings right = CreateSettingsDto();
             itemEqualsTestHelper.ItemEquals(
                 left,
                 right,
@@ -278,8 +260,8 @@ namespace WodiLib.Test.SourceGenerator
         [Test]
         public static void ItemEqualsTest_ReadOnlyModel()
         {
-            var left = new StubFixedLengthList(CreateSettingsDto(length: 4));
-            var right = new ReadOnlyStubFixedLengthList(CreateSettingsDto(length: 4));
+            var left = new StubFixedLengthList(CreateSettingsDto());
+            var right = new ReadOnlyStubFixedLengthList(new StubFixedLengthList(CreateSettingsDto()));
             itemEqualsTestHelper.ItemEquals(
                 left,
                 right,
@@ -297,8 +279,8 @@ namespace WodiLib.Test.SourceGenerator
         [Test]
         public static void ItemEqualsTest_EditableModel()
         {
-            var left = new StubFixedLengthList(CreateSettingsDto(length: 4));
-            var right = new StubFixedLengthList(CreateSettingsDto(length: 4));
+            var left = new StubFixedLengthList(CreateSettingsDto());
+            var right = new StubFixedLengthList(CreateSettingsDto());
             itemEqualsTestHelper.ItemEquals(
                 left,
                 right,
@@ -316,7 +298,7 @@ namespace WodiLib.Test.SourceGenerator
         [Test]
         public static void ItemEqualsTest_Object()
         {
-            var left = new StubFixedLengthList(CreateSettingsDto(length: 4));
+            var left = new StubFixedLengthList(CreateSettingsDto());
             object right = "CompareTest";
             itemEqualsTestHelper.ItemEquals(
                 left,
@@ -342,17 +324,19 @@ namespace WodiLib.Test.SourceGenerator
 
         #region テスト用Settings作成
 
-        private static StubFixedLengthListSettings CreateSettingsDto(int length = 4)
+        private static StubFixedLengthListSettings CreateSettingsDto()
         {
-            return new StubFixedLengthListSettings(length.Iterate(CreateItemSettingsDto).ToList())
+            return new StubFixedLengthListSettings(
+                StubFixedLengthList.Capacity.Iterate(CreateItemSettingsDto).ToList()
+            )
             {
-                Tags = new List<string>() { "Tag1", "Tag2" },
+                Tags = new List<string> { "Tag1", "Tag2" },
             };
         }
 
-        private static StubModelSettings CreateItemSettingsDto(int index)
+        private static IStubModelSettings CreateItemSettingsDto(int index)
         {
-            return new StubModelSettings()
+            return new StubModelSettings
             {
                 StringValue = index.ToString(),
             };

@@ -19,8 +19,8 @@ namespace WodiLib.SourceGenerator.SumType
     /// <summary>
     ///     共用型SourceGenerator
     /// </summary>
-    [Generator]
-    public class Generator : ISourceGenerator
+    // [Generator]
+    public class Generator // : ISourceGenerator
     {
         private const string NoFieldName = "genericNo";
         private const string ValueFieldName = "genericValue";

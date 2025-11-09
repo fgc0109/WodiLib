@@ -174,7 +174,7 @@ namespace WodiLib.Test.Tools
                 }
 
                 // プロパティ変更通知が発火していないこと
-                Assert.AreEqual(0, changedPropertyList.Count == 0);
+                Assert.AreEqual(0, changedPropertyList.Count);
 
                 return;
             }

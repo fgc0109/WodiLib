@@ -31,7 +31,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                     $"/// <summary>",
                     $"/// {__}{modelInfo.Description}設定DTO",
                     $"/// </summary>",
-                    $"{modelInfo.Accessibility} {modelInfo.AbstractKeyword}partial record {modelInfo.SettingsDtoInfo.SettingsDtoName}(IReadOnlyList<{modelInfo.ElementSettingsType}> Settings) : {modelInfo.SettingsDtoInfo.ExtendsSettingsDto}",
+                    $"{modelInfo.Accessibility} {modelInfo.AbstractKeyword}partial record {modelInfo.SettingsDtoInfo.SettingsDtoName}(IList<{modelInfo.ElementSettingsType}> Settings) : {modelInfo.SettingsDtoInfo.ExtendsSettingsDto}",
                     $"{{",
                 },
                 SourceTextFormatter.Format(

@@ -7,8 +7,11 @@
 // ========================================
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace WodiLib.Sys.Collections
@@ -23,22 +26,88 @@ namespace WodiLib.Sys.Collections
     ///         それ以外にもいくつかメソッドを追加している。
     ///     </para>
     ///     <para>
-    ///         <typeparamref name="TReadOnlyElement"/> が変更通知を行うクラスだった場合、
+    ///         <typeparamref name="TElementImpl"/> が変更通知を行うクラスだった場合、
     ///         通知を受け取ると自身の "Items[]" プロパティ変更通知を行う。
     ///     </para>
     /// </remarks>
-    /// <typeparam name="TEditableElement">リスト要素型（編集可能）</typeparam>
-    /// <typeparam name="TReadOnlyElement">リスト要素型（読取専用）</typeparam>
-    /// <typeparam name="TElementSettings">リスト内包型の入力パラメータ型</typeparam>
-    internal class ExtendedList<TEditableElement, TReadOnlyElement, TElementSettings> :
-        FixedLengthList<TEditableElement, TReadOnlyElement, TElementSettings>,
-        IExtendedList<TEditableElement, TReadOnlyElement, TElementSettings>,
-        IEqualityComparable<ExtendedList<TEditableElement, TReadOnlyElement, TElementSettings>>
-        where TEditableElement : TReadOnlyElement, TElementSettings
-        where TReadOnlyElement : TElementSettings
+    /// <typeparam name="TListSettings">リストの入力パラメータ型</typeparam>
+    /// <typeparam name="TElementImpl">リスト要素型</typeparam>
+    /// <typeparam name="TElementSettings">リスト要素の入力パラメータ型</typeparam>
+    internal class ExtendedList<TListSettings, TElementImpl, TElementSettings> :
+        ModelBase,
+        IExtendedList<TElementImpl, TElementSettings>,
+        IEnumerable<TElementImpl>,
+        INotifyCollectionChanged,
+        IEqualityComparable<ExtendedList<TListSettings, TElementImpl, TElementSettings>>
+        where TListSettings : IListSettings<TElementSettings>
+        where TElementImpl : TElementSettings
         where TElementSettings : notnull
     {
+        #region Delegates
+
+        #region public
+
+        /// <summary>
+        ///     入力パラメータからリスト内部で保持するインスタンスを生成する処理
+        /// </summary>
+        public delegate TElementImpl BuildItemFromSettingsDelegate(int index, TElementSettings settings);
+
+        #endregion
+
+        #endregion
+
+        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Events
+
+        #region public
+
+        /// <inheritdoc/>
+        public event NotifyCollectionChangedEventHandler? CollectionChanged
+        {
+            add => collectionChanged += value;
+            remove => collectionChanged -= value;
+        }
+
+        #endregion
+
+        #endregion
+
+        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Properties
+
+        #region public
+
+        /// <inheritdoc/>
+        public TElementImpl this[int index]
+        {
+            [Pure] get => Get(index);
+            set => Set(index, value);
+        }
+
+        /// <inheritdoc/>
+        public int Count => Items.Count;
+
+        #endregion
+
+        #region private protected
+
+        private protected SimpleList<TElementImpl> Items { get; }
+
+        private protected IWodiLibListValidator<TListSettings, TElementSettings>? Validator { get; }
+
+        #endregion
+
+        #endregion
+
+        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
         #region Fields
+
+        private protected BuildItemFromSettingsDelegate BuildItemFromSettings { get; }
+
+        private event NotifyCollectionChangedEventHandler? collectionChanged;
 
         private readonly int minCapacity;
         private readonly int maxCapacity;
@@ -60,15 +129,25 @@ namespace WodiLib.Sys.Collections
         /// <param name="validator">各種引数検証バリデーター実装</param>
         /// <param name="buildItemFromSettings">入力パラメータからリスト内部で保持するインスタンスを生成する処理</param>
         internal ExtendedList(
-            SimpleList<TEditableElement> itemsImpl,
+            SimpleList<TElementImpl> itemsImpl,
             int minCapacity,
             int maxCapacity,
-            IWodiLibListValidator<TElementSettings>? validator,
+            IWodiLibListValidator<TListSettings, TElementSettings>? validator,
             BuildItemFromSettingsDelegate buildItemFromSettings
-        ) : base(itemsImpl, validator, buildItemFromSettings)
+        )
         {
+            ThrowHelper.ValidateArgumentNotNull(itemsImpl is null, nameof(itemsImpl));
+
+            BuildItemFromSettings = buildItemFromSettings;
+
             this.maxCapacity = maxCapacity;
             this.minCapacity = minCapacity;
+
+            Items = itemsImpl;
+            Validator = validator;
+
+            PropagatePropertyChangeEvent(Items);
+            PropagateCollectionChangeEvent(Items);
         }
 
         #endregion
@@ -84,24 +163,66 @@ namespace WodiLib.Sys.Collections
         #region Capacity
 
         /// <inheritdoc/>
+        [Pure]
         public int GetMaxCapacity() => maxCapacity;
 
         /// <inheritdoc/>
+        [Pure]
         public int GetMinCapacity() => minCapacity;
+
+        #endregion
+
+        #region IEnumerable
+
+        /// <inheritdoc/>
+        [Pure]
+        public IEnumerator<TElementImpl> GetEnumerator()
+            => Items.GetEnumerator();
 
         #endregion
 
         #region CRUD
 
         /// <inheritdoc/>
-        public TEditableElement Add(TElementSettings settings)
+        [Pure]
+        public TElementImpl Get(int index)
+        {
+            ValidateGet(index);
+            return GetInternal(index);
+        }
+
+        /// <inheritdoc/>
+        [Pure]
+        public IEnumerable<TElementImpl> GetRange(int index, int count)
+        {
+            ValidateGetRange(index, count);
+            return GetRangeInternal(index, count);
+        }
+
+        /// <inheritdoc/>
+        public TElementImpl Set(int index, TElementSettings settings)
+        {
+            ValidateSet(index, settings);
+            return SetInternal(index, settings);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TElementImpl> SetRange(int index, IEnumerable<TElementSettings>? settings)
+        {
+            var settingsArray = settings as TElementSettings[] ?? settings?.ToArray()!;
+            ValidateSetRange(index, settingsArray);
+            return SetRangeInternal(index, settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public TElementImpl Add(TElementSettings settings)
         {
             ValidateAdd(settings);
             return AddInternal(settings);
         }
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> AddRange(IEnumerable<TElementSettings> settings)
+        public IEnumerable<TElementImpl> AddRange(IEnumerable<TElementSettings> settings)
         {
             var settingsArray = settings as TElementSettings[] ?? settings.ToArray();
             ValidateAddRange(settingsArray);
@@ -109,14 +230,14 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <inheritdoc/>
-        public TEditableElement Insert(int index, TElementSettings settings)
+        public TElementImpl Insert(int index, TElementSettings settings)
         {
             ValidateInsert(index, settings);
             return InsertInternal(index, settings);
         }
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> InsertRange(int index, IEnumerable<TElementSettings> settings)
+        public IEnumerable<TElementImpl> InsertRange(int index, IEnumerable<TElementSettings> settings)
         {
             var settingsArray = settings as TElementSettings[] ?? settings.ToArray();
             ValidateInsertRange(index, settingsArray);
@@ -124,7 +245,7 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> Overwrite(int index, IEnumerable<TElementSettings> settings)
+        public IEnumerable<TElementImpl> Overwrite(int index, IEnumerable<TElementSettings> settings)
         {
             var settingsArray = settings as TElementSettings[] ?? settings.ToArray();
             ValidateOverwrite(index, settingsArray);
@@ -132,57 +253,85 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <inheritdoc/>
-        public TEditableElement Remove(int index)
+        public void Move(int oldIndex, int newIndex)
+        {
+            ValidateMove(oldIndex, newIndex);
+            MoveInternal(oldIndex, newIndex);
+        }
+
+        /// <inheritdoc/>
+        public void MoveRange(int oldIndex, int newIndex, int count)
+        {
+            ValidateMoveRange(oldIndex, newIndex, count);
+            MoveRangeInternal(oldIndex, newIndex, count);
+        }
+
+        /// <inheritdoc/>
+        public TElementImpl Remove(int index)
         {
             ValidateRemove(index);
             return RemoveInternal(index);
         }
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> RemoveRange(int index, int count)
+        public IEnumerable<TElementImpl> RemoveRange(int index, int count)
         {
             ValidateRemoveRange(index, count);
             return RemoveRangeInternal(index, count);
         }
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> AdjustLength(int length)
+        public IEnumerable<TElementImpl> AdjustLength(int length)
         {
             ValidateAdjustLength(length);
             return AdjustLengthInternal(length);
         }
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> AdjustLengthIfShort(int length)
+        public IEnumerable<TElementImpl> AdjustLengthIfShort(int length)
         {
             ValidateAdjustLength(length);
             if (Count >= length)
             {
-                return Array.Empty<TEditableElement>();
+                return Array.Empty<TElementImpl>();
             }
 
             return AdjustLengthInternal(length);
         }
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> AdjustLengthIfLong(int length)
+        public IEnumerable<TElementImpl> AdjustLengthIfLong(int length)
         {
             ValidateAdjustLength(length);
             if (Count <= length)
             {
-                return Array.Empty<TEditableElement>();
+                return Array.Empty<TElementImpl>();
             }
 
             return AdjustLengthInternal(length);
         }
 
-        /// <inheritdoc
-        ///     cref="IExtendedList{TEditableElement,TReadOnlyElement,TElementSettings}.Reset(System.Collections.Generic.IEnumerable{TElementSettings})"/>
-        public new IEnumerable<TEditableElement> Reset(IEnumerable<TElementSettings> settings)
+        /// <inheritdoc/>
+        public IEnumerable<TElementImpl> Reset(IEnumerable<TElementSettings> settings)
         {
             var settingsArray = settings as TElementSettings[] ?? settings.ToArray();
             ValidateReset(settingsArray);
             return ResetInternal(settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TElementImpl> ResetStrict(IEnumerable<TElementSettings> settings)
+        {
+            var settingsArray = settings as TElementSettings[] ?? settings.ToArray();
+            ValidateResetStrict(settingsArray);
+            return ResetStrictInternal(settingsArray);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<TElementImpl> Reset()
+        {
+            ValidateReset();
+            return ResetInternal();
         }
 
         /// <inheritdoc/>
@@ -195,6 +344,22 @@ namespace WodiLib.Sys.Collections
         #endregion
 
         #region Validation
+
+        /// <inheritdoc/>
+        public void ValidateGet(int index)
+            => Validator?.Get((nameof(index), index), ("count", 1));
+
+        /// <inheritdoc/>
+        public void ValidateGetRange(int index, int count)
+            => Validator?.Get((nameof(index), index), (nameof(count), count));
+
+        /// <inheritdoc/>
+        public void ValidateSet(int index, TElementSettings settings)
+            => Validator?.Set((nameof(index), index), (nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateSetRange(int index, IEnumerable<TElementSettings> settings)
+            => Validator?.Set((nameof(index), index), (nameof(settings), settings));
 
         /// <inheritdoc/>
         public void ValidateAdd(TElementSettings settings)
@@ -217,6 +382,14 @@ namespace WodiLib.Sys.Collections
             => Validator?.Overwrite((nameof(index), index), (nameof(settings), settings));
 
         /// <inheritdoc/>
+        public void ValidateMove(int oldIndex, int newIndex)
+            => Validator?.Move((nameof(oldIndex), oldIndex), (nameof(newIndex), newIndex));
+
+        /// <inheritdoc/>
+        public void ValidateMoveRange(int oldIndex, int newIndex, int count)
+            => Validator?.Move((nameof(oldIndex), oldIndex), (nameof(newIndex), newIndex), (nameof(count), count));
+
+        /// <inheritdoc/>
         public void ValidateRemove(int index)
             => Validator?.Remove((nameof(index), index));
 
@@ -228,9 +401,17 @@ namespace WodiLib.Sys.Collections
         public void ValidateAdjustLength(int length)
             => Validator?.AdjustLength((nameof(length), length));
 
-        /// <inheritdoc cref="Reset"/>
-        public new void ValidateReset(IEnumerable<TElementSettings> settings)
+        /// <inheritdoc/>
+        public void ValidateReset(IEnumerable<TElementSettings> settings)
             => Validator?.Reset((nameof(settings), settings));
+
+        /// <inheritdoc/>
+        public void ValidateResetStrict(IEnumerable<TElementSettings> settings)
+            => Validator?.Reset((nameof(settings), settings), canChangeSize: false);
+
+        /// <inheritdoc/>
+        public void ValidateReset()
+            => Validator?.Reset();
 
         /// <inheritdoc/>
         public void ValidateClear()
@@ -241,36 +422,64 @@ namespace WodiLib.Sys.Collections
         #region CRUD Core
 
         /// <inheritdoc/>
-        public TEditableElement AddInternal(TElementSettings settings)
+        [Pure]
+        public TElementImpl GetInternal(int index)
+            => Items.Get(index, 1).First();
+
+        /// <inheritdoc/>
+        [Pure]
+        public IEnumerable<TElementImpl> GetRangeInternal(int index, int count)
+            => Items.Get(index, count);
+
+        /// <inheritdoc/>
+        public TElementImpl SetInternal(int index, TElementSettings settings)
+            => Items.Set(index, BuildItemFromSettings(index, settings)).First();
+
+        /// <inheritdoc/>
+        public IEnumerable<TElementImpl> SetRangeInternal(int index, IEnumerable<TElementSettings> settings)
+            => Items.Set(
+                index,
+                settings.Select((dto, i) => BuildItemFromSettings(index + i, dto)).ToArray()
+            );
+
+        /// <inheritdoc/>
+        public TElementImpl AddInternal(TElementSettings settings)
             => Items.Add(BuildItemFromSettings(Items.Count, settings)).First();
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> AddRangeInternal(IEnumerable<TElementSettings> settings)
+        public IEnumerable<TElementImpl> AddRangeInternal(IEnumerable<TElementSettings> settings)
             => Items.Add(
                 settings.Select((setting, i) => BuildItemFromSettings(Items.Count + i, setting)).ToArray()
             );
 
         /// <inheritdoc/>
-        public TEditableElement InsertInternal(int index, TElementSettings settings)
+        public TElementImpl InsertInternal(int index, TElementSettings settings)
             => Items.Insert(index, BuildItemFromSettings(index, settings)).First();
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> InsertRangeInternal(int index, IEnumerable<TElementSettings> settings)
+        public IEnumerable<TElementImpl> InsertRangeInternal(int index, IEnumerable<TElementSettings> settings)
             => Items.Insert(
                 index,
                 settings.Select((setting, i) => BuildItemFromSettings(index + i, setting)).ToArray()
             );
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> OverwriteInternal(int index, IEnumerable<TElementSettings> settings)
+        public IEnumerable<TElementImpl> OverwriteInternal(int index, IEnumerable<TElementSettings> settings)
             => Items.Overwrite(
                 index,
                 settings.Select((setting, i) => BuildItemFromSettings(index + i, setting)).ToArray()
             );
 
+        /// <inheritdoc/>
+        public void MoveInternal(int oldIndex, int newIndex)
+            => Items.Move(oldIndex, newIndex);
 
         /// <inheritdoc/>
-        public TEditableElement RemoveInternal(int index)
+        public void MoveRangeInternal(int oldIndex, int newIndex, int count)
+            => Items.Move(oldIndex, newIndex, count);
+
+        /// <inheritdoc/>
+        public TElementImpl RemoveInternal(int index)
         {
             var removeItem = Items[index];
             Items.RemoveAt(index);
@@ -278,18 +487,28 @@ namespace WodiLib.Sys.Collections
         }
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> RemoveRangeInternal(int index, int count)
+        public IEnumerable<TElementImpl> RemoveRangeInternal(int index, int count)
             => Items.Remove(index, count);
 
         /// <inheritdoc/>
-        public IEnumerable<TEditableElement> AdjustLengthInternal(int length)
+        public IEnumerable<TElementImpl> AdjustLengthInternal(int length)
             => Items.Adjust(length);
 
-        /// <inheritdoc cref="Reset"/>
-        public new IEnumerable<TEditableElement> ResetInternal(IEnumerable<TElementSettings> settings)
+        /// <inheritdoc/>
+        public IEnumerable<TElementImpl> ResetInternal(IEnumerable<TElementSettings> settings)
             => Items.Reset(
                 settings.Select((setting, i) => BuildItemFromSettings(i, setting)).ToArray()
             );
+
+        /// <inheritdoc/>
+        public IEnumerable<TElementImpl> ResetStrictInternal(IEnumerable<TElementSettings> settings)
+            => Items.Reset(
+                settings.Select((setting, i) => BuildItemFromSettings(i, setting)).ToArray()
+            );
+
+        /// <inheritdoc/>
+        public IEnumerable<TElementImpl> ResetInternal()
+            => Items.Reset(Items.Count);
 
         /// <inheritdoc/>
         public void ClearInternal()
@@ -298,8 +517,49 @@ namespace WodiLib.Sys.Collections
         #endregion
 
         /// <inheritdoc/>
-        public bool ItemEquals(ExtendedList<TEditableElement, TReadOnlyElement, TElementSettings>? other)
-            => ItemEquals((ReadOnlyExtendedList<TEditableElement, TReadOnlyElement, TElementSettings>?)other);
+        [Pure]
+        public bool ItemEquals(ExtendedList<TListSettings, TElementImpl, TElementSettings>? other)
+        {
+            if (ReferenceEquals(other, this)) return true;
+            if (ReferenceEquals(other, null)) return false;
+
+            return Items.SequenceEqual(
+                other.Items,
+                EqualityComparerFactory.Create<TElementImpl>()
+            );
+        }
+
+        /// <inheritdoc/>
+        [Pure]
+        public bool ItemEquals(object? other)
+            => ItemEquals(
+                other as ExtendedList<TListSettings, TElementImpl, TElementSettings>
+            );
+
+        #endregion
+
+        #region Interface Implicit
+
+        #region IEnumerable
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        #endregion
+
+        #endregion
+
+        #region private
+
+        /// <summary>
+        ///     <see cref="SimpleList{T}"/> が通知した
+        ///     <see cref="INotifyCollectionChanged"/> イベントを
+        ///     自身のイベントとして通知する。
+        /// </summary>
+        /// <param name="target">対象</param>
+        private void PropagateCollectionChangeEvent(SimpleList<TElementImpl> target)
+        {
+            target.CollectionChanged += (_, args) => { collectionChanged?.Invoke(this, args); };
+        }
 
         #endregion
 

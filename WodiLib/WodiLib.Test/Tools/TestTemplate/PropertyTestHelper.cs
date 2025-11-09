@@ -373,7 +373,7 @@ namespace WodiLib.Test.Tools
             {
                 // 値が変化している場合、
                 //      プロパティ変更通知が発火していること（対象プロパティのみチェック）
-                Assert.AreNotEqual(0, changedPropertyList.Count);
+                Assert.AreEqual(1, changedPropertyList.Count);
                 Assert.AreEqual(
                     propertyName,
                     changedPropertyList[0]

@@ -14,7 +14,7 @@ using WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize;
 namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.Attributes
 {
     /// <summary>
-    ///     容量固定クラスのプロパティとして抽出する対象に付与する属性
+    ///     容量固定クラスに抽出する対象に付与する属性
     /// </summary>
     internal class FixedLengthListPropertyAttribute : InitializeAttributeSourceAddable
     {
@@ -26,9 +26,28 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
 
         /// <inheritdoc/>
         public override string Summary
-            => "容量固定クラスとして抽出する対象に付与する属性";
+            => "容量固定クラスに抽出する対象に付与する属性";
 
         public override bool AllowMultiple => false;
+
+        public static readonly PropertyInfo Accessibility = new()
+        {
+            Name = nameof(Accessibility),
+            Type = typeof(string).FullName!,
+            Summary = "アクセス修飾子",
+            Remarks = "デフォルト値: \"public\"",
+            DefaultValue = "\"public\"",
+        };
+
+        public static readonly PropertyInfo SetterAccessibility = new()
+        {
+            Name = nameof(SetterAccessibility),
+            Type = typeof(string).FullName!,
+            Summary = "Setterのアクセス修飾子",
+            Remarks = "デフォルト値: \"public\"<br/>"
+                      + "\"NONE\" にすると Setter を設けない。",
+            DefaultValue = "\"public\"",
+        };
 
         public static readonly PropertyInfo ReturnType = new()
         {
@@ -36,16 +55,6 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             Type = typeof(Type).FullName!,
             Summary = "プロパティが返す型。null の場合、元となるプロパティと同じ型を返す",
             DefaultValue = "null",
-        };
-
-        public static readonly PropertyInfo Accessibility = new()
-        {
-            Name = nameof(Accessibility),
-            Type = typeof(string).FullName!,
-            Summary = "setterのアクセス修飾子",
-            Remarks = "デフォルト値: \"public\"<br/>\r\n"
-                      + "\"NONE\" にすると setter を設けない。",
-            DefaultValue = "\"public\"",
         };
 
         /// <inheritdoc/>
@@ -56,8 +65,9 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
         public override IEnumerable<PropertyInfo> Properties()
             => new[]
             {
-                ReturnType,
                 Accessibility,
+                SetterAccessibility,
+                ReturnType,
             };
 
         private FixedLengthListPropertyAttribute()

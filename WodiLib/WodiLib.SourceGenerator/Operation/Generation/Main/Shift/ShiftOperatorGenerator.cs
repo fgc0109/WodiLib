@@ -9,7 +9,9 @@
 using System;
 using System.Linq;
 using System.Text;
-using WodiLib.SourceGenerator.Core.Dtos;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using WodiLib.SourceGenerator.Core;
 using WodiLib.SourceGenerator.Core.Extensions;
 using WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
@@ -25,35 +27,42 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Shift
     {
         public override InitializeAttributeSourceAddable TargetAttribute => MyAttr.Instance;
 
-        /// <inheritDoc/>
-        private protected override string HintName(WorkState workState)
+        private protected override string HintName(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
-            var thisType = workState.FullName;
+            var operationCode = selfAttributeData.GetPropertyData<int>(MyAttr.Operation.Name);
 
-            var operationCode = workState.PropertyValues[MyAttr.Operation.Name]!;
+            var operationCodeHex = $"{operationCode:X}";
 
-            var operationCodeHex = $"{int.Parse(operationCode):X}";
-
-            return $"{thisType.CompressNameSpace()}.ShiftOperation0x{operationCodeHex}";
+            return $"{source.FullName().CompressNameSpace()}.ShiftOperation0x{operationCodeHex}";
         }
 
-        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(WorkState workState)
+        private protected override SourceFormatTargetBlock GenerateTypeDefinitionSource(
+            SemanticModel semanticModel,
+            BaseTypeDeclarationSyntax typeDecl,
+            INamedTypeSymbol source,
+            AttributeData selfAttributeData,
+            ILogger logger
+        )
         {
-            var thisType = workState.PropertyValues.TargetSymbol?.Name ?? "";
-            var defInfo = workState.CurrentTypeDefinitionInfo;
+            var thisTypeName = source.ClassName();
 
-            var propValues = workState.PropertyValues;
-            var operation = propValues[MyAttr.Operation.Name]!;
-            var innerCastType = propValues[MyAttr.InnerCastType.Name]!;
-            var returnTypeCode = int.Parse(propValues[MyAttr.ReturnCodeType.Name]!);
+            var operation = selfAttributeData.GetPropertyData<int>(MyAttr.Operation.Name).ToString();
+            var innerCastType = selfAttributeData.GetPropertyData<INamedTypeSymbol>(MyAttr.InnerCastType.Name)!;
+            var returnTypeCode = selfAttributeData.GetPropertyData<int>(MyAttr.ReturnCodeType.Name);
 
-            var codeMaker = new OperationCodeMaker(thisType, innerCastType, returnTypeCode);
+            var codeMaker = new OperationCodeMaker(thisTypeName, innerCastType.FullName(), returnTypeCode);
 
             return SourceTextFormatter.Format(
                 "",
                 new SourceFormatTarget[]
                 {
-                    $"{DefinitionSource(defInfo)} {thisType}",
+                    $"{DefinitionSource(source)} {thisTypeName}",
                     $"{{",
                 },
                 SourceTextFormatter.Format(IndentSpace, OperationBlock(codeMaker, operation)),
@@ -67,26 +76,27 @@ namespace WodiLib.SourceGenerator.Operation.Generation.Main.Shift
         /// <summary>
         ///     定義宣言部のソースを生成する。
         /// </summary>
-        /// <param name="typeDefinitionInfo">型定義情報</param>
+        /// <param name="thisType">型情報</param>
         /// <returns>ソースコード文字列</returns>
-        private static string DefinitionSource(TypeDefinitionInfo typeDefinitionInfo)
+        private static string DefinitionSource(INamedTypeSymbol thisType)
         {
             var resultBuilder = new StringBuilder();
 
-            var accessibility = AccessibilityConverter.ConvertSourceText(typeDefinitionInfo.Accessibility);
+            var accessibility = AccessibilityConverter.ConvertSourceText(thisType.DeclaredAccessibility);
             resultBuilder.Append(accessibility);
             resultBuilder.Append(" partial ");
-            if (typeDefinitionInfo.IsClass)
+
+            if (thisType.IsRecord)
             {
-                resultBuilder.Append(" class ");
+                resultBuilder.Append("record");
             }
-            else if (typeDefinitionInfo.IsRecord)
+            else if (thisType.TypeKind == TypeKind.Class)
             {
-                resultBuilder.Append(" record ");
+                resultBuilder.Append("class");
             }
             else
             {
-                resultBuilder.Append(" struct ");
+                resultBuilder.Append("struct");
             }
 
             return resultBuilder.ToString();

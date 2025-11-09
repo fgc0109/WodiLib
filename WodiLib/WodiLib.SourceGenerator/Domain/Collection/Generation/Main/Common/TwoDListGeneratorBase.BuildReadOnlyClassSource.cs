@@ -6,7 +6,7 @@
 // see LICENSE file
 // ========================================
 
-using System.Collections.Generic;
+using System.Linq;
 using WodiLib.SourceGenerator.Core.SourceBuilder;
 using WodiLib.SourceGenerator.ValueObject.Extensions;
 using static WodiLib.SourceGenerator.Core.SourceBuilder.SourceConstants;
@@ -26,7 +26,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"/// </summary>",
                 $"{modelInfo.Accessibility} {modelInfo.AbstractKeyword}partial class {modelInfo.ReadOnlyListInfo.ReadOnlyListClassName} : ModelBase,",
                 $"{__}{modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword},",
-                $"{__}IReadOnlyList<{modelInfo.ReadOnlyRowType}>,",
+                $"{__}IEnumerable<{modelInfo.ReadOnlyRowType}>,",
                 $"{__}INotifyCollectionChanged,",
                 $"{__}IEqualityComparable<{modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}>,",
                 $"{__}IEqualityComparable<{modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword}>,",
@@ -38,19 +38,19 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"{__}IDeepCloneable<{modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}>",
                 $"{{",
                 // Constants
-                BuildReadOnlyListConstantsSource(modelInfo),
+                BuildReadOnlyClassConstantsSource(modelInfo),
                 SourceFormatTargetBlock.Empty,
                 // Events
-                BuildEventSource(modelInfo),
-                SourceFormatTargetBlock.Empty,
-                // Constructor
-                BuildReadOnlyListConstructorsSource(modelInfo),
+                BuildReadOnlyClassEventSource(modelInfo),
                 SourceFormatTargetBlock.Empty,
                 // Properties
-                BuildReadOnlyListPropertiesSource(modelInfo),
+                BuildReadOnlyClassPropertiesSource(modelInfo),
+                SourceFormatTargetBlock.Empty,
+                // Constructor
+                BuildReadOnlyClassConstructorsSource(modelInfo),
                 SourceFormatTargetBlock.Empty,
                 // Methods
-                BuildReadOnlyListMethodsSource(modelInfo),
+                BuildReadOnlyClassMethodsSource(modelInfo),
                 SourceFormatTargetBlock.Empty,
                 // ItemEquals
                 BuildReadOnlyClassItemEqualsSource(modelInfo),
@@ -59,71 +59,29 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 BuildReadOnlyClassPropDeepCloneSource(modelInfo),
                 SourceFormatTargetBlock.Empty,
                 // Private Methods
-                BuildPrivateMethodSource(modelInfo),
+                BuildReadOnlyClassPrivateMethodSource(modelInfo),
+                SourceFormatTargetBlock.Empty,
+                // Settings Interface Implements
+                BuildReadOnlyClassSettingsInterfaceImplementsSource(modelInfo),
+                SourceFormatTargetBlock.Empty,
+                // Implicit Type Conversion Operator
+                BuildReadOnlyClassImplicitTypeConversionOperatorSource(modelInfo),
                 // class end
                 $"}}"
             );
         }
 
-        private static SourceFormatTargetBlock BuildReadOnlyListConstantsSource(
-            ModelInformation modelInfo
+        private static SourceFormatTargetBlock BuildReadOnlyClassConstantsSource(
+            ModelInformation _
         )
         {
-            var lines = new List<string>();
-
-            if (modelInfo.MaxRowCapacity == modelInfo.MinRowCapacity)
-            {
-                lines.AddRange(
-                    new[]
-                    {
-                        $"/// <summary>{modelInfo.RowLogicalName}容量</summary>",
-                        $"public static int {modelInfo.RowPhysicalName}Capacity => {modelInfo.MaxRowCapacity};",
-                    }
-                );
-            }
-            else
-            {
-                lines.AddRange(
-                    new[]
-                    {
-                        $"/// <summary>{modelInfo.RowLogicalName}容量最大値</summary>",
-                        $"public static int Max{modelInfo.RowPhysicalName}Capacity => {modelInfo.MaxRowCapacity};",
-                        $"/// <summary>{modelInfo.RowLogicalName}容量最小値</summary>",
-                        $"public static int Min{modelInfo.RowPhysicalName}Capacity => {modelInfo.MinRowCapacity};",
-                    }
-                );
-            }
-
-            if (modelInfo.MaxColumnCapacity == modelInfo.MinColumnCapacity)
-            {
-                lines.AddRange(
-                    new[]
-                    {
-                        $"/// <summary>{modelInfo.ColumnLogicalName}容量</summary>",
-                        $"public static int {modelInfo.ColumnPhysicalName}Capacity => {modelInfo.MaxColumnCapacity};",
-                    }
-                );
-            }
-            else
-            {
-                lines.AddRange(
-                    new[]
-                    {
-                        $"/// <summary>{modelInfo.ColumnLogicalName}容量最大値</summary>",
-                        $"public static int Max{modelInfo.ColumnPhysicalName}Capacity => {modelInfo.MaxColumnCapacity};",
-                        $"/// <summary>{modelInfo.ColumnLogicalName}容量最小値</summary>",
-                        $"public static int Min{modelInfo.ColumnPhysicalName}Capacity => {modelInfo.MinColumnCapacity};",
-                    }
-                );
-            }
-
             return SourceTextFormatter.Format(
-                __,
-                lines.ToArray()
+                __
+                // 何も出力しない
             );
         }
 
-        private static SourceFormatTargetBlock BuildEventSource(
+        private static SourceFormatTargetBlock BuildReadOnlyClassEventSource(
             ModelInformation _
         )
         {
@@ -132,46 +90,13 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"/// <inheritdoc/>",
                 $"public event NotifyCollectionChangedEventHandler? CollectionChanged",
                 $"{{",
-                $"{__}add => collectionChanged += value;",
-                $"{__}remove => collectionChanged -= value;",
-                $"}}",
-                $"",
-                $"private event NotifyCollectionChangedEventHandler? collectionChanged;"
-            );
-        }
-
-        private static SourceFormatTargetBlock BuildReadOnlyListConstructorsSource(
-            ModelInformation modelInfo
-        )
-        {
-            return SourceTextFormatter.Format(
-                __,
-                $"private protected {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword} settings, SimpleList<{modelInfo.RowType}> itemsImpl)",
-                $"{{",
-                $"{__}Table =",
-                $"{__}{__}new TwoDimensionalList<{modelInfo.RowType}, {modelInfo.FixedLengthRowType}, {modelInfo.ReadOnlyRowType}, {modelInfo.RowSettingsType}, {modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}, {modelInfo.ElementSettingsType}>(",
-                $"{__}{__}{__}itemsImpl,",
-                $"{__}{__}{__}new ReadOnly2DList<{modelInfo.RowType}, {modelInfo.FixedLengthRowType}, {modelInfo.ReadOnlyRowType}, {modelInfo.RowSettingsType}, {modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}, {modelInfo.ElementSettingsType}>.Config(",
-                $"{__}{__}{__}{__}BuildRowSettingsFromRowIndex,",
-                $"{__}{__}{__}{__}BuildRowFromSettings,",
-                $"{__}{__}{__}{__}BuildListElementFromSetting,",
-                $"{__}{__}{__}{__}CompareElement,",
-                $"{__}{__}{__}{__}BuildValidator(settings, itemsImpl)",
-                $"{__}{__}{__})",
-                $"{__}{__}{__}{{",
-                $"{__}{__}{__}{__}MaxRowCapacity = Max{modelInfo.RowPhysicalName}Capacity,",
-                $"{__}{__}{__}{__}MinRowCapacity = Min{modelInfo.RowPhysicalName}Capacity,",
-                $"{__}{__}{__}{__}MaxColumnCapacity = Max{modelInfo.ColumnPhysicalName}Capacity,",
-                $"{__}{__}{__}{__}MinColumnCapacity = Min{modelInfo.ColumnPhysicalName}Capacity,",
-                $"{__}{__}{__}}}",
-                $"{__}{__});",
-                $"{__}PropagatePropertyChangeEvent(Table);",
-                $"{__}PropagateCollectionChangeEvent(Table);",
+                $"{__}add => MutableInstance.CollectionChanged += value;",
+                $"{__}remove => MutableInstance.CollectionChanged -= value;",
                 $"}}"
             );
         }
 
-        private static SourceFormatTargetBlock BuildReadOnlyListPropertiesSource(
+        private static SourceFormatTargetBlock BuildReadOnlyClassPropertiesSource(
             ModelInformation modelInfo
         )
         {
@@ -183,80 +108,64 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"/// <exception cref=\"ArgumentOutOfRangeException\">",
                 $"/// {__}<paramref name=\"{modelInfo.RowPhysicalName.ToLowerFirstChar()}Index\"/>が指定範囲外の場合。",
                 $"/// </exception>",
-                $"public {modelInfo.ReadOnlyRowType} this[int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index] => Get{modelInfo.RowPhysicalName}( {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index);",
+                $"[Pure]",
+                $"public {modelInfo.ReadOnlyRowType} this[int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index] => Get{modelInfo.RowPhysicalName}({modelInfo.RowPhysicalName.ToLowerFirstChar()}Index);",
                 $"",
                 $"/// <summary>{modelInfo.CellLogicalName}インデクサによるアクセス</summary>",
                 $"/// <param name=\"{modelInfo.RowPhysicalName.ToLowerFirstChar()}Index\">[Range(0, <see cref=\"{modelInfo.RowPhysicalName}Count\"/> - 1)] {modelInfo.RowLogicalName}インデックス</param>",
-                $"/// <param name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\">[Range(0, <see cref=\"{modelInfo.ColumnPhysicalName}\"/> - 1)] {modelInfo.ColumnLogicalName}インデックス</param>",
+                $"/// <param name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\">[Range(0, <see cref=\"{modelInfo.ColumnPhysicalName}Count\"/> - 1)] {modelInfo.ColumnLogicalName}インデックス</param>",
                 $"/// <returns>指定した{modelInfo.RowLogicalName}・{modelInfo.ColumnLogicalName}インデックスの{modelInfo.CellLogicalName}要素</returns>",
                 $"/// <exception cref=\"ArgumentOutOfRangeException\">",
                 $"/// {__}<paramref name=\"{modelInfo.RowPhysicalName.ToLowerFirstChar()}Index\"/>, <paramref name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\"/>が指定範囲外の場合。",
                 $"/// </exception>",
+                $"[Pure]",
                 $"public {modelInfo.ReadOnlyElementType} this[int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index] => Get{modelInfo.CellPhysicalName}({modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index);",
                 $"",
                 $"/// <summary>{modelInfo.RowLogicalName}数</summary>",
-                $"public int {modelInfo.RowPhysicalName}Count => Table.RowCount;",
+                $"[Pure]",
+                $"public int {modelInfo.RowPhysicalName}Count => MutableInstance.{modelInfo.RowPhysicalName}Count;",
                 $"",
                 $"/// <summary>{modelInfo.ColumnLogicalName}数</summary>",
-                $"public int {modelInfo.ColumnPhysicalName} => Table.ColumnCount;",
+                $"[Pure]",
+                $"public int {modelInfo.ColumnPhysicalName}Count => MutableInstance.{modelInfo.ColumnPhysicalName}Count;",
                 $"",
-                $"/// <summary>すべての編集可能型{modelInfo.RowLogicalName}要素</summary>",
-                $"public {modelInfo.ReadOnlyRowType}[] Editable{modelInfo.RowPhysicalName}s => Table.EditableRows;",
+                modelInfo.Members.ReadOnlyListProperties.SelectMany(p => p.ImplementationCode).ToArray(),
                 $"",
                 $"/// <inheritdoc/>",
-                $"public IReadOnlyList<{modelInfo.RowSettingsType}> Settings => Table;",
+                $"[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]",
+                $"[Pure]",
+                $"public IList<{modelInfo.RowSettingsType}> Settings => MutableInstance.Settings;",
                 $"",
-                $"int IReadOnlyCollection<{modelInfo.ReadOnlyRowType}>.Count => {modelInfo.RowPhysicalName}Count;",
-                $"",
-                $"private protected TwoDimensionalList<{modelInfo.RowType}, {modelInfo.FixedLengthRowType}, {modelInfo.ReadOnlyRowType}, {modelInfo.RowSettingsType}, {modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}, {modelInfo.ElementSettingsType}> Table {{ get; }}"
+                $"internal {modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword} MutableInstance {{ get; }}"
             );
         }
 
-        private static SourceFormatTargetBlock BuildReadOnlyListMethodsSource(
+        private static SourceFormatTargetBlock BuildReadOnlyClassConstructorsSource(
+            ModelInformation modelInfo
+        )
+        {
+            // 読取専用リスト単体ではインスタンス作成不可
+            return SourceTextFormatter.Format(
+                __,
+                $"internal {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}({modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword} mutableInstance)",
+                $"{{",
+                $"{__}MutableInstance = mutableInstance;",
+                $"{__}PropagatePropertyChangeEvent(MutableInstance);",
+                $"}}"
+            );
+        }
+
+        private static SourceFormatTargetBlock BuildReadOnlyClassMethodsSource(
             ModelInformation modelInfo
         )
         {
             return SourceTextFormatter.Format(
                 __,
                 $"/// <inheritdoc/>",
-                $"public IEnumerator<{modelInfo.ReadOnlyRowType}> GetEnumerator() => Table.GetEnumerator();",
+                $"[Pure]",
+                $"public IEnumerator<{modelInfo.ReadOnlyRowType}> GetEnumerator() => MutableInstance.Select(row => row.Cast<{modelInfo.FixedLengthRowType}, {modelInfo.ReadOnlyRowType}>()).GetEnumerator();",
                 $"",
                 $"IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();",
-                $"",
-                SourceTextFormatter.If(
-                    modelInfo.MaxRowCapacity == modelInfo.MinRowCapacity,
-                    "",
-                    $"/// <summary>{modelInfo.RowLogicalName}容量を取得する。</summary>",
-                    $"/// <returns>{modelInfo.RowLogicalName}容量</returns>",
-                    $"public int Get{modelInfo.RowPhysicalName}Capacity() => {modelInfo.RowPhysicalName}Capacity;"
-                ),
-                SourceTextFormatter.If(
-                    modelInfo.MaxRowCapacity != modelInfo.MinRowCapacity,
-                    "",
-                    $"/// <summary>{modelInfo.RowLogicalName}容量最大値を取得する。</summary>",
-                    $"/// <returns>{modelInfo.RowLogicalName}容量最大値</returns>",
-                    $"public int GetMax{modelInfo.RowPhysicalName}Capacity() => Max{modelInfo.RowPhysicalName}Capacity;",
-                    $"/// <summary>{modelInfo.RowLogicalName}容量最小値を取得する。</summary>",
-                    $"/// <returns>{modelInfo.RowLogicalName}容量最小値</returns>",
-                    $"public int GetMin{modelInfo.RowPhysicalName}Capacity() => Min{modelInfo.RowPhysicalName}Capacity;"
-                ),
-                SourceTextFormatter.If(
-                    modelInfo.MaxColumnCapacity == modelInfo.MinColumnCapacity,
-                    "",
-                    $"/// <summary>{modelInfo.ColumnLogicalName}容量を取得する。</summary>",
-                    $"/// <returns>{modelInfo.ColumnLogicalName}容量</returns>",
-                    $"public int Get{modelInfo.ColumnPhysicalName}Capacity() => {modelInfo.ColumnPhysicalName}Capacity;"
-                ),
-                SourceTextFormatter.If(
-                    modelInfo.MaxColumnCapacity != modelInfo.MinColumnCapacity,
-                    "",
-                    $"/// <summary>{modelInfo.ColumnLogicalName}容量最大値を取得する。</summary>",
-                    $"/// <returns>{modelInfo.ColumnLogicalName}容量最大値</returns>",
-                    $"public int GetMax{modelInfo.ColumnPhysicalName}Capacity() => Max{modelInfo.ColumnPhysicalName}Capacity;",
-                    $"/// <summary>{modelInfo.ColumnLogicalName}容量最小値を取得する。</summary>",
-                    $"/// <returns>{modelInfo.ColumnLogicalName}容量最小値</returns>",
-                    $"public int GetMin{modelInfo.ColumnPhysicalName}Capacity() => Min{modelInfo.ColumnPhysicalName}Capacity;"
-                ),
                 $"",
                 $"/// <summary>",
                 $"/// {__}指定{modelInfo.RowLogicalName}インデックスの{modelInfo.RowLogicalName}要素を取得する。",
@@ -266,7 +175,8 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"/// <exception cref=\"ArgumentOutOfRangeException\">",
                 $"/// {__}<paramref name=\"{modelInfo.RowPhysicalName.ToLowerFirstChar()}Index\"/> が指定範囲外の場合。",
                 $"/// </exception>",
-                $"public {modelInfo.ReadOnlyRowType} Get{modelInfo.RowPhysicalName}(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index) => Table.GetRow( {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index);",
+                $"[Pure]",
+                $"public {modelInfo.ReadOnlyRowType} Get{modelInfo.RowPhysicalName}(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index) => MutableInstance.Get{modelInfo.RowPhysicalName}({modelInfo.RowPhysicalName.ToLowerFirstChar()}Index);",
                 $"",
                 $"/// <summary>",
                 $"/// {__}指定範囲の{modelInfo.RowLogicalName}要素を簡易コピーしたリストを取得する。",
@@ -278,107 +188,118 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"/// {__}<paramref name=\"{modelInfo.RowPhysicalName.ToLowerFirstChar()}Index\"/>, <paramref name=\"count\"/>が指定範囲外の場合。",
                 $"/// </exception>",
                 $"/// <exception cref=\"ArgumentException\">有効な範囲外の{modelInfo.RowLogicalName}要素を取得しようとした場合。</exception>",
+                $"[Pure]",
                 $"public IEnumerable<{modelInfo.ReadOnlyRowType}> Get{modelInfo.RowPhysicalName}Range(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, int count)",
-                $"{__}=> Table.GetRowRange( {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, count);",
+                $"{__}=> MutableInstance.Get{modelInfo.RowPhysicalName}Range({modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, count).Select(row => row.Cast<{modelInfo.FixedLengthRowType}, {modelInfo.ReadOnlyRowType}>());",
                 $"",
                 $"/// <summary>",
                 $"/// {__}指定{modelInfo.ColumnLogicalName}インデックスの{modelInfo.ColumnLogicalName}要素を取得する。",
                 $"/// </summary>",
-                $"/// <param name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\">[Range(0, <see cref=\"{modelInfo.ColumnPhysicalName}\"/> - 1)] {modelInfo.ColumnLogicalName}インデックス</param>",
+                $"/// <param name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\">[Range(0, <see cref=\"{modelInfo.ColumnPhysicalName}Count\"/> - 1)] {modelInfo.ColumnLogicalName}インデックス</param>",
                 $"/// <returns>指定{modelInfo.ColumnLogicalName}の要素リスト</returns>",
                 $"/// <exception cref=\"ArgumentOutOfRangeException\">",
                 $"/// {__}<paramref name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\"/> が指定範囲外の場合。",
                 $"/// </exception>",
-                $"public IEnumerable<{modelInfo.ReadOnlyElementType}> Get{modelInfo.ColumnPhysicalName}(int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index) => Table.GetColumn({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index);",
+                $"[Pure]",
+                $"public IEnumerable<{modelInfo.ReadOnlyElementType}> Get{modelInfo.ColumnPhysicalName}(int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index) => MutableInstance.Get{modelInfo.ColumnPhysicalName}({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index).Select(column => column.Cast<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}>());",
                 $"",
                 $"/// <summary>",
                 $"/// {__}指定範囲の{modelInfo.ColumnLogicalName}要素を簡易コピーしたリストを取得する。",
                 $"/// </summary>",
-                $"/// <param name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\">[Range(0, <see cref=\"{modelInfo.ColumnPhysicalName}\"/> - 1)] {modelInfo.ColumnLogicalName}インデックス</param>",
-                $"/// <param name=\"count\">[Range(0, <see cref=\"{modelInfo.ColumnPhysicalName}\"/>)] {modelInfo.ColumnLogicalName}数</param>",
+                $"/// <param name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\">[Range(0, <see cref=\"{modelInfo.ColumnPhysicalName}Count\"/> - 1)] {modelInfo.ColumnLogicalName}インデックス</param>",
+                $"/// <param name=\"count\">[Range(0, <see cref=\"{modelInfo.ColumnPhysicalName}Count\"/>)] {modelInfo.ColumnLogicalName}数</param>",
                 $"/// <returns>指定範囲の{modelInfo.ColumnLogicalName}要素簡易コピーリスト</returns>",
                 $"/// <exception cref=\"ArgumentOutOfRangeException\">",
                 $"/// {__}<paramref name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\"/>, <paramref name=\"count\"/>が指定範囲外の場合。",
                 $"/// </exception>",
                 $"/// <exception cref=\"ArgumentException\">有効な範囲外の{modelInfo.ColumnLogicalName}要素を取得しようとした場合。</exception>",
+                $"[Pure]",
                 $"public IEnumerable<IEnumerable<{modelInfo.ReadOnlyElementType}>> Get{modelInfo.ColumnPhysicalName}Range(int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index, int count)",
-                $"{__}=> Table.GetColumnRange({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index, count);",
+                $"{__}=> MutableInstance.Get{modelInfo.ColumnPhysicalName}Range({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index, count).Select(columns => columns.Select(column => column.Cast<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}>()));",
                 $"",
                 $"/// <summary>",
                 $"/// {__}指定{modelInfo.RowLogicalName}・{modelInfo.ColumnLogicalName}インデックスの{modelInfo.CellLogicalName}要素を取得する。",
                 $"/// </summary>",
                 $"/// <param name=\"{modelInfo.RowPhysicalName.ToLowerFirstChar()}Index\">[Range(0, <see cref=\"{modelInfo.RowPhysicalName}Count\"/> - 1)] {modelInfo.RowLogicalName}インデックス</param>",
-                $"/// <param name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\">[Range(0, <see cref=\"{modelInfo.ColumnPhysicalName}\"/> - 1)] {modelInfo.ColumnLogicalName}インデックス</param>",
+                $"/// <param name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\">[Range(0, <see cref=\"{modelInfo.ColumnPhysicalName}Count\"/> - 1)] {modelInfo.ColumnLogicalName}インデックス</param>",
                 $"/// <returns>指定{modelInfo.RowLogicalName}・{modelInfo.ColumnLogicalName}の{modelInfo.CellLogicalName}要素</returns>",
                 $"/// <exception cref=\"ArgumentOutOfRangeException\">",
                 $"/// {__}<paramref name=\"{modelInfo.RowPhysicalName.ToLowerFirstChar()}Index\"/>, <paramref name=\"{modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index\"/> が指定範囲外の場合。",
                 $"/// </exception>",
-                $"public {modelInfo.ReadOnlyElementType} Get{modelInfo.CellPhysicalName}(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index) => Table.GetCell( {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index);",
+                $"[Pure]",
+                $"public {modelInfo.ReadOnlyElementType} Get{modelInfo.CellPhysicalName}(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index) => MutableInstance.Get{modelInfo.CellPhysicalName}({modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index).Cast<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}>();",
                 $"",
                 $"/// <summary>",
                 $"/// {__}<see cref=\"Get{modelInfo.RowPhysicalName}\"/> メソッドの検証処理。",
                 $"/// </summary>",
                 $"/// <inheritdoc cref=\"Get{modelInfo.RowPhysicalName}\" path=\"param|exception\"/>",
-                $"public void ValidateGet{modelInfo.RowPhysicalName}(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index) => Table.ValidateGetRow( {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index);",
+                $"public void ValidateGet{modelInfo.RowPhysicalName}(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index) => MutableInstance.ValidateGet{modelInfo.RowPhysicalName}({modelInfo.RowPhysicalName.ToLowerFirstChar()}Index);",
                 $"",
                 $"/// <summary>",
                 $"/// {__}<see cref=\"Get{modelInfo.RowPhysicalName}Range\"/> メソッドの検証処理。",
                 $"/// </summary>",
                 $"/// <inheritdoc cref=\"Get{modelInfo.RowPhysicalName}Range\" path=\"param|exception\"/>",
-                $"public void ValidateGet{modelInfo.RowPhysicalName}Range(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, int count) => Table.ValidateGetRowRange( {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, count);",
+                $"public void ValidateGet{modelInfo.RowPhysicalName}Range(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, int count) => MutableInstance.ValidateGet{modelInfo.RowPhysicalName}Range({modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, count);",
                 $"",
                 $"/// <summary>",
                 $"/// {__}<see cref=\"Get{modelInfo.ColumnPhysicalName}\"/> メソッドの検証処理。",
                 $"/// </summary>",
                 $"/// <inheritdoc cref=\"Get{modelInfo.ColumnPhysicalName}\" path=\"param|exception\"/>",
-                $"public void ValidateGet{modelInfo.ColumnPhysicalName}(int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index) => Table.ValidateGetColumn({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index);",
+                $"public void ValidateGet{modelInfo.ColumnPhysicalName}(int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index) => MutableInstance.ValidateGet{modelInfo.ColumnPhysicalName}({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index);",
                 $"",
                 $"/// <summary>",
                 $"/// {__}<see cref=\"Get{modelInfo.ColumnPhysicalName}Range\"/> メソッドの検証処理。",
                 $"/// </summary>",
                 $"/// <inheritdoc cref=\"Get{modelInfo.ColumnPhysicalName}Range\" path=\"param|exception\"/>",
                 $"public void ValidateGet{modelInfo.ColumnPhysicalName}Range(int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index, int count)",
-                $"{__}=> Table.ValidateGetColumnRange({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index, count);",
+                $"{__}=> MutableInstance.ValidateGet{modelInfo.ColumnPhysicalName}Range({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index, count);",
                 $"",
                 $"/// <summary>",
                 $"/// {__}<see cref=\"Get{modelInfo.CellPhysicalName}\"/> メソッドの検証処理。",
                 $"/// </summary>",
                 $"/// <inheritdoc cref=\"Get{modelInfo.CellPhysicalName}\" path=\"param|exception\"/>",
-                $"public void ValidateGet{modelInfo.CellPhysicalName}(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index) => Table.ValidateGetCell( {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index);",
+                $"public void ValidateGet{modelInfo.CellPhysicalName}(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index) => MutableInstance.ValidateGet{modelInfo.CellPhysicalName}({modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index);",
                 $"",
                 $"/// <summary>",
                 $"/// {__}<see cref=\"Get{modelInfo.RowPhysicalName}\"/> メソッド処理中核。",
                 $"/// </summary>",
                 $"/// <inheritdoc cref=\"Get{modelInfo.RowPhysicalName}\" path=\"param\"/>",
-                $"public {modelInfo.ReadOnlyRowType} Get{modelInfo.RowPhysicalName}Internal(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index) => Table.GetRowInternal( {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index);",
+                $"[Pure]",
+                $"public {modelInfo.ReadOnlyRowType} Get{modelInfo.RowPhysicalName}Internal(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index) => MutableInstance.Get{modelInfo.RowPhysicalName}Internal({modelInfo.RowPhysicalName.ToLowerFirstChar()}Index);",
                 $"",
                 $"/// <summary>",
                 $"/// {__}<see cref=\"Get{modelInfo.RowPhysicalName}Range\"/> メソッド処理中核。",
                 $"/// </summary>",
                 $"/// <inheritdoc cref=\"Get{modelInfo.RowPhysicalName}Range\" path=\"param\"/>",
+                $"[Pure]",
                 $"public IEnumerable<{modelInfo.ReadOnlyRowType}> Get{modelInfo.RowPhysicalName}RangeInternal(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, int count)",
-                $"{__}=> Table.GetRowRangeInternal( {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, count);",
+                $"{__}=> MutableInstance.Get{modelInfo.RowPhysicalName}RangeInternal({modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, count).Select(row => row.Cast<{modelInfo.FixedLengthRowType}, {modelInfo.ReadOnlyRowType}>());",
                 $"",
                 $"/// <summary>",
                 $"/// {__}<see cref=\"Get{modelInfo.ColumnPhysicalName}\"/> メソッド処理中核。",
                 $"/// </summary>",
                 $"/// <inheritdoc cref=\"Get{modelInfo.ColumnPhysicalName}\" path=\"param\"/>",
+                $"[Pure]",
                 $"public IEnumerable<{modelInfo.ReadOnlyElementType}> Get{modelInfo.ColumnPhysicalName}Internal(int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index)",
-                $"{__}=> Table.GetColumnInternal({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index);",
+                $"{__}=> MutableInstance.Get{modelInfo.ColumnPhysicalName}Internal({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index).Select(column => column.Cast<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}>());",
                 $"",
                 $"/// <summary>",
                 $"/// {__}<see cref=\"Get{modelInfo.ColumnPhysicalName}Range\"/> メソッド処理中核。",
                 $"/// </summary>",
                 $"/// <inheritdoc cref=\"Get{modelInfo.ColumnPhysicalName}Range\" path=\"param\"/>",
+                $"[Pure]",
                 $"public IEnumerable<IEnumerable<{modelInfo.ReadOnlyElementType}>> Get{modelInfo.ColumnPhysicalName}RangeInternal(int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index, int count)",
-                $"{__}=> Table.GetColumnRangeInternal({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index, count);",
+                $"{__}=> MutableInstance.Get{modelInfo.ColumnPhysicalName}RangeInternal({modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index, count).Select(columns => columns.Select(column => column.Cast<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}>()));",
                 $"",
                 $"/// <summary>",
                 $"/// {__}<see cref=\"Get{modelInfo.CellPhysicalName}\"/> メソッド処理中核。",
                 $"/// </summary>",
                 $"/// <inheritdoc cref=\"Get{modelInfo.CellPhysicalName}\" path=\"param\"/>",
+                $"[Pure]",
                 $"public {modelInfo.ReadOnlyElementType} Get{modelInfo.CellPhysicalName}Internal(int {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, int {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index)",
-                $"{__}=> Table.GetCellInternal( {modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index);"
+                $"{__}=> MutableInstance.Get{modelInfo.CellPhysicalName}Internal({modelInfo.RowPhysicalName.ToLowerFirstChar()}Index, {modelInfo.ColumnPhysicalName.ToLowerFirstChar()}Index).Cast<{modelInfo.ElementType}, {modelInfo.ReadOnlyElementType}>();",
+                $"",
+                modelInfo.Members.ReadOnlyListMethods.SelectMany(x => x.ImplementationCode).ToArray()
             );
         }
 
@@ -396,23 +317,32 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
             return SourceTextFormatter.Format(
                 __,
                 $"/// <inheritdoc/>",
+                $"[Pure]",
                 $"public bool ItemEquals({modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}? other)",
-                $"{__}=> ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});",
+                $"{__}=> MutableInstance.ItemEquals(other);",
                 $"",
                 $"/// <inheritdoc/>",
+                $"[Pure]",
                 $"public bool ItemEquals({modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword}? other)",
-                $"{__}=> ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});",
+                $"{__}=> MutableInstance.ItemEquals(other);",
                 $"",
                 SourceTextFormatter.If(
                     !modelInfo.IsFixed,
                     "",
                     $"/// <inheritdoc/>",
+                    $"[Pure]",
                     $"public bool ItemEquals({modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword}? other)",
-                    $"{__}=> ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});",
+                    $"{__}=> MutableInstance.ItemEquals(other);",
                     $""
                 ),
                 $"/// <inheritdoc/>",
-                $"public bool {objectItemEqualsKeyword}ItemEquals(object? other) => ItemEquals(other as {modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword});"
+                $"[Pure]",
+                $"public bool ItemEquals({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword}? other)",
+                $"{__}=> MutableInstance.ItemEquals(other);",
+                $"",
+                $"/// <inheritdoc/>",
+                $"[Pure]",
+                $"public bool {objectItemEqualsKeyword}ItemEquals(object? other) => MutableInstance.ItemEquals(other);"
             );
         }
 
@@ -424,32 +354,43 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 !modelInfo.IsAbstract,
                 __,
                 $"/// <inheritdoc/>",
-                $"public {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword} DeepClone() => new(this);",
+                $"[Pure]",
+                $"public {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword} DeepClone() => new(MutableInstance.DeepClone());",
                 $"object IDeepCloneable.DeepClone() => DeepClone();"
             );
         }
 
-        private static SourceFormatTargetBlock BuildPrivateMethodSource(
+        private static SourceFormatTargetBlock BuildReadOnlyClassSettingsInterfaceImplementsSource(
             ModelInformation modelInfo
         )
         {
-            return SourceTextFormatter.If(
-                !modelInfo.IsAbstract,
+            var targetProperties =
+                modelInfo.Members.SettingsProperties.Where(definition => definition.IsOverrideReturnType);
+
+            return SourceTextFormatter.Format(
                 __,
-                $"/// <summary>",
-                $"/// {__}<see cref=\"SimpleList{{T}}\"/> が通知した",
-                $"/// {__}<see cref=\"INotifyCollectionChanged\"/> イベントを",
-                $"/// {__}自身のイベントとして通知する。",
-                $"/// </summary>",
-                $"/// <param name=\"target\">対象</param>",
-                $"private void PropagateCollectionChangeEvent(",
-                $"{__}TwoDimensionalList<{modelInfo.RowType}, {modelInfo.FixedLengthRowType},",
-                $"{__}{__}{modelInfo.ReadOnlyRowType}, {modelInfo.RowSettingsType}, {modelInfo.ElementType}, {modelInfo.ReadOnlyElementType},",
-                $"{__}{__}{modelInfo.ElementSettingsType}> target",
-                $")",
-                $"{{",
-                $"{__}target.CollectionChanged += (_, args) => {{ collectionChanged?.Invoke(this, args); }};",
-                $"}}"
+                targetProperties.Select(definition => definition.GetInterfaceImplementCode)
+                    .ToArray()
+            );
+        }
+
+        private static SourceFormatTargetBlock BuildReadOnlyClassPrivateMethodSource(
+            ModelInformation _
+        )
+        {
+            return SourceTextFormatter.Format(
+                __
+                // 何も出力しない
+            );
+        }
+
+        private static SourceFormatTargetBlock BuildReadOnlyClassImplicitTypeConversionOperatorSource(
+            ModelInformation _
+        )
+        {
+            return SourceTextFormatter.Format(
+                __
+                // 何も出力しない
             );
         }
     }

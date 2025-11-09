@@ -1,10 +1,11 @@
 using NUnit.Framework;
 using WodiLib.Sys;
+using WodiLib.Test.Tools;
 
 namespace WodiLib.Test.Sys
 {
     [TestFixture]
-    public class BoolExtensionTest
+    public class BoolExtensionTest : TestFixtureBase
     {
         [TestCase(true, 1)]
         [TestCase(false, 0)]

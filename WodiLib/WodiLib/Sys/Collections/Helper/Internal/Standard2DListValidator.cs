@@ -14,10 +14,12 @@ namespace WodiLib.Sys.Collections
     /// <summary>
     ///     二次元リスト編集メソッドの引数汎用検証処理実施クラス
     /// </summary>
+    /// <typeparam name="TListSettings">リストの入力パラメータ型</typeparam>
     /// <typeparam name="TRowElementSettings">行要素設定型</typeparam>
     /// <typeparam name="TListElementSettings">リスト要素設定型</typeparam>
-    internal class Standard2DListValidator<TRowElementSettings, TListElementSettings>
-        : IWodiLib2DListValidator<TRowElementSettings, TListElementSettings>
+    internal class Standard2DListValidator<TListSettings, TRowElementSettings, TListElementSettings>
+        : IWodiLib2DListValidator<TListSettings, TRowElementSettings, TListElementSettings>
+        where TListSettings : IListSettings<TRowElementSettings>
         where TRowElementSettings : IListSettings<TListElementSettings>
     {
         public delegate int GetRowCountDelegate();
@@ -27,25 +29,36 @@ namespace WodiLib.Sys.Collections
         protected GetRowCountDelegate RowCountGetter { get; }
         protected GetColumnCountDelegate ColumnCountGetter { get; }
 
+        protected string RowItemsName { get; }
+        protected string ColumnItemsName { get; }
+
         public Standard2DListValidator(
             GetRowCountDelegate rowCountGetter,
-            GetColumnCountDelegate columnCountGetter
+            GetColumnCountDelegate columnCountGetter,
+            string rowItemsName = "行数",
+            string columnItemsName = "列数"
         )
         {
             RowCountGetter = rowCountGetter;
             ColumnCountGetter = columnCountGetter;
+            RowItemsName = rowItemsName;
+            ColumnItemsName = columnItemsName;
         }
 
-        public virtual void Constructor(NamedValue<IEnumerable<TRowElementSettings>> initItems)
+        public virtual void Constructor(NamedValue<TListSettings> initSettings)
         {
-            ThrowHelper.ValidateArgumentNotNull(initItems.Value is null, initItems.Name);
-            TwoDListValidationHelper.ItemNotNull<TRowElementSettings, TListElementSettings>(initItems);
-            TwoDListValidationHelper.ItemsNotJag<TRowElementSettings, TListElementSettings>(initItems.Value);
+            ThrowHelper.ValidateArgumentNotNull(initSettings.Value is null, initSettings.Name);
+            TwoDListValidationHelper.ItemNotNull<TRowElementSettings, TListElementSettings>(
+                (initSettings.Name, initSettings.Value.Settings)
+            );
+            TwoDListValidationHelper.ItemsNotJag<TRowElementSettings, TListElementSettings>(
+                initSettings.Value.Settings
+            );
         }
 
         public virtual void GetRow(NamedValue<int> rowIndex, NamedValue<int> count)
         {
-            var namedRowCount = new NamedValue<int>("RowCount", RowCountGetter.Invoke());
+            var namedRowCount = new NamedValue<int>(RowItemsName, RowCountGetter.Invoke());
 
             ListValidationHelper.SelectIndex(rowIndex, namedRowCount);
             ListValidationHelper.Count(count, namedRowCount);
@@ -54,7 +67,7 @@ namespace WodiLib.Sys.Collections
 
         public virtual void GetColumn(NamedValue<int> columnIndex, NamedValue<int> count)
         {
-            var namedColumnCount = new NamedValue<int>("ColumnCount", ColumnCountGetter.Invoke());
+            var namedColumnCount = new NamedValue<int>(ColumnItemsName, ColumnCountGetter.Invoke());
 
             ListValidationHelper.SelectIndex(columnIndex, namedColumnCount);
             ListValidationHelper.Count(count, namedColumnCount);
@@ -63,8 +76,8 @@ namespace WodiLib.Sys.Collections
 
         public virtual void GetCell(NamedValue<int> rowIndex, NamedValue<int> columnIndex)
         {
-            var namedRowCount = new NamedValue<int>("RowCount", RowCountGetter.Invoke());
-            var namedColumnCount = new NamedValue<int>("ColumnCount", ColumnCountGetter.Invoke());
+            var namedRowCount = new NamedValue<int>(RowItemsName, RowCountGetter.Invoke());
+            var namedColumnCount = new NamedValue<int>(ColumnItemsName, ColumnCountGetter.Invoke());
 
             ListValidationHelper.SelectIndex(rowIndex, namedRowCount);
             ListValidationHelper.SelectIndex(columnIndex, namedColumnCount);
@@ -72,7 +85,7 @@ namespace WodiLib.Sys.Collections
 
         public virtual void SetRow(NamedValue<int> rowIndex, NamedValue<IEnumerable<TRowElementSettings>> settings)
         {
-            var namedRowCount = new NamedValue<int>("RowCount", RowCountGetter.Invoke());
+            var namedRowCount = new NamedValue<int>(RowItemsName, RowCountGetter.Invoke());
 
             ListValidationHelper.SelectIndex(rowIndex, namedRowCount);
             ThrowHelper.ValidateArgumentNotNull(settings.Value is null, settings.Name);
@@ -94,7 +107,7 @@ namespace WodiLib.Sys.Collections
             NamedValue<IEnumerable<IEnumerable<TListElementSettings>>> settings
         )
         {
-            var namedColumnCount = new NamedValue<int>("ColumnCount", ColumnCountGetter.Invoke());
+            var namedColumnCount = new NamedValue<int>(ColumnItemsName, ColumnCountGetter.Invoke());
 
             ListValidationHelper.SelectIndex(columnIndex, namedColumnCount);
             ThrowHelper.ValidateArgumentNotNull(settings.Value is null, settings.Name);
@@ -116,8 +129,8 @@ namespace WodiLib.Sys.Collections
             NamedValue<TListElementSettings> settings
         )
         {
-            var namedRowCount = new NamedValue<int>("RowCount", RowCountGetter.Invoke());
-            var namedColumnCount = new NamedValue<int>("ColumnCount", ColumnCountGetter.Invoke());
+            var namedRowCount = new NamedValue<int>(RowItemsName, RowCountGetter.Invoke());
+            var namedColumnCount = new NamedValue<int>(ColumnItemsName, ColumnCountGetter.Invoke());
 
             ListValidationHelper.SelectIndex(rowIndex, namedRowCount);
             ListValidationHelper.SelectIndex(columnIndex, namedColumnCount);
@@ -126,7 +139,7 @@ namespace WodiLib.Sys.Collections
 
         public virtual void InsertRow(NamedValue<int> rowIndex, NamedValue<IEnumerable<TRowElementSettings>> settings)
         {
-            var namedRowCount = new NamedValue<int>("RowCount", RowCountGetter.Invoke());
+            var namedRowCount = new NamedValue<int>(RowItemsName, RowCountGetter.Invoke());
 
             ThrowHelper.ValidateArgumentNotNull(settings.Value is null, settings.Name);
             TwoDListValidationHelper.ItemNotNull<TRowElementSettings, TListElementSettings>(settings);
@@ -143,7 +156,7 @@ namespace WodiLib.Sys.Collections
             NamedValue<IEnumerable<IEnumerable<TListElementSettings>>> settings
         )
         {
-            var namedColumnCount = new NamedValue<int>("ColumnCount", ColumnCountGetter.Invoke());
+            var namedColumnCount = new NamedValue<int>(ColumnItemsName, ColumnCountGetter.Invoke());
 
             TwoDListValidationHelper.ColumnSizeNotZero(namedColumnCount);
 
@@ -161,7 +174,7 @@ namespace WodiLib.Sys.Collections
             NamedValue<IEnumerable<TRowElementSettings>> settings
         )
         {
-            var namedRowCount = new NamedValue<int>("RowCount", RowCountGetter.Invoke());
+            var namedRowCount = new NamedValue<int>(RowItemsName, RowCountGetter.Invoke());
 
             ThrowHelper.ValidateArgumentNotNull(settings.Value is null, settings.Name);
             TwoDListValidationHelper.ItemNotNull<TRowElementSettings, TListElementSettings>(settings);
@@ -178,7 +191,7 @@ namespace WodiLib.Sys.Collections
             NamedValue<IEnumerable<IEnumerable<TListElementSettings>>> settings
         )
         {
-            var namedColumnCount = new NamedValue<int>("ColumnCount", ColumnCountGetter.Invoke());
+            var namedColumnCount = new NamedValue<int>(ColumnItemsName, ColumnCountGetter.Invoke());
 
             TwoDListValidationHelper.ColumnSizeNotZero(namedColumnCount);
 
@@ -193,7 +206,7 @@ namespace WodiLib.Sys.Collections
 
         public virtual void MoveRow(NamedValue<int> oldRowIndex, NamedValue<int> newRowIndex, NamedValue<int> count)
         {
-            var namedRowCount = new NamedValue<int>("RowCount", RowCountGetter.Invoke());
+            var namedRowCount = new NamedValue<int>(RowItemsName, RowCountGetter.Invoke());
 
             ListValidationHelper.ItemCountNotZero(namedRowCount);
             ListValidationHelper.SelectIndex(oldRowIndex, namedRowCount);
@@ -209,7 +222,7 @@ namespace WodiLib.Sys.Collections
             NamedValue<int> count
         )
         {
-            var namedColumnCount = new NamedValue<int>("ColumnCount", ColumnCountGetter.Invoke());
+            var namedColumnCount = new NamedValue<int>(ColumnItemsName, ColumnCountGetter.Invoke());
 
             ListValidationHelper.ItemCountNotZero(namedColumnCount);
             ListValidationHelper.SelectIndex(oldColumnIndex, namedColumnCount);
@@ -221,7 +234,7 @@ namespace WodiLib.Sys.Collections
 
         public virtual void RemoveRow(NamedValue<int> rowIndex, NamedValue<int> count)
         {
-            var namedRowCount = new NamedValue<int>("RowCount", RowCountGetter.Invoke());
+            var namedRowCount = new NamedValue<int>(RowItemsName, RowCountGetter.Invoke());
 
             ListValidationHelper.SelectIndex(rowIndex, namedRowCount);
             ListValidationHelper.Count(count, namedRowCount);
@@ -230,7 +243,7 @@ namespace WodiLib.Sys.Collections
 
         public virtual void RemoveColumn(NamedValue<int> columnIndex, NamedValue<int> count)
         {
-            var namedColumnCount = new NamedValue<int>("ColumnCount", ColumnCountGetter.Invoke());
+            var namedColumnCount = new NamedValue<int>(ColumnItemsName, ColumnCountGetter.Invoke());
 
             ListValidationHelper.SelectIndex(columnIndex, namedColumnCount);
             ListValidationHelper.Count(count, namedColumnCount);

@@ -51,7 +51,7 @@ namespace WodiLib.Test.Tools
             instance,
             execAction,
             expectedFailure: false,
-            verifyException: null
+            exceptionVerifier: null
         );
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace WodiLib.Test.Tools
         /// </summary>
         /// <param name="instance">テスト対象のインスタンス</param>
         /// <param name="execAction">メソッド実行処理</param>
-        /// <param name="verifyException">
+        /// <param name="exceptionVerifier">
         ///     例外発生時の例外検証処理。<br/>
         ///     <br/>
         ///     <see langword="null"/> の場合、例外が発生しても検証処理を行わない。
@@ -67,19 +67,19 @@ namespace WodiLib.Test.Tools
         public void PureActionFailure<TTarget>(
             TTarget instance,
             Action<TTarget> execAction,
-            ValueVerifier<Exception>? verifyException = null
+            ValueVerifier<Exception>? exceptionVerifier = null
         ) => PureActionInternal(
             instance,
             execAction,
             expectedFailure: true,
-            verifyException
+            exceptionVerifier
         );
 
         private void PureActionInternal<TTarget>(
             TTarget instance,
             Action<TTarget> execAction,
             bool expectedFailure,
-            ValueVerifier<Exception>? verifyException = null
+            ValueVerifier<Exception>? exceptionVerifier = null
         )
         {
             var changedPropertyList = new List<string>();
@@ -116,7 +116,7 @@ namespace WodiLib.Test.Tools
             if (errorOccured)
             {
                 // 発生したエラーの検証処理
-                verifyException?.Verify(exception!);
+                exceptionVerifier?.Verify(exception!);
             }
 
             // 状態が変化していないこと

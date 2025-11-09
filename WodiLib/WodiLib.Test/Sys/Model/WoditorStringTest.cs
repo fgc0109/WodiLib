@@ -2,11 +2,12 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using WodiLib.Sys;
+using WodiLib.Test.Tools;
 
 namespace WodiLib.Test.Sys
 {
     [TestFixture]
-    public class WoditorStringTest
+    public class WoditorStringTest : TestFixtureBase
     {
         private static readonly object[] TestCaseSource =
         {

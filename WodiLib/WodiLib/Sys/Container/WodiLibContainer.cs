@@ -127,6 +127,9 @@ namespace WodiLib.Sys
             /// <summary>呼び出し毎に生成</summary>
             public static readonly Lifetime Transient;
 
+            /// <summary>全ての要素</summary>
+            public static IEnumerable<Lifetime> AllItems => EnumItems.AllEnums;
+
             static Lifetime()
             {
                 Container = new Lifetime(nameof(Container));

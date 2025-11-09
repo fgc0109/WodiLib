@@ -20,7 +20,7 @@ namespace WodiLib.SourceGenerator.Core
     {
         /// <summary>ログ出力フラグ</summary>
         /* 解析途中のログが欲しいときは true にする (csproj の設定変更も必要) */
-        private bool IsOutputLog => false;
+        private bool IsOutputLog => true;
 
         /// <summary>
         ///     ログ文字列タンク

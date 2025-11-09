@@ -8,6 +8,7 @@
 
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using WodiLib.SourceGenerator.Core.Dtos;
 
 namespace WodiLib.SourceGenerator.Core.Extensions
 {
@@ -44,6 +45,19 @@ namespace WodiLib.SourceGenerator.Core.Extensions
         }
 
         /// <summary>
+        ///     自身が何らかのクラス（object以外）を継承したクラスであるかを判定する。
+        /// </summary>
+        /// <param name="symbol">判定対象</param>
+        /// <returns>継承している場合<see langword="true"/></returns>
+        public static bool IsExtended(this INamedTypeSymbol symbol)
+        {
+            var baseType = symbol.BaseType;
+            return baseType is not null
+                   && baseType.SpecialType != SpecialType.System_Object
+                   && baseType.SpecialType != SpecialType.System_ValueType;
+        }
+
+        /// <summary>
         ///     自身が <paramref name="targetFullName"/> を継承したクラスであるかを判定する。
         /// </summary>
         /// <param name="symbol">判定対象</param>
@@ -61,25 +75,6 @@ namespace WodiLib.SourceGenerator.Core.Extensions
             }
 
             return IsExtended(baseType, targetFullName);
-        }
-
-        /// <summary>
-        ///     指定した属性（またはその属性を継承した属性）のデータを取得する。
-        /// </summary>
-        /// <param name="symbol">処理対象</param>
-        /// <param name="targetFullName">取得対象属性名（フル）</param>
-        /// <returns>属性データ（属性が付与されていない場合 <see langword="null"/></returns>
-        public static AttributeData? GetFirstOrDefaultAttribute(this INamedTypeSymbol symbol, string targetFullName)
-        {
-            var attrData = symbol.GetAttributes()
-                .FirstOrDefault(data => data.AttributeClass?.IsSameOrExtended(targetFullName) ?? false);
-            if (attrData is not null)
-            {
-                return attrData;
-            }
-
-            var baseType = symbol.BaseType;
-            return baseType?.FirstOrDefaultAttribute(targetFullName);
         }
 
         /// <summary>
@@ -106,16 +101,97 @@ namespace WodiLib.SourceGenerator.Core.Extensions
         /// <returns>名称</returns>
         public static string FullName(this INamedTypeSymbol symbol)
         {
-            var nameSpace = symbol.Namespace();
+            return symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+        }
 
-            var generic = "";
-            if (symbol.Arity > 0)
+        /// <summary>
+        ///     親クラスを起点として、親クラスに遡りながら、指定した名前のプロパティが定義されているか判定する。
+        /// </summary>
+        /// <param name="symbol"></param>
+        /// <param name="propertyName"></param>
+        /// <returns></returns>
+        public static bool IsParentImplementsPropertyRecursive(this INamedTypeSymbol symbol, string propertyName)
+        {
+            var current = symbol.BaseType;
+            while (current is not null)
             {
-                generic =
-                    $"<{string.Join(", ", symbol.TypeArguments.Select(arg => arg.FullName()))}>";
+                var attr = current.GetMembers(propertyName).OfType<IPropertySymbol>().Any();
+                if (attr)
+                {
+                    return true;
+                }
+
+                current = current.BaseType;
             }
 
-            return $"{(nameSpace != "" ? $"{nameSpace}." : "")}{symbol.Name}{generic}";
+            return false;
+        }
+
+        /// <summary>
+        ///     親クラスを起点として、親クラスに遡りながら、指定した名前のプロパティが定義されているか判定する。
+        ///     プロパティが定義されていなくても、
+        ///     自動生成対象となった属性クラスの基底クラスまたはその派生クラスが親クラスに属性として付与されている場合、
+        ///     定義されているとみなす。
+        /// </summary>
+        /// <param name="symbol"></param>
+        /// <param name="propertyInfo"></param>
+        /// <param name="attributeData"></param>
+        /// <returns></returns>
+        public static bool IsParentImplementsPropertyRecursive(
+            this INamedTypeSymbol symbol,
+            PropertyInfo propertyInfo,
+            AttributeData attributeData
+        )
+        {
+            // 基底クラスに付与された属性の指定を探す
+            var rootAttributeClass = attributeData.AttributeClass!;
+            for (var current = rootAttributeClass; current is not null; current = current.BaseType)
+            {
+                if (current.Name == "Attribute")
+                {
+                    break;
+                }
+
+                rootAttributeClass = current;
+            }
+
+            for (var current = symbol.BaseType; current is not null; current = current.BaseType)
+            {
+                // 基底クラスの実装を探す
+                var attr = current.GetMembers(propertyInfo.Name).OfType<IPropertySymbol>().Any();
+                if (attr)
+                {
+                    return true;
+                }
+
+                // 基底クラスに付与された属性でプロパティが指定されているか探す
+                var attrData = current.GetAttributes()
+                    .FirstOrDefault(a => a.AttributeClass?.IsDerivedFrom(rootAttributeClass) ?? false);
+                var propData = attrData?.GetPropertyData<object?>(propertyInfo.Name);
+                if (propData != null && propData.ToString() != propertyInfo.DefaultValue?.ToString())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        ///     指定したクラスから継承されているか判定する。
+        /// </summary>
+        /// <param name="derived"></param>
+        /// <param name="baseType"></param>
+        /// <returns></returns>
+        public static bool IsDerivedFrom(this INamedTypeSymbol derived, INamedTypeSymbol? baseType)
+        {
+            for (var current = derived; current != null; current = current.BaseType)
+            {
+                if (SymbolEqualityComparer.Default.Equals(current, baseType))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

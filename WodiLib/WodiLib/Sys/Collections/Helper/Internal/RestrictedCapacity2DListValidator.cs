@@ -15,10 +15,12 @@ namespace WodiLib.Sys.Collections
     /// <summary>
     ///     容量制限あり二次元リスト編集メソッドの引数汎用検証処理実施クラス
     /// </summary>
+    /// <typeparam name="TListSettings">リストの入力パラメータ型</typeparam>
     /// <typeparam name="TRowElementSettings">行要素設定型</typeparam>
     /// <typeparam name="TListElementSettings">リスト要素設定型</typeparam>
-    internal class RestrictedCapacity2DListValidator<TRowElementSettings, TListElementSettings>
-        : Standard2DListValidator<TRowElementSettings, TListElementSettings>
+    internal class RestrictedCapacity2DListValidator<TListSettings, TRowElementSettings, TListElementSettings>
+        : Standard2DListValidator<TListSettings, TRowElementSettings, TListElementSettings>
+        where TListSettings : IListSettings<TRowElementSettings>
         where TRowElementSettings : IListSettings<TListElementSettings>
     {
         public delegate int GetMinRowCapacityDelegate();
@@ -28,9 +30,6 @@ namespace WodiLib.Sys.Collections
         public delegate int GetMinColumnCapacityDelegate();
 
         public delegate int GetMaxColumnCapacityDelegate();
-
-        private static string RowItemsName => "行数";
-        private static string ColumnItemsName => "列数";
 
         protected GetMinRowCapacityDelegate MinRowCapacityGetter { get; }
         protected GetMaxRowCapacityDelegate MaxRowCapacityGetter { get; }
@@ -43,9 +42,11 @@ namespace WodiLib.Sys.Collections
             GetMinRowCapacityDelegate minRowCapacityGetter,
             GetMaxRowCapacityDelegate maxRowCapacityGetter,
             GetMinColumnCapacityDelegate minColumnCapacityGetter,
-            GetMaxColumnCapacityDelegate maxColumnCapacityGetter
+            GetMaxColumnCapacityDelegate maxColumnCapacityGetter,
+            string rowItemsName = "行数",
+            string columnItemsName = "列数"
         )
-            : base(rowCountGetter, columnCountGetter)
+            : base(rowCountGetter, columnCountGetter, rowItemsName, columnItemsName)
         {
             MinRowCapacityGetter = minRowCapacityGetter;
             MaxRowCapacityGetter = maxRowCapacityGetter;
@@ -53,9 +54,9 @@ namespace WodiLib.Sys.Collections
             MaxColumnCapacityGetter = maxColumnCapacityGetter;
         }
 
-        public override void Constructor(NamedValue<IEnumerable<TRowElementSettings>> initItems)
+        public override void Constructor(NamedValue<TListSettings> initSettings)
         {
-            base.Constructor(initItems);
+            base.Constructor(initSettings);
 
             var maxRowCapacity = MaxRowCapacityGetter.Invoke();
             var minRowCapacity = MinRowCapacityGetter.Invoke();
@@ -79,12 +80,12 @@ namespace WodiLib.Sys.Collections
 #endif
 
             RestrictedCapacity2DListValidationHelper.RowAndColCount<TRowElementSettings, TListElementSettings>(
-                initItems.Value,
+                initSettings.Value.Settings,
                 minRowCapacity,
                 maxRowCapacity,
                 minColumnCapacity,
                 maxColumnCapacity,
-                initItems.Name
+                initSettings.Name
             );
         }
 

@@ -266,7 +266,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"public void ValidateMoveRange(int oldIndex, int newIndex, int count) => MutableInstance.ValidateMoveRange(oldIndex, newIndex, count);",
                 $"",
                 $"/// <summary><see cref=\"ResetStrict(System.Collections.Generic.IEnumerable{{{modelInfo.ElementSettingsType}}})\"/> メソッドの検証処理。</summary>",
-                $"/// <inheritdoc cref=\"Reset(System.Collections.Generic.IEnumerable{{{modelInfo.ElementSettingsType}}})\" path=\"param|exception\"/>",
+                $"/// <inheritdoc cref=\"ResetStrict(System.Collections.Generic.IEnumerable{{{modelInfo.ElementSettingsType}}})\" path=\"param|exception\"/>",
                 $"public void ValidateResetStrict(IEnumerable<{modelInfo.ElementSettingsType}> settings) => MutableInstance.ValidateResetStrict(settings);",
                 $"",
                 $"/// <summary><see cref=\"Reset()\"/> メソッドの検証処理。</summary>",
@@ -388,9 +388,10 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"/// </summary>",
                 $"/// <param name=\"src\">変換元</param>",
                 $"/// <returns>変換したインスタンス</returns>",
-                $"public static implicit operator {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}({modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword} src)",
+                $"[return: System.Diagnostics.CodeAnalysis.NotNullIfNotNull(nameof(src))]",
+                $"public static implicit operator {modelInfo.ReadOnlyListInfo.ReadOnlyListClassNameWithoutInOutKeyword}?({modelInfo.FixedLengthListInfo.FixedLengthListClassNameWithoutInOutKeyword}? src)",
                 $"{{",
-                $"    return src.MutableInstance;",
+                $"    return src?.MutableInstance;",
                 $"}}"
             );
         }

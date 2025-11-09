@@ -14,11 +14,11 @@ namespace WodiLib.Sys.Collections
     ///     リスト設定インタフェース
     /// </summary>
     /// <typeparam name="TListElementSettings"></typeparam>
-    public interface IListSettings<out TListElementSettings>
+    public interface IListSettings<TListElementSettings>
     {
         /// <summary>
         ///     要素の設定DTOインタフェース列挙
         /// </summary>
-        public IReadOnlyList<TListElementSettings> Settings { get; }
+        public IList<TListElementSettings> Settings { get; }
     }
 }

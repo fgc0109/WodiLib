@@ -25,7 +25,7 @@ namespace WodiLib.Sys
         where T : TypeSafeEnum<T>
     {
         /// <summary>列挙子管理</summary>
-        private static readonly EnumItemsManager EnumItems = new();
+        private protected static readonly EnumItemsManager EnumItems = new();
 
         /// <summary>
         ///     コンストラクタ
@@ -36,9 +36,6 @@ namespace WodiLib.Sys
             Id = id;
             EnumItems.Add(id, this);
         }
-
-        /// <summary>全ての要素</summary>
-        protected static IEnumerable<T> AllItems => EnumItems.AllEnums;
 
         /// <summary>列挙子識別子</summary>
         public string Id { get; }
@@ -120,7 +117,7 @@ namespace WodiLib.Sys
         /// <summary>
         ///     列挙子管理クラス
         /// </summary>
-        private class EnumItemsManager
+        private protected class EnumItemsManager
         {
             private Dictionary<string, TypeSafeEnum<T>> ItemDic { get; } = new();
 
