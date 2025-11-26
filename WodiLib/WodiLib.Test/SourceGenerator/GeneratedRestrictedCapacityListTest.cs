@@ -72,7 +72,7 @@ namespace WodiLib.Test.SourceGenerator
             instance.Tags.Add("test1");
             instance.Tags.Add("test2");
 
-            var expected = new List<string>() { "Tag1", "Tag2", "test1", "test2" };
+            var expected = new List<string> { "Tag1", "Tag2", "test1", "test2" };
 
             propertyTestHelper.PropertyGetSuccess(
                 instance,
@@ -366,13 +366,13 @@ namespace WodiLib.Test.SourceGenerator
         {
             return new StubRestrictedCapacityListSettings(length.Iterate(CreateItemSettingsDto).ToList())
             {
-                Tags = new List<string>() { "Tag1", "Tag2" },
+                Tags = new List<string> { "Tag1", "Tag2" },
             };
         }
 
         private static IStubModelSettings CreateItemSettingsDto(int index)
         {
-            return new StubModelSettings()
+            return new StubModelSettings
             {
                 StringValue = index.ToString(),
             };

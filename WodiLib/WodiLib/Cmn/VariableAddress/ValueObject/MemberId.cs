@@ -6,6 +6,7 @@
 // see LICENSE file
 // ========================================
 
+using WodiLib.SourceGenerator.JsonConverter.Attributes;
 using WodiLib.Sys;
 
 namespace WodiLib.Cmn
@@ -14,6 +15,7 @@ namespace WodiLib.Cmn
     ///     [Range(1, 5)] 仲間ID
     /// </summary>
     [CommonIntValueObject(MinValue = 1, MaxValue = 5)]
+    [IntValueObjectJsonConvert]
     public partial record MemberId
     {
         /// <summary>

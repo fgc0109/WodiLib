@@ -22,7 +22,7 @@ namespace WodiLib.Test.Tools
         ///     cref="ValueVerifier{T}.AreItemEquals{TVal}(TVal,WodiLib.Test.Tools.ValueVerifier{T}.MakeItemEqualsCustomMessage{TVal}?)"/>
         public static ValueVerifier<T> AreItemEquals<T>(
             T expected,
-            ValueVerifier<T>.MakeItemEqualsCustomMessage<T>? customMessage = null
+            ValueVerifier<T?>.MakeItemEqualsCustomMessage<T>? customMessage = null
         )
             where T : IEqualityComparable<T>
             => new(actual => CustomAssert.AreItemEquals(

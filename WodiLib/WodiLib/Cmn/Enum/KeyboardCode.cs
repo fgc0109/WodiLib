@@ -8,6 +8,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using WodiLib.SourceGenerator.JsonConverter.Attributes;
 using WodiLib.Sys;
 
 namespace WodiLib.Cmn
@@ -15,7 +16,8 @@ namespace WodiLib.Cmn
     /// <summary>
     ///     キーボードコード
     /// </summary>
-    public class KeyboardCode : TypeSafeEnum<KeyboardCode>
+    [TypeSafeEnumJsonConvert]
+    public partial class KeyboardCode : TypeSafeEnum<KeyboardCode>
     {
         /// <summary>ESC</summary>
         public static readonly KeyboardCode Esc;

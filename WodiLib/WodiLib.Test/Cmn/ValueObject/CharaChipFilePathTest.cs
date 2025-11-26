@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Cmn;
 using WodiLib.Test.Tools;
@@ -8,23 +7,12 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.Cmn.ValueObject
 {
     [TestFixture]
-    public class CharaChipFilePathTest
+    public class CharaChipFilePathTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
-        private static ConstructorTestHelper constructorTestHelper = null!;
-        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
-        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
-
-            constructorTestHelper = new ConstructorTestHelper(logger);
-            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
-            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
+            InitializeTestHelpers();
         }
 
         #region Constructor

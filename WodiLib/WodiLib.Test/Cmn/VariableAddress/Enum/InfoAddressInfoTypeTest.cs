@@ -1,5 +1,4 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Cmn;
 using WodiLib.Test.Tools;
@@ -7,19 +6,12 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.Cmn.Enum
 {
     [TestFixture]
-    public class InfoAddressInfoTypeTest
+    public class InfoAddressInfoTypeTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
-        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
-
-            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
+            InitializeTestHelpers();
         }
 
         #region Constants

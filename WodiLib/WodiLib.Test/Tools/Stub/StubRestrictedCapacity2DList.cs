@@ -172,7 +172,7 @@ namespace WodiLib.Test.Tools
             SimpleList<StubRestrictedCapacityList> list
         )
             => new(
-                columnLength.Iterate<IStubModelSettings>(columnIndex => new StubModelSettings()
+                columnLength.Iterate<IStubModelSettings>(columnIndex => new StubModelSettings
                         { StringValue = $"{rowIndex}_{columnIndex}" }
                     )
                     .ToArray()

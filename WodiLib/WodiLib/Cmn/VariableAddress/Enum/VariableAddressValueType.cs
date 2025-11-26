@@ -7,6 +7,7 @@
 // ========================================
 
 using System.Collections.Generic;
+using WodiLib.SourceGenerator.JsonConverter.Attributes;
 using WodiLib.Sys;
 
 namespace WodiLib.Cmn
@@ -14,7 +15,8 @@ namespace WodiLib.Cmn
     /// <summary>
     ///     各情報アドレス情報種別
     /// </summary>
-    public class VariableAddressValueType : TypeSafeEnum<VariableAddressValueType>
+    [TypeSafeEnumJsonConvert]
+    public partial class VariableAddressValueType : TypeSafeEnum<VariableAddressValueType>
     {
         /// <summary>数値</summary>
         public static readonly VariableAddressValueType Numeric;

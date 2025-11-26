@@ -10,6 +10,7 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using WodiLib.SourceGenerator.JsonConverter.Attributes;
 using WodiLib.Sys;
 
 namespace WodiLib.Cmn
@@ -19,6 +20,7 @@ namespace WodiLib.Cmn
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
     [FilePathStringObjectValue]
+    [StringValueObjectJsonConvert]
     public partial record FilePath
     {
         #region Constructors

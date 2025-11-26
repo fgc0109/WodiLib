@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using Commons;
 using NUnit.Framework;
+using WodiLib.Sys.Cmn;
 
 namespace WodiLib.Test.Tools
 {
@@ -53,7 +53,7 @@ namespace WodiLib.Test.Tools
     /// </remarks>
     internal class PropertyTestHelper : TestHelperBase
     {
-        public PropertyTestHelper(Logger logger) : base(logger)
+        public PropertyTestHelper(WodiLibLogger logger) : base(logger)
         {
         }
 

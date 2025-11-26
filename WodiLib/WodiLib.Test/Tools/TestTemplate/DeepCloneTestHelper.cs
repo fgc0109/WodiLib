@@ -1,6 +1,6 @@
-using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
+using WodiLib.Sys.Cmn;
 
 namespace WodiLib.Test.Tools
 {
@@ -39,7 +39,7 @@ namespace WodiLib.Test.Tools
     {
         private readonly PureFunctionTestHelper pureFunctionTestHelper;
 
-        public DeepCloneTestHelper(Logger logger) : base(logger)
+        public DeepCloneTestHelper(WodiLibLogger logger) : base(logger)
         {
             pureFunctionTestHelper = new PureFunctionTestHelper(logger);
         }

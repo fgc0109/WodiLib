@@ -15,45 +15,45 @@ namespace WodiLib.Sys.Cmn
     /// </summary>
     public class WodiLibLogger
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Constants
 
         /// <summary>
         ///     デフォルト設定キー名
         /// </summary>
         private static string DefaultKeyName => "default";
 
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Static Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Static Properties
 
         /// <summary>
         ///     現在の設定キー名
         /// </summary>
         public static string TargetKeyName { get; private set; } = "";
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Static Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
         /// <summary>
         ///     コンフィグコンテナ
         /// </summary>
         private static WodiLibContainer ConfigContainer { get; } = new();
 
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Properties
 
         /// <summary>
         ///     ログハンドラ
         /// </summary>
         public WodiLibLogHandler LogHandler { get; private set; }
 
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Static Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Static Methods
 
         /// <summary>
         ///     メインで使用する設定キーを変更する。
@@ -110,10 +110,6 @@ namespace WodiLib.Sys.Cmn
             instance.LogHandler = logHandler;
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Static Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
         /// <summary>
         ///     指定した設定キー名の設定インスタンスがコンテナに登録されていなければ登録する。
         /// </summary>
@@ -130,9 +126,11 @@ namespace WodiLib.Sys.Cmn
             }
         }
 
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Constructor
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Constructors
 
         static WodiLibLogger()
         {
@@ -153,17 +151,19 @@ namespace WodiLib.Sys.Cmn
             LogHandler = logHandler;
         }
 
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Methods
 
         /// <summary>
         ///     エラーメッセージを処理する。
         /// </summary>
-        /// <param name="message">メッセージ</param>
-        public void Error(string? message)
+        /// <param name="exception">例外</param>
+        public void Exception(Exception exception)
         {
-            LogHandler.DoError(message);
+            LogHandler.DoError(exception.Message + Environment.NewLine + exception.StackTrace);
         }
 
         /// <summary>
@@ -192,5 +192,7 @@ namespace WodiLib.Sys.Cmn
         {
             LogHandler.DoDebug(message);
         }
+
+        #endregion
     }
 }

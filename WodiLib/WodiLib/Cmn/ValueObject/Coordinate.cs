@@ -6,6 +6,7 @@
 // see LICENSE file
 // ========================================
 
+using WodiLib.SourceGenerator.JsonConverter.Attributes;
 using WodiLib.Sys;
 
 namespace WodiLib.Cmn
@@ -14,6 +15,7 @@ namespace WodiLib.Cmn
     ///     座標
     /// </summary>
     [CommonIntValueObject(MinValue = 0, MaxValue = int.MaxValue)]
+    [IntValueObjectJsonConvert]
     public partial record Coordinate
     {
         /// <summary>

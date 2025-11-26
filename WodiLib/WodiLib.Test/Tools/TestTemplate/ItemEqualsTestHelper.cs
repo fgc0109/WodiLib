@@ -1,6 +1,6 @@
-using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
+using WodiLib.Sys.Cmn;
 
 namespace WodiLib.Test.Tools
 {
@@ -14,7 +14,7 @@ namespace WodiLib.Test.Tools
     {
         private readonly PureFunctionTestHelper pureFunctionTestHelper;
 
-        public ItemEqualsTestHelper(Logger logger) : base(logger)
+        public ItemEqualsTestHelper(WodiLibLogger logger) : base(logger)
         {
             pureFunctionTestHelper = new PureFunctionTestHelper(logger);
         }

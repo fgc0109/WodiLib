@@ -75,13 +75,21 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
                     isValidateLength,
                 }.All(b => !b)) return Array.Empty<SourceFormatTarget>();
 
+            var isNewMaxMinLength =
+                typeSymbol.IsParentImplementsPropertyRecursive(MyAttr.MaxLength, selfAttributeData)
+                || typeSymbol.IsParentImplementsPropertyRecursive(MyAttr.MinLength, selfAttributeData);
+            var isNewByteMaxMinLength =
+                typeSymbol.IsParentImplementsPropertyRecursive(MyAttr.ByteMaxLength, selfAttributeData)
+                || typeSymbol.IsParentImplementsPropertyRecursive(MyAttr.ByteMinLength, selfAttributeData);
+
             return SourceTextFormatter.Format(
                 "",
                 SourceTextFormatter.If(
                     isValidatePattern,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_String(
                         MyAttr.Pattern,
-                        selfAttributeData
+                        selfAttributeData,
+                        isOverwrittenProperty: isNewMaxMinLength
                     )
                 ),
                 SourceTextFormatter.If(
@@ -102,22 +110,26 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
                     isValidateByteLength,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.ByteMaxLength,
-                        selfAttributeData
+                        selfAttributeData,
+                        isOverwrittenProperty: isNewByteMaxMinLength
                     ),
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.ByteMinLength,
-                        selfAttributeData
+                        selfAttributeData,
+                        isOverwrittenProperty: isNewByteMaxMinLength
                     )
                 ),
                 SourceTextFormatter.If(
                     isValidateLength,
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.MaxLength,
-                        selfAttributeData
+                        selfAttributeData,
+                        isOverwrittenProperty: isNewMaxMinLength
                     ),
                     SourceFormatTargetHelper.SourceFormatTargetsClassConstant_Numeric(
                         MyAttr.MinLength,
-                        selfAttributeData
+                        selfAttributeData,
+                        isOverwrittenProperty: isNewMaxMinLength
                     )
                 )
             );
@@ -157,12 +169,16 @@ namespace WodiLib.SourceGenerator.ValueObject.Generation.Main.SingleValues
                 SourceFormatTargetsValidateNewLine(selfAttributeData),
                 SourceFormatTargetsValidateByteLength(selfAttributeData),
                 SourceFormatTargetsValidateLength(selfAttributeData),
-                new SourceFormatTarget[]
-                {
-                    // DoConstructorExpansion メソッドで RawValue を更新する可能性があるので RawValue の初期化を先に行う
-                    $"{selfAttributeData.GetPropertyDataRecursive<string>(MyAttr.PropertyName.Name)} = value;",
-                    $"DoConstructorExpansion(value);",
-                }
+                SourceTextFormatter.If(
+                    // Rootクラスのみ
+                    !typeSymbol.IsExtended(),
+                    new SourceFormatTarget[]
+                    {
+                        // DoConstructorExpansion メソッドで RawValue を更新する可能性があるので RawValue の初期化を先に行う
+                        $"{selfAttributeData.GetPropertyDataRecursive<string>(MyAttr.PropertyName.Name)} = value;",
+                        $"DoConstructorExpansion(value);",
+                    }
+                )
             );
         }
 

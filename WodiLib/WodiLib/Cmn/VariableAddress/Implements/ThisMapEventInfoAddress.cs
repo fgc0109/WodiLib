@@ -7,6 +7,7 @@
 // ========================================
 
 using System;
+using WodiLib.SourceGenerator.JsonConverter.Attributes;
 using WodiLib.Sys;
 using WodiLib.Sys.Cmn;
 
@@ -19,6 +20,7 @@ namespace WodiLib.Cmn
     [VariableAddressGapCalculatable(
         OtherTypes = new[] { typeof(ThisMapEventInfoAddress), typeof(VariableAddress) }
     )]
+    [IntValueObjectJsonConvert]
     public partial record ThisMapEventInfoAddress : VariableAddress
     {
         /// <summary>変数種別</summary>

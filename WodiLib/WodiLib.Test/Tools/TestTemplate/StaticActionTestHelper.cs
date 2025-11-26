@@ -1,6 +1,6 @@
 using System;
-using Commons;
 using NUnit.Framework;
+using WodiLib.Sys.Cmn;
 
 namespace WodiLib.Test.Tools
 {
@@ -20,7 +20,7 @@ namespace WodiLib.Test.Tools
     /// </remarks>
     internal class StaticActionTestHelper : TestHelperBase
     {
-        public StaticActionTestHelper(Logger logger) : base(logger)
+        public StaticActionTestHelper(WodiLibLogger logger) : base(logger)
         {
         }
 

@@ -1,31 +1,17 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Cmn;
 using WodiLib.Test.Tools;
 
-namespace WodiLib.Test.Cmn
+namespace WodiLib.Test.Cmn.Implements
 {
     [TestFixture]
-    public class SystemDatabaseAddressTest
+    public class SystemDatabaseAddressTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
-        private static ConstructorTestHelper constructorTestHelper = null!;
-        private static PropertyTestHelper propertyTestHelper = null!;
-        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
-        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
-
-            constructorTestHelper = new ConstructorTestHelper(logger);
-            propertyTestHelper = new PropertyTestHelper(logger);
-            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
-            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
+            InitializeTestHelpers();
         }
 
         #region properties

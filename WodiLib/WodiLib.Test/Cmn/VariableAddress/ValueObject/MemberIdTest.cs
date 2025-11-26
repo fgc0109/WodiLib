@@ -1,29 +1,17 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Cmn;
 using WodiLib.Test.Tools;
 
-namespace WodiLib.Test.Cmn
+namespace WodiLib.Test.Cmn.ValueObject
 {
     [TestFixture]
-    public class MemberIdTest
+    public class MemberIdTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
-        private static ConstructorTestHelper constructorTestHelper = null!;
-        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
-        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
-
-            constructorTestHelper = new ConstructorTestHelper(logger);
-            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
-            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
+            InitializeTestHelpers();
         }
 
         #region Constructor
@@ -73,7 +61,7 @@ namespace WodiLib.Test.Cmn
         [TestCase(5)]
         public static void CastIntToMemberIdTest_Success(int value)
         {
-            staticFunctionTestHelper.StaticFuncSuccess<MemberId>(
+            staticFunctionTestHelper.StaticFuncSuccess(
                 execFunc: () => value,
                 resultValueVerifier: new ValueVerifier<MemberId>(actual => { Assert.AreEqual(actual.RawValue, value); })
             );
@@ -104,7 +92,7 @@ namespace WodiLib.Test.Cmn
         [TestCase(5)]
         public static void CastMemberIdToIntTest_Success(int value)
         {
-            staticFunctionTestHelper.StaticFuncSuccess<int>(
+            staticFunctionTestHelper.StaticFuncSuccess(
                 execFunc: () => new MemberId(value),
                 resultValueVerifier: new ValueVerifier<int>(actual => { Assert.AreEqual(actual, value); })
             );

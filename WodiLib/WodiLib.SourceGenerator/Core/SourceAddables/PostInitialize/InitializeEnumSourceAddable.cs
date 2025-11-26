@@ -61,10 +61,10 @@ namespace WodiLib.SourceGenerator.Core.SourceAddables.PostInitialize
         public class EnumMember
         {
             /// <summary>列挙メンバー名</summary>
-            public string MemberName { get; private init; } = default!;
+            public string MemberName { get; private init; } = null!;
 
             /// <summary>Summary</summary>
-            public string Summary { get; private init; } = default!;
+            public string Summary { get; private init; } = null!;
 
             /// <summary>値</summary>
             public int Value { get; private init; }

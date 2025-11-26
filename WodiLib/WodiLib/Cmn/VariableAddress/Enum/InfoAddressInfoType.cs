@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WodiLib.SourceGenerator.JsonConverter.Attributes;
 using WodiLib.Sys;
 
 namespace WodiLib.Cmn
@@ -16,7 +17,8 @@ namespace WodiLib.Cmn
     /// <summary>
     ///     各情報アドレス情報種別
     /// </summary>
-    public class InfoAddressInfoType : TypeSafeEnum<InfoAddressInfoType>
+    [TypeSafeEnumJsonConvert]
+    public partial class InfoAddressInfoType : TypeSafeEnum<InfoAddressInfoType>
     {
         /// <summary>X座標</summary>
         public static readonly InfoAddressInfoType PositionX;

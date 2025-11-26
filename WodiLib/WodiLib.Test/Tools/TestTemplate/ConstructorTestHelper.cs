@@ -1,6 +1,6 @@
 using System;
-using Commons;
 using NUnit.Framework;
+using WodiLib.Sys.Cmn;
 
 namespace WodiLib.Test.Tools
 {
@@ -25,7 +25,7 @@ namespace WodiLib.Test.Tools
     /// </remarks>
     internal class ConstructorTestHelper : TestHelperBase
     {
-        public ConstructorTestHelper(Logger logger) : base(logger)
+        public ConstructorTestHelper(WodiLibLogger logger) : base(logger)
         {
         }
 

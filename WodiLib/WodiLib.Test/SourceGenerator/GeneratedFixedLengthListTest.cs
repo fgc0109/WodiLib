@@ -56,7 +56,7 @@ namespace WodiLib.Test.SourceGenerator
         {
             var instance = new StubFixedLengthList(CreateSettingsDto());
 
-            var expected = new List<string>() { "Tag1", "Tag2" };
+            var expected = new List<string> { "Tag1", "Tag2" };
 
             propertyTestHelper.PropertyGetSuccess(
                 instance,

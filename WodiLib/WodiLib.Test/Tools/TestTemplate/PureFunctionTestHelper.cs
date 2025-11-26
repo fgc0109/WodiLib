@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Sys;
+using WodiLib.Sys.Cmn;
 
 namespace WodiLib.Test.Tools
 {
@@ -39,7 +39,7 @@ namespace WodiLib.Test.Tools
     /// </remarks>
     internal class PureFunctionTestHelper : TestHelperBase
     {
-        public PureFunctionTestHelper(Logger logger) : base(logger)
+        public PureFunctionTestHelper(WodiLibLogger logger) : base(logger)
         {
         }
 

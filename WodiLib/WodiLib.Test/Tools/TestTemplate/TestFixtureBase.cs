@@ -1,4 +1,4 @@
-using Commons;
+using WodiLib.Sys.Cmn;
 
 namespace WodiLib.Test.Tools
 {
@@ -10,7 +10,7 @@ namespace WodiLib.Test.Tools
     /// </remarks>
     public abstract class TestFixtureBase
     {
-        private protected static Logger logger = null!;
+        private protected static WodiLibLogger logger = null!;
 
         private protected static PropertyTestHelper propertyTestHelper = null!;
         private protected static ConstructorTestHelper constructorTestHelper = null!;
@@ -24,10 +24,18 @@ namespace WodiLib.Test.Tools
         private protected static StaticFunctionTestHelper staticFunctionTestHelper = null!;
         private protected static StaticActionTestHelper staticActionTestHelper = null!;
 
-        private protected static void InitializeTestHelpers()
+        private protected static void InitializeTestHelpers(bool isProjectNamespace = false)
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            if (isProjectNamespace)
+            {
+                LoggerInitializer.SetupLoggerForProjectTest();
+            }
+            else
+            {
+                LoggerInitializer.SetupLoggerForDebug();
+            }
+
+            logger = WodiLibLogger.GetInstance();
 
             propertyTestHelper = new PropertyTestHelper(logger);
             constructorTestHelper = new ConstructorTestHelper(logger);

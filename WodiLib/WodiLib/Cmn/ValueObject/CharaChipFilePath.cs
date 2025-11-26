@@ -8,13 +8,15 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using WodiLib.SourceGenerator.JsonConverter.Attributes;
 
 namespace WodiLib.Cmn
 {
     /// <summary>
     ///     [NotNewLine] キャラチップファイルパス
     /// </summary>
-    public record CharaChipFilePath : FilePath
+    [StringValueObjectJsonConvert]
+    public partial record CharaChipFilePath : FilePath
     {
         /// <summary>
         ///     コンストラクタ

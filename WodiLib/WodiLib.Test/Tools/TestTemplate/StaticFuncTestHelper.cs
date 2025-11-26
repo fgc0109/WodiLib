@@ -1,6 +1,6 @@
 using System;
-using Commons;
 using NUnit.Framework;
+using WodiLib.Sys.Cmn;
 
 namespace WodiLib.Test.Tools
 {
@@ -25,7 +25,7 @@ namespace WodiLib.Test.Tools
     /// </remarks>
     internal class StaticFunctionTestHelper : TestHelperBase
     {
-        public StaticFunctionTestHelper(Logger logger) : base(logger)
+        public StaticFunctionTestHelper(WodiLibLogger logger) : base(logger)
         {
         }
 
@@ -95,7 +95,8 @@ namespace WodiLib.Test.Tools
             Assert.AreEqual(
                 expectedFailure,
                 errorOccured,
-                $"expectedFailure not eq errorOccured. ({expectedFailure}, {errorOccured})"
+                $"expectedFailure not eq errorOccured. ({expectedFailure}, {errorOccured})\n"
+                + $"error: {(errorOccured ? exception.ToString() : "null")}"
             );
 
             // エラーが発生した場合、発生したエラーの検証処理

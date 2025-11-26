@@ -1,12 +1,12 @@
 using System.Collections.Generic;
-using Commons;
 using NUnit.Framework;
+using WodiLib.Sys.Cmn;
 
 namespace WodiLib.Test.Tools
 {
     internal abstract class ImpureTestHelperBase : TestHelperBase
     {
-        protected ImpureTestHelperBase(Logger logger) : base(logger)
+        protected ImpureTestHelperBase(WodiLibLogger logger) : base(logger)
         {
         }
 

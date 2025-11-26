@@ -51,5 +51,5 @@ namespace WodiLib.Sys
             var (name, value) = tuple;
             return new NamedValue<T>(name, value);
         }
-    };
+    }
 }

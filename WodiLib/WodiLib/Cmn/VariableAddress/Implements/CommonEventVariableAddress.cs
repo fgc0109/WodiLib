@@ -6,6 +6,8 @@
 // see LICENSE file
 // ========================================
 
+using WodiLib.SourceGenerator.JsonConverter.Attributes;
+
 namespace WodiLib.Cmn
 {
     /// <summary>
@@ -15,6 +17,7 @@ namespace WodiLib.Cmn
     [VariableAddressGapCalculatable(
         OtherTypes = new[] { typeof(CommonEventVariableAddress), typeof(VariableAddress) }
     )]
+    [IntValueObjectJsonConvert]
     public partial record CommonEventVariableAddress : VariableAddress
     {
         /// <summary>変数種別</summary>

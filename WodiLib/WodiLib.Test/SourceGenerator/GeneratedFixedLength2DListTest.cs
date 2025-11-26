@@ -59,7 +59,7 @@ namespace WodiLib.Test.SourceGenerator
         {
             var instance = new StubFixedLength2DList(CreateSettingsDto());
 
-            var expected = new List<string>() { "Tag1", "Tag2" };
+            var expected = new List<string> { "Tag1", "Tag2" };
 
             propertyTestHelper.PropertyGetSuccess(
                 instance,
@@ -427,7 +427,7 @@ namespace WodiLib.Test.SourceGenerator
                     .ToList()
             )
             {
-                Tags = new List<string>() { "Tag1", "Tag2" },
+                Tags = new List<string> { "Tag1", "Tag2" },
             };
         }
 
@@ -440,13 +440,13 @@ namespace WodiLib.Test.SourceGenerator
                     .ToList()
             )
             {
-                Tags = new List<string>() { "Tag1", "Tag2" },
+                Tags = new List<string> { "Tag1", "Tag2" },
             };
         }
 
         private static StubModelSettings CreateItemSettingsDto(int rowIndex, int columnIndex)
         {
-            return new StubModelSettings()
+            return new StubModelSettings
             {
                 StringValue = $"Row{rowIndex} Col{columnIndex}",
             };

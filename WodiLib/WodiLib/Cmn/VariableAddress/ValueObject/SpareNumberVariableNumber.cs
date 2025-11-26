@@ -6,6 +6,7 @@
 // see LICENSE file
 // ========================================
 
+using WodiLib.SourceGenerator.JsonConverter.Attributes;
 using WodiLib.Sys;
 
 namespace WodiLib.Cmn
@@ -14,6 +15,7 @@ namespace WodiLib.Cmn
     ///     [Range(0, 9)] 予備変数番号
     /// </summary>
     [CommonIntValueObject(MinValue = 0, MaxValue = 9)]
+    [IntValueObjectJsonConvert]
     public partial record SpareNumberVariableNumber
     {
         /// <summary>

@@ -7,8 +7,8 @@
 // ========================================
 
 using System;
-using Commons;
 using NUnit.Framework;
+using WodiLib.Sys.Cmn;
 
 namespace WodiLib.Test.Tools
 {
@@ -17,9 +17,9 @@ namespace WodiLib.Test.Tools
     /// </summary>
     internal abstract class TestHelperBase
     {
-        protected readonly Logger logger;
+        protected readonly WodiLibLogger logger;
 
-        protected TestHelperBase(Logger logger)
+        protected TestHelperBase(WodiLibLogger logger)
         {
             this.logger = logger;
         }

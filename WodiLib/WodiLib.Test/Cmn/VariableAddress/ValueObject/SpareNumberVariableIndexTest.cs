@@ -1,29 +1,17 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Cmn;
 using WodiLib.Test.Tools;
 
-namespace WodiLib.Test.Cmn
+namespace WodiLib.Test.Cmn.ValueObject
 {
     [TestFixture]
-    public class SpareNumberVariableIndexTest
+    public class SpareNumberVariableIndexTest : TestFixtureBase
     {
-        private static Logger logger = null!;
-
-        private static ConstructorTestHelper constructorTestHelper = null!;
-        private static PureFunctionTestHelper pureFunctionTestHelper = null!;
-        private static StaticFunctionTestHelper staticFunctionTestHelper = null!;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
-
-            constructorTestHelper = new ConstructorTestHelper(logger);
-            pureFunctionTestHelper = new PureFunctionTestHelper(logger);
-            staticFunctionTestHelper = new StaticFunctionTestHelper(logger);
+            InitializeTestHelpers();
         }
 
         #region Constructor
@@ -73,7 +61,7 @@ namespace WodiLib.Test.Cmn
         [TestCase(99999)]
         public static void CastIntToSpareNumberVariableIndexTest_Success(int value)
         {
-            staticFunctionTestHelper.StaticFuncSuccess<SpareNumberVariableIndex>(
+            staticFunctionTestHelper.StaticFuncSuccess(
                 execFunc: () => value,
                 resultValueVerifier: new ValueVerifier<SpareNumberVariableIndex>(actual =>
                     {
@@ -108,7 +96,7 @@ namespace WodiLib.Test.Cmn
         [TestCase(99999)]
         public static void CastSpareNumberVariableIndexToIntTest_Success(int value)
         {
-            staticFunctionTestHelper.StaticFuncSuccess<int>(
+            staticFunctionTestHelper.StaticFuncSuccess(
                 execFunc: () => new SpareNumberVariableIndex(value),
                 resultValueVerifier: new ValueVerifier<int>(actual => { Assert.AreEqual(actual, value); })
             );

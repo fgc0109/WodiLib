@@ -36,7 +36,7 @@ namespace WodiLib.SourceGenerator.Core.Templates.FromAttribute
 
             if (!value.StartsWith("\"") && !value.EndsWith("\""))
             {
-                value = $"\"{value}\"";
+                value = $"@\"{value}\"";
             }
 
             return SourceFormatTargetsClassConstant(propertyInfo, value, isOverwrittenProperty: isOverwrittenProperty);

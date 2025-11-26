@@ -347,7 +347,7 @@ namespace WodiLib.Test.SourceGenerator
 
         private static StubModelSettings CreateSettingsDto(string str = "")
         {
-            return new StubModelSettings()
+            return new StubModelSettings
             {
                 StringValue = str,
             };
