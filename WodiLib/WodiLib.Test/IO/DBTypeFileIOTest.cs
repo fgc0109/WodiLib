@@ -1,22 +1,19 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Database;
 using WodiLib.IO;
+using WodiLib.Test.IO.TestData.Database;
 using WodiLib.Test.Tools;
 
 namespace WodiLib.Test.IO
 {
     [TestFixture]
-    public class DBTypeFileIOTest
+    public class DBTypeFileIOTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
         [OneTimeSetUp]
@@ -26,49 +23,53 @@ namespace WodiLib.Test.IO
             DBTypeFileTestItemGenerator.OutputFile();
         }
 
-        // ################################################################################
-        //    Resourceファイルの内容をDBTypeインスタンスに変換してバイナリ変換した後
-        //    別ファイルとして書き出すテスト
-        // ################################################################################
-
-        [TestCase("タイプ(データ含む)_002_┣ 主人公行動AI.dbtype", "Outputタイプ(データ含む)_002_┣ 主人公行動AI.dbtype")]
-        [TestCase("タイプ(データ含む)_008_状態設定.dbtype", "Outputタイプ(データ含む)_008_状態設定.dbtype")]
-        public static void DBTypeIOTest(string inputFileName, string outputFileName)
+        private static readonly object[][] DBTypeIOTestCaseSource =
         {
-            var reader =
-                new DBTypeFileReader(
-                    $@"{DBTypeFileTestItemGenerator.TestWorkRootDir}\{inputFileName}");
-            DBType data = null;
-            var isSuccessRead = false;
-            try
+            // [inputFilePath, outputFilePath]
+            new object[]
             {
-                data = reader.ReadAsync().GetAwaiter().GetResult();
-                isSuccessRead = true;
-            }
-            catch (Exception ex)
+                new DBTypeFilePath($@"{IoTestDataConstants.TestWorkRootDir}\タイプ(データ含む)_002_┣ 主人公行動AI.dbtype"),
+                new DBTypeFilePath($@"{IoTestDataConstants.TestWorkRootDir}\Outputタイプ(データ含む)_002_┣ 主人公行動AI.dbtype"),
+            },
+            new object[]
             {
-                logger.Exception(ex);
-            }
+                new DBTypeFilePath($@"{IoTestDataConstants.TestWorkRootDir}\タイプ(データ含む)_008_状態設定.dbtype"),
+                new DBTypeFilePath($@"{IoTestDataConstants.TestWorkRootDir}\Outputタイプ(データ含む)_008_状態設定.dbtype"),
+            },
+        };
 
-            Assert.IsTrue(isSuccessRead);
+        /// <summary>
+        ///     読み取りと書き出しが正常に終了すること。
+        /// </summary>
+        [TestCaseSource(nameof(DBTypeIOTestCaseSource))]
+        public static void DBTypeIOTest(DBTypeFilePath inputFilePath, DBTypeFilePath outputFilePath)
+        {
+            // ----------------------------------------
+            // 読み取りテスト
 
-            var writer = new DBTypeFileWriter(
-                $@"{DBTypeFileTestItemGenerator.TestWorkRootDir}\{outputFileName}");
-            var isSuccessWrite = false;
-            try
-            {
-                writer.WriteAsync(data).GetAwaiter().GetResult();
-                isSuccessWrite = true;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-            }
+            var reader = new DBTypeFileReader(inputFilePath);
 
-            Assert.IsTrue(isSuccessWrite);
+            DBType data = null!;
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: reader,
+                execFunc: target => target.ReadAsync().GetAwaiter().GetResult(),
+                resultValueVerifier: new ValueVerifier<DBType>(result => { data = result; })
+            );
+
+            // ----------------------------------------
+            // 書き込みテスト
+
+            var writer = new DBTypeFileWriter(outputFilePath);
+            pureActionTestHelper.PureActionSuccess(
+                instance: writer,
+                execAction: target => target.WriteAsync(data).GetAwaiter().GetResult()
+            );
+
+            // ----------------------------------------
 
             Console.WriteLine(
-                $@"Written FilePath : {DBTypeFileTestItemGenerator.TestWorkRootDir}\{outputFileName}");
+                $@"Written FilePath : {outputFilePath}"
+            );
         }
 
         [OneTimeTearDown]

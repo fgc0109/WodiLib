@@ -14,14 +14,10 @@ namespace WodiLib.IO
     /// <summary>
     ///     システムデータベースデータファイル名
     /// </summary>
-    [FilePathStringObjectValue(SafetyPattern = @"^SysDataBase\.dat$")]
-    public partial class SystemDatabaseDatFilePath : DatabaseDatFilePath
+    [FilePathStringObjectValue(SafetyPattern = @"^(.+\\)?SysDataBase\.dat$")]
+    public partial record SystemDatabaseDatFilePath : DBDatFilePath
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Override Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
         /// <summary>DB種別</summary>
-        public override DBKind DBKind => DBKind.System;
+        public override DatabaseKind DbKind => DatabaseKind.System;
     }
 }

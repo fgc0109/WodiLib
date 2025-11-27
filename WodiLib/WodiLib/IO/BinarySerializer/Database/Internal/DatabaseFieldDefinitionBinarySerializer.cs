@@ -9,7 +9,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using WodiLib.Database;
-using WodiLib.Sys;
+using Endian = WodiLib.Sys.Endian;
+using IntExtension = WodiLib.Sys.IntExtension;
+using LinqExtension = WodiLib.Sys.LinqExtension;
+using StringExtension = WodiLib.Sys.StringExtension;
 
 namespace WodiLib.IO
 {
@@ -18,6 +21,10 @@ namespace WodiLib.IO
     /// </summary>
     internal static class DatabaseFieldDefinitionBinarySerializer
     {
+        /// <inheritdoc cref="SerializeFieldNames(IEnumerable{ReadOnlyDatabaseFieldDefinition})"/>
+        public static byte[] SerializeFieldNames(this IEnumerable<DatabaseFieldDefinition> src)
+            => SerializeFieldNames(src.Select(item => (ReadOnlyDatabaseFieldDefinition)item));
+
         /// <summary>
         ///     <see cref="ReadOnlyDatabaseFieldDefinition"/> 列挙中の <see cref="ReadOnlyDatabaseFieldDefinition.FieldName"/>
         ///     をバイナリ配列に変換する。
@@ -26,8 +33,13 @@ namespace WodiLib.IO
         /// <returns>すべての <see cref="ReadOnlyDatabaseFieldDefinition.FieldName"/> を変換したバイナリ配列</returns>
         public static byte[] SerializeFieldNames(this IEnumerable<ReadOnlyDatabaseFieldDefinition> src)
         {
-            return src.SelectMany(row => ((string)row.FieldName).ToWoditorStringBytes()).ToArray();
+            return src.SelectMany(row => StringExtension.ToWoditorStringBytes(row.FieldName)).ToArray();
         }
+
+        /// <inheritdoc cref="SerializeFieldTypesAndOrder(IEnumerable{ReadOnlyDatabaseFieldDefinition})"/>
+        public static byte[] SerializeFieldTypesAndOrder(
+            this IEnumerable<DatabaseFieldDefinition> src
+        ) => SerializeFieldTypesAndOrder(src.Select(item => (ReadOnlyDatabaseFieldDefinition)item));
 
         /// <summary>
         ///     <see cref="ReadOnlyDatabaseFieldDefinition"/> 列挙中の <see cref="ReadOnlyDatabaseFieldDefinition.FieldType"/>
@@ -39,6 +51,12 @@ namespace WodiLib.IO
             this IEnumerable<ReadOnlyDatabaseFieldDefinition> src
         )
             => src.Select(row => row.FieldType).Serialize();
+
+        /// <inheritdoc cref="SerializeSpecialSettingDescription(IEnumerable{ReadOnlyDatabaseFieldDefinition})"/>
+        public static byte[] SerializeSpecialSettingDescription(
+            this IEnumerable<DatabaseFieldDefinition> src
+        ) => SerializeSpecialSettingDescription(src.Select(item => (ReadOnlyDatabaseFieldDefinition)item));
+
 
         /// <summary>
         ///     <see cref="ReadOnlyDatabaseFieldDefinition"/> 列挙中の特殊指定情報をバイナリ配列に変換する。
@@ -56,7 +74,7 @@ namespace WodiLib.IO
             var fieldLength = definitionArray.Length;
 
             // 特殊指定数
-            result.AddRange(needFieldLength.ToWoditorIntBytes());
+            result.AddRange(IntExtension.ToWoditorIntBytes(needFieldLength));
 
             // 特殊指定
             var settingTypeList = definitionArray.Select(x => x.SpecialSettingDefinition.SettingType);
@@ -68,10 +86,12 @@ namespace WodiLib.IO
             }
 
             // 項目メモ数
-            result.AddRange(fieldLength.ToWoditorIntBytes());
+            result.AddRange(IntExtension.ToWoditorIntBytes(fieldLength));
 
             // 項目メモ
-            result.AddRange(definitionArray.SelectMany(x => ((string)x.FieldMemo).ToWoditorStringBytes()));
+            result.AddRange(
+                definitionArray.SelectMany(x => StringExtension.ToWoditorStringBytes(x.FieldMemo))
+            );
 
             // ---------- 特殊指定文字列パラメータ、特殊指定内パラメータ、初期値
 
@@ -99,37 +119,41 @@ namespace WodiLib.IO
             }
 
             // 特殊指定文字列パラメータ数
-            result.AddRange(specialCaseDescriptions.Count.ToWoditorIntBytes());
+            result.AddRange(IntExtension.ToWoditorIntBytes(specialCaseDescriptions.Count));
 
             // 特殊指定文字列パラメータ
             specialCaseDescriptions.ForEach(x =>
                 {
                     // 文字列パラメータ数
-                    result.AddRange(x.Count.ToBytes(Endian.Woditor));
+                    result.AddRange(IntExtension.ToBytes(x.Count, Endian.Woditor));
                     // 文字列パラメータ
-                    x.ForEach(y =>
-                        result.AddRange(((string)y).ToWoditorStringBytes())
+                    LinqExtension.ForEach(
+                        x,
+                        y =>
+                            result.AddRange(StringExtension.ToWoditorStringBytes((string)y))
                     );
                 }
             );
 
             // 特殊指定数値パラメータ数
-            result.AddRange(specialCaseNumbers.Count.ToWoditorIntBytes());
+            result.AddRange(IntExtension.ToWoditorIntBytes(specialCaseNumbers.Count));
 
             // 特殊指定数値パラメータ
             specialCaseNumbers.ForEach(x =>
                 {
                     // 数値パラメータ数
-                    result.AddRange(x.Count.ToWoditorIntBytes());
+                    result.AddRange(IntExtension.ToWoditorIntBytes(x.Count));
                     // 数値パラメータ
-                    x.ForEach(y =>
-                        result.AddRange(((int)y).ToWoditorIntBytes())
+                    LinqExtension.ForEach(
+                        x,
+                        y =>
+                            result.AddRange(IntExtension.ToWoditorIntBytes((int)y))
                     );
                 }
             );
 
             // 初期値数
-            result.AddRange(initValues.Count.ToWoditorIntBytes());
+            result.AddRange(IntExtension.ToWoditorIntBytes(initValues.Count));
 
             // 初期値
             result.AddRange(initValues.Serialize());

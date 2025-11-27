@@ -1,145 +1,220 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Database;
 using WodiLib.Test.Tools;
 
-namespace WodiLib.Test.Database
+namespace WodiLib.Test.Database.ValueObject
 {
     [TestFixture]
-    public class DatabaseMemoTest
+    public class DatabaseMemoTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-        [TestCase(null, true)]
-        [TestCase("", false)]
-        [TestCase("abc", false)]
-        [TestCase("あいうえお", false)]
-        [TestCase("Hello\r\nWorld!", false)]
-        [TestCase("Wolf\nRPG\nEditor.", false)]
-        public static void ConstructorTest(string value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = new DatabaseMemo(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+        #region Constructor
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-        }
-
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase("")]
         [TestCase("abc")]
+        [TestCase("Hello\r\nWorld!")]
         [TestCase("あいうえお")]
-        public static void ToStringTest(string value)
+        public static void ConstructorStringTest_Success(string value)
         {
-            var instance = new DatabaseMemo(value);
-
-            var strValue = instance.ToString();
-
-            // セットした値と取得した値が一致すること
-            Assert.AreEqual(strValue, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new DatabaseMemo(value),
+                instanceVerifier: new ValueVerifier<DatabaseMemo>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(null)]
-        [TestCase("")]
-        [TestCase("abc")]
-        [TestCase("あいうえお")]
-        public static void CastToStringTest(string value)
+        /// <summary>
+        ///     引数が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NullArgs()
         {
-            var instance = value != null
-                ? new DatabaseMemo(value)
-                : null;
-
-            var errorOccured = false;
-            try
-            {
-                var _ = (string) instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // キャストした結果が一致すること
-            Assert.AreEqual((string) instance, value);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new DatabaseMemo(null!),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
         }
 
-        [TestCase(null, false)]
-        [TestCase("", false)]
-        [TestCase("abc", false)]
-        [TestCase("あいうえお", false)]
-        [TestCase("Hello\r\nWorld!", false)]
-        [TestCase("Wolf\nRPG\nEditor.", false)]
-        public static void CastFromStringTest(string value, bool isError)
+        #endregion
+
+        #region Methods
+
+        #region public
+
+        #region GetHashCode
+
+        [Test]
+        public static void GetHashCodeTest()
         {
-            DatabaseMemo instance = null;
+            var instance1 = new DatabaseMemo("a");
+            var instance2 = new DatabaseMemo("a");
+            var instance3 = new DatabaseMemo("aa");
 
-            var errorOccured = false;
-            try
-            {
-                instance = value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+            // 同じ値は同じハッシュコードを返すこと
+            Assert.AreEqual(instance1.GetHashCode(), instance2.GetHashCode());
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // キャストした結果が一致すること
-            Assert.AreEqual((string) instance, value);
+            // 異なる値は異なるハッシュコードを返すこと
+            Assert.AreNotEqual(instance1.GetHashCode(), instance3.GetHashCode());
         }
 
-        private static readonly object[] EqualTestCaseSource =
+        #endregion
+
+        #region ToString
+
+        [Test]
+        public static void ToStringTest_Success()
         {
-            new object[] {"a", "a", true},
-            new object[] {"a", "b", false},
+            const string value = "String TestValue";
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: new DatabaseMemo(value),
+                execFunc: target => target.ToString(),
+                resultValueVerifier: ValueVerifier.AreEquals(value)
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     string から DatabaseMemo に暗黙的型変換できること。
+        /// </summary>
+        [Test]
+        public static void CastStringToDatabaseMemoTest_Success()
+        {
+            const string value = "abc";
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => value,
+                resultValueVerifier: ValueVerifier<DatabaseMemo>.AreEquals(value)
+            );
+        }
+
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     DatabaseMemo から string に暗黙的型変換できること。
+        /// </summary>
+        [Test]
+        public static void CastDatabaseMemoToStringTest_Success()
+        {
+            const string value = "abc";
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => new DatabaseMemo(value),
+                resultValueVerifier: ValueVerifier.AreEquals(value)
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと。
+        /// </summary>
+        [TestCase("a", "a", true)]
+        [TestCase("a", "b", false)]
+        [TestCase("a", null, false)]
+        [TestCase(null, "b", false)]
+        public static void OperatorEqualTest(string? left, string? right, bool expected)
+        {
+            var leftValue = (DatabaseMemo?)left;
+            var rightValue = (DatabaseMemo?)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと。
+        /// </summary>
+        [TestCase("a", "a", false)]
+        [TestCase("a", "b", true)]
+        [TestCase("a", null, true)]
+        [TestCase(null, "b", true)]
+        public static void OperatorNotEqualTest(string? left, string? right, bool expected)
+        {
+            var leftValue = (DatabaseMemo?)left;
+            var rightValue = (DatabaseMemo?)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCase("a", "a", true)]
+        [TestCase("a", "b", false)]
+        [TestCase("a", null, false)]
+        public static void EqualsTest_DatabaseMemo(string left, string? right, bool expected)
+        {
+            var leftValue = (DatabaseMemo)left;
+            var rightValue = (DatabaseMemo?)right;
+
+            equalsTestHelper.Equals(
+                leftValue,
+                rightValue,
+                expected
+            );
+        }
+
+        private static readonly object?[][] EqualsObjectTestCaseSource =
+        {
+            // [left, right, expected]
+            new object?[] { "abc", new DatabaseMemo("abc"), true },
+            new object?[] { "abc", new DatabaseMemo("cba"), false },
+            new object?[] { "abc", "abc", false },
+            new object?[] { "abc", 10, false },
+            new object?[] { "abc", null, false },
         };
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualTest(string left, string right, bool isEqual)
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCaseSource(nameof(EqualsObjectTestCaseSource))]
+        public static void EqualsTest_Object(string left, object? right, bool expected)
         {
-            var leftIndex = (DatabaseMemo) left;
-            var rightIndex = (DatabaseMemo) right;
-            Assert.AreEqual(leftIndex == rightIndex, isEqual);
+            var leftValue = (DatabaseMemo)left;
+
+            equalsTestHelper.Equals(
+                leftValue,
+                right,
+                expected
+            );
         }
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorNotEqualTest(string left, string right, bool isEqual)
-        {
-            var leftIndex = (DatabaseMemo) left;
-            var rightIndex = (DatabaseMemo) right;
-            Assert.AreEqual(leftIndex != rightIndex, !isEqual);
-        }
+        #endregion
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualsTest(string left, string right, bool isEqual)
-        {
-            var leftIndex = (DatabaseMemo) left;
-            var rightIndex = (DatabaseMemo) right;
-            Assert.AreEqual(leftIndex.Equals(rightIndex), isEqual);
-        }
+        #endregion
     }
 }

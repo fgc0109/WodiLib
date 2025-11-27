@@ -15,13 +15,13 @@ using WodiLib.Sys.Cmn;
 namespace WodiLib.IO
 {
     /// <summary>
-    /// DBプロジェクトデータファイル読み込みクラス
+    ///     DBプロジェクトデータファイル読み込みクラス
     /// </summary>
     public class DBTypeFileReader : WoditorFileReaderBase<DBTypeFilePath, DBType>
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Properties
+
+        #region private
 
         /// <summary>ファイル読み込みステータス</summary>
         private FileReadStatus ReadStatus { get; }
@@ -29,181 +29,188 @@ namespace WodiLib.IO
         /// <summary>ロガー</summary>
         private WodiLibLogger WodiLibLogger { get; } = WodiLibLogger.GetInstance();
 
-        private readonly object readLock = new object();
+        #endregion
+
+        #endregion
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Property
+
+        #region Fields
+
+        private readonly object readLock = new();
+
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        /// <summary>
-        /// コンストラクタ
-        /// </summary>
-        /// <param name="filePath">読み込みファイルパス</param>
-        /// <exception cref="ArgumentNullException">filePathがnullの場合</exception>
+        #region Constructors
+
+        #region Required
+
+        /// <inheritdoc/>
         public DBTypeFileReader(DBTypeFilePath filePath) : base(filePath)
         {
-            ReadStatus = new FileReadStatus(FilePath);
+            ReadStatus = new FileReadStatus(filePath);
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Method
+        #endregion
+
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        /// <summary>
-        /// ファイルを同期的に読み込む
-        /// </summary>
-        /// <returns>読み込んだデータ</returns>
-        /// <exception cref="InvalidOperationException">
-        ///     すでにファイルを読み込んでいる場合、
-        ///     またはファイルが正しく読み込めなかった場合
-        /// </exception>
+        #region Methods
+
+        #region public
+
+        /// <inheritdoc/>
         public override DBType ReadSync()
         {
             lock (readLock)
             {
                 WodiLibLogger.Info(FileIOMessage.StartFileRead(GetType()));
 
-                var result = new DBType();
+                var typeTableSettings =
+                    new DatabaseTypeMetadataTableSettings(new List<IDatabaseNamedDataRowSettings>());
 
                 // ヘッダチェック
                 ReadHeader(ReadStatus);
 
                 // タイプ設定
-                ReadTypeSetting(ReadStatus, out var typeSetting);
-                result.TypeName = typeSetting.TypeName;
-                result.Memo = typeSetting.Memo;
+                ReadTypeSetting(ReadStatus, typeTableSettings, out var dataNameListSettings);
 
                 // データ設定
-                ReadDataSetting(ReadStatus, out var dataSetting);
-                result.SetDataSettingType(dataSetting);
-
-                result.ItemDescList.AddRange(MakeItemDescList(typeSetting, dataSetting));
-
-                result.DataDescList.Overwrite(0, MakeDataDescList(typeSetting, dataSetting));
+                ReadDataSetting(ReadStatus, dataNameListSettings, typeTableSettings);
 
                 WodiLibLogger.Info(FileIOMessage.EndFileRead(GetType()));
 
-                return result;
+                var typeSettings = new DBTypeSettings
+                {
+                    TypeMetadataTable = typeTableSettings,
+                };
+                return new DBType(typeSettings);
             }
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     ReadMethod
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #endregion
+
+        #region private
 
         /// <summary>
-        /// ヘッダ
+        ///     ヘッダ
         /// </summary>
         /// <param name="status">読み込み経過状態</param>
         /// <exception cref="InvalidOperationException">ファイルヘッダが仕様と異なる場合</exception>
         private void ReadHeader(FileReadStatus status)
         {
-            foreach (var b in DBType.Header)
+            foreach (var b in DBTypeFile.Header)
             {
                 if (status.ReadByte() != b)
                 {
                     throw new InvalidOperationException(
-                        $"ファイルヘッダがファイル仕様と異なります（offset:{status.Offset}）");
+                        $"ファイルヘッダがファイル仕様と異なります（offset:{status.Offset}）"
+                    );
                 }
 
                 status.IncreaseByteOffset();
             }
 
-            WodiLibLogger.Debug(FileIOMessage.CheckOk(typeof(DBTypeFileReader),
-                "ヘッダ"));
+            WodiLibLogger.Debug(
+                FileIOMessage.CheckOk(
+                    typeof(DBTypeFileReader),
+                    "ヘッダ"
+                )
+            );
         }
 
         /// <summary>
-        /// タイプ設定
+        ///     タイプ設定 $amp; データ名
         /// </summary>
         /// <param name="status">読み込み経過状態</param>
-        /// <param name="typeSetting">読み込み結果インスタンス</param>
-        private void ReadTypeSetting(FileReadStatus status, out DBTypeSetting typeSetting)
+        /// <param name="typeTableSettings">結果格納先(タイプ設定)</param>
+        /// <param name="dataNameListSettings">結果格納先(データ名)</param>
+        private void ReadTypeSetting(
+            FileReadStatus status,
+            DatabaseTypeMetadataTableSettings typeTableSettings,
+            out DatabaseDataNameListSettings dataNameListSettings
+        )
         {
-            WodiLibLogger.Debug(FileIOMessage.StartCommonRead(typeof(DBTypeFileReader),
-                "タイプ設定"));
+            WodiLibLogger.Debug(
+                FileIOMessage.StartCommonRead(
+                    typeof(DBTypeFileReader),
+                    "タイプ設定"
+                )
+            );
 
-            var reader = new DBTypeSettingReader(status, 1, true);
+            var readResult = DatabaseTypeDefinitionReader.Read(
+                status,
+                length: 1,
+                hasDataNameList: true
+            );
+            var typeDefinitionSettings = readResult.TypeDefinitionSettingsList[0];
+            typeTableSettings.TypeName = typeDefinitionSettings.TypeName;
+            typeTableSettings.Memo = typeDefinitionSettings.Memo;
+            typeTableSettings.FieldMetadataList =
+                typeDefinitionSettings.FieldDefinitionList.TransformMetadataSettings();
 
-            var settings = reader.Read();
-            typeSetting = settings[0];
+            dataNameListSettings = readResult.DataNameListSettingsList[0];
 
-            WodiLibLogger.Debug(FileIOMessage.EndCommonRead(typeof(DBTypeFileReader),
-                "タイプ設定"));
+            WodiLibLogger.Debug(
+                FileIOMessage.EndCommonRead(
+                    typeof(DBTypeFileReader),
+                    "タイプ設定"
+                )
+            );
         }
 
         /// <summary>
-        /// タイプ設定
+        ///     データ設定
         /// </summary>
         /// <param name="status">読み込み経過状態</param>
-        /// <param name="dataSetting">読み込み結果インスタンス</param>
-        private void ReadDataSetting(FileReadStatus status, out DBDataSetting dataSetting)
+        /// <param name="dataNameList">データ名</param>
+        /// <param name="typeTableSettings">読み込み結果インスタンス(データ名の設定方法)</param>
+        private void ReadDataSetting(
+            FileReadStatus status,
+            DatabaseDataNameListSettings dataNameList,
+            DatabaseTypeMetadataTableSettings typeTableSettings
+        )
         {
-            WodiLibLogger.Debug(FileIOMessage.StartCommonRead(typeof(DBTypeFileReader),
-                "データ設定"));
+            WodiLibLogger.Debug(
+                FileIOMessage.StartCommonRead(
+                    typeof(DBTypeFileReader),
+                    "データ設定"
+                )
+            );
 
-            var reader = new DBDataSettingReader(status, 1);
+            var readResult = DatabaseDataTableWithDataNamingReader.Read(
+                status,
+                length: 1
+            );
+            var definitionSettings = readResult.Settings[0];
+            typeTableSettings.DataNamingDefinition = definitionSettings.DataNamingDefinition;
 
-            var settings = reader.Read();
-            dataSetting = settings[0];
+            definitionSettings.DataTable.Settings.Zip(dataNameList.Settings)
+                .ForEach(dataSet =>
+                    {
+                        var (dataRow, name) = dataSet;
+                        var rowSettings = new DatabaseNamedDataRowSettings(dataRow.Settings)
+                        {
+                            DataName = name,
+                        };
+                        typeTableSettings.Settings.Add(rowSettings);
+                    }
+                );
 
-            WodiLibLogger.Debug(FileIOMessage.EndCommonRead(typeof(DBTypeFileReader),
-                "データ設定"));
+            WodiLibLogger.Debug(
+                FileIOMessage.EndCommonRead(
+                    typeof(DBTypeFileReader),
+                    "データ設定"
+                )
+            );
         }
 
-        /// <summary>
-        /// DataDescのリスト
-        /// </summary>
-        /// <param name="typeSetting">タイプ設定</param>
-        /// <param name="dataSetting">データ設定</param>
-        /// <returns></returns>
-        private IReadOnlyList<DatabaseDataDesc> MakeDataDescList(DBTypeSetting typeSetting,
-            DBDataSetting dataSetting)
-        {
-            var result = new List<DatabaseDataDesc>();
+        #endregion
 
-            var dataNameList = typeSetting.DataNameList;
-            var valuesList = dataSetting.SettingValuesList;
-
-            if (dataNameList.Count != valuesList.Count)
-                throw new InvalidOperationException(
-                    $"データ名数とデータ数が異なります。");
-
-            for (var i = 0; i < typeSetting.DataNameList.Count; i++)
-            {
-                var desc = new DatabaseDataDesc(dataNameList[i],
-                    valuesList[i].ToLengthChangeableItemValueList());
-
-                result.Add(desc);
-            }
-
-            return result;
-        }
-
-        private IReadOnlyList<DatabaseItemDesc> MakeItemDescList(DBTypeSetting typeSetting,
-            DBDataSetting dataSetting)
-        {
-            var result = new List<DatabaseItemDesc>();
-
-            var itemSettingList = typeSetting.ItemSettingList;
-            var valueList = dataSetting.SettingValuesList[0];
-
-            if (itemSettingList.Count != valueList.Count)
-                throw new InvalidOperationException(
-                    "項目設定数と項目数が異なります。");
-
-            for (var i = 0; i < itemSettingList.Count; i++)
-            {
-                var desc = new DatabaseItemDesc
-                {
-                    ItemName = itemSettingList[i].ItemName,
-                    SpecialSettingDesc = itemSettingList[i].SpecialSettingDesc,
-                    ItemType = valueList[i].Type,
-                };
-                result.Add(desc);
-            }
-
-            return result;
-        }
+        #endregion
     }
 }

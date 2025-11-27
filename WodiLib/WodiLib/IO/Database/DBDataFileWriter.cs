@@ -6,27 +6,37 @@
 // see LICENSE file
 // ========================================
 
-using System;
+using System.Collections.Generic;
 using WodiLib.Database;
+using WodiLib.Sys;
 
 namespace WodiLib.IO
 {
     /// <summary>
-    /// DBファイル書き出しクラス
+    ///     DBファイル書き出しクラス
     /// </summary>
     public class DBDataFileWriter : WoditorBinaryFileWriterBase<DBDataFilePath, DBData>
     {
-        /// <summary>
-        /// コンストラクタ
-        /// </summary>
-        /// <param name="filePath">書き出しファイルパス</param>
-        /// <exception cref="ArgumentNullException">filePathがnullの場合</exception>
+        /// <inheritdoc/>
         public DBDataFileWriter(DBDataFilePath filePath) : base(filePath)
         {
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         protected override byte[] GetDataBytes(DBData data)
-            => data.ToBinary();
+        {
+            var result = new List<byte>();
+
+            // ヘッダ
+            result.AddRange(DBDataFile.Header);
+
+            // データ数
+            result.AddRange(data.DataTable.DataCount.ToWoditorIntBytes());
+
+            // データ
+            result.AddRange(data.DataTable.SerializeValuesDividedType());
+
+            return result.ToArray();
+        }
     }
 }

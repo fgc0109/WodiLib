@@ -30,35 +30,34 @@ namespace WodiLib.Database
         /// <exception cref="ArgumentException">
         ///     設定DTOに不適切な <see langword="null"/> 要素が含まれる場合。
         /// </exception>
-        public static IDatabaseFieldSpecialSettingDefinition Create(
-            DatabaseFieldSpecialSettingDefinitionSettingsUnion settings
+        public static DatabaseFieldSpecialSettingDefinition Create(
+            IDatabaseFieldSpecialSettingDefinitionSettings settings
         )
         {
             ThrowHelper.ValidateArgumentNotNull(settings is null, nameof(settings));
 
-            if (settings.DtoType == DatabaseFieldSpecialSettingType.Normal)
+            if (settings.TryCastNormalSettings(out var normalSettings))
             {
-                return new DatabaseFieldSpecialSettingDefinitionNormal(settings.AsNormalSettings());
+                return new DatabaseFieldSpecialSettingDefinitionNormal(normalSettings);
             }
 
-            if (settings.DtoType == DatabaseFieldSpecialSettingType.LoadFile)
+            if (settings.TryCastLoadFileSettings(out var loadFileSettings))
             {
-                return new DatabaseFieldSpecialSettingDefinitionLoadFile(settings.AsLoadFileSettings());
+                return new DatabaseFieldSpecialSettingDefinitionLoadFile(loadFileSettings);
             }
 
-            if (settings.DtoType == DatabaseFieldSpecialSettingType.ReferDatabase)
+            if (settings.TryCastDatabaseReferenceSettings(out var databaseReferenceSettings))
             {
-                return new DatabaseFieldSpecialSettingDefinitionDatabaseReference(
-                    settings.AsDatabaseReferenceSettings()
-                );
+                return new DatabaseFieldSpecialSettingDefinitionDatabaseReference(databaseReferenceSettings);
             }
 
-            if (settings.DtoType == DatabaseFieldSpecialSettingType.Manual)
+            if (settings.TryCastManualSettings(out var manualSettings))
             {
-                return new DatabaseFieldSpecialSettingDefinitionManual(settings.AsManualSettings());
+                return new DatabaseFieldSpecialSettingDefinitionManual(manualSettings);
             }
 
-            throw new ArgumentException($"{settings.DtoType}のファクトリメソッドが未実装です。");
+            // 通常ここには来ない
+            throw new ArgumentException($"{settings}のファクトリメソッドが未実装です。");
         }
 
         /// <summary>
@@ -222,7 +221,7 @@ namespace WodiLib.Database
                 new DatabaseFieldSpecialSettingDefinitionManualSettings
                 {
                     SpecialCases =
-                        new DatabaseValueCaseListSettings(cases?.ToArray() ?? Array.Empty<DatabaseValueCase>()),
+                        new DatabaseValueCaseListSettings(cases?.ToList() ?? new List<DatabaseValueCase>()),
                 }
             );
         }

@@ -1,5 +1,4 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.IO;
 using WodiLib.Test.Tools;
@@ -7,49 +6,42 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.IO.ValueObject
 {
     [TestFixture]
-    public class MpsFilePathTest
+    public class MpsFilePathTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-        [TestCase(null, true)]
-        [TestCase("", true)]
-        [TestCase("Map0000.mps", false)]
-        [TestCase("map0123.MPS", false)]
-        [TestCase("Map0000.map", false)]
-        [TestCase("Map_.mps.bak", false)]
-        [TestCase("./Map0002.mps", false)]
-        [TestCase(@".\Data\Map0003.mps", false)]
-        [TestCase(@"c:\MyProject\Data\Map0003.mps", false)]
-        [TestCase(@"c:\MyProject\Data\Map0003.map", false)]
-        public static void ConstructorTest(string path, bool isError)
+        [TestCase("Map0000.mps")]
+        [TestCase("./map0123.MPS")]
+        [TestCase(@".\Data\Map0000.mps")]
+        [TestCase(@"c:\MyProject\Data\Map0000.mps")]
+        public static void ConstructorTest_Success(string value)
         {
-            MpsFilePath instance = null;
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new MpsFilePath(value),
+                instanceVerifier: new ValueVerifier<MpsFilePath>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
+        }
 
-            var errorOccured = false;
-            try
-            {
-                instance = new MpsFilePath(path);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 内容が一致すること
-            Assert.AreEqual((string)instance, path);
+        /// <summary>
+        ///     引数が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NullArgs()
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new MpsFilePath(null!),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
         }
     }
 }

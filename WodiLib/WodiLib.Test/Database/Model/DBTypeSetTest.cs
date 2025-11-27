@@ -1,217 +1,302 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Database;
-using WodiLib.Test.IO;
+using WodiLib.Sys;
 using WodiLib.Test.Tools;
+using WodiLib.Test.Tools.TestData;
 
-namespace WodiLib.Test.Database
+namespace WodiLib.Test.Database.Model
 {
     [TestFixture]
-    public class DBTypeSetTest
+    public class DBTypeSetTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-        [OneTimeSetUp]
-        public static void OneTimeSetUp()
-        {
-            // テスト用ファイル出力
-            DBTypeSetFileTestItemGenerator.OutputFile();
-        }
+        #region Properties
 
-        private static readonly object[] TypeNameTestCaseSource =
-        {
-            new object[] {(TypeName) "typeName", false},
-            new object[] {null, true},
-        };
+        #region MutableClass
 
-        [TestCaseSource(nameof(TypeNameTestCaseSource))]
-        public static void TypeNameTest(TypeName typeName, bool isError)
-        {
-            var instance = new DBTypeSet();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
+        #region public
 
-            var errorOccured = false;
-            try
-            {
-                instance.TypeName = typeName;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+        #region TypeDefinition
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (!errorOccured)
-            {
-                var setValue = instance.TypeName;
-
-                // セットした値と取得した値が一致すること
-                Assert.IsTrue(setValue.Equals(typeName));
-            }
-
-            // 意図したとおりプロパティ変更通知が発火していること
-            if (errorOccured)
-            {
-                Assert.AreEqual(changedPropertyList.Count, 0);
-            }
-            else
-            {
-                Assert.AreEqual(changedPropertyList.Count, 1);
-                Assert.IsTrue(changedPropertyList[0].Equals(nameof(DBTypeSet.TypeName)));
-            }
-        }
-
-
+        /// <summary>
+        ///     プロパティ TypeDefinition の取得・編集に成功すること。
+        /// </summary>
         [Test]
-        public static void ItemSettingListGetterTest()
+        public static void TypeDefinitionGetAndSetTest_Success()
         {
             var instance = new DBTypeSet();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
+            var setItem = DatabaseTestData.CreateDatabaseTypeDefinitionType2();
 
-            var errorOccured = false;
-            try
-            {
-                var _ = instance.ItemSettingList;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // プロパティ変更通知が発火していないこと
-            Assert.AreEqual(changedPropertyList.Count, 0);
+            propertyTestHelper.PropertyGetAndSetSuccess(
+                instance,
+                propertyName: nameof(DBTypeSet.TypeDefinition),
+                setItem,
+                isValueEqualsBefore: false,
+                setter: (x, v) => x.TypeDefinition = v,
+                getter: x => x.TypeDefinition,
+                getValueVerifier: ValueVerifier.AreEquals(setItem)
+            );
         }
 
-        private static readonly object[] MemoTestCaseSource =
-        {
-            new object[] {(DatabaseMemo) "Memo", false},
-            new object[] {null, true},
-        };
-
-        [TestCaseSource(nameof(MemoTestCaseSource))]
-        public static void MemoTest(DatabaseMemo memo, bool isError)
+        /// <summary>
+        ///     プロパティ TypeDefinition に null を設定した場合、
+        ///     PropertyNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void TypeDefinitionSetTest_Failure_PropertyNullException()
         {
             var instance = new DBTypeSet();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
 
-            var errorOccured = false;
-            try
-            {
-                instance.Memo = memo;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (!errorOccured)
-            {
-                var setValue = instance.Memo;
-
-                // セットした値と取得した値が一致すること
-                Assert.IsTrue(setValue.Equals(memo));
-            }
-
-            // 意図したとおりプロパティ変更通知が発火していること
-            if (errorOccured)
-            {
-                Assert.AreEqual(changedPropertyList.Count, 0);
-            }
-            else
-            {
-                Assert.AreEqual(changedPropertyList.Count, 1);
-                Assert.IsTrue(changedPropertyList[0].Equals(nameof(DBTypeSet.Memo)));
-            }
+            propertyTestHelper.PropertySetFailure(
+                instance,
+                setItem: (DatabaseTypeDefinition)null!,
+                setter: (x, v) => x.TypeDefinition = v,
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(PropertyNullException))
+            );
         }
 
+        #endregion
 
-        private static readonly object[] ToBinaryTestCaseSource =
+        #endregion
+
+        #endregion
+
+        #region SettingsInterface
+
+        /// <summary>
+        ///     設定DTOインタフェースに意図したプロパティがすべて定義されていること。
+        /// </summary>
+        [Test]
+        public static void SettingInterfacePropertyTest()
         {
-            new object[]
-            {
-                $@"{DBTypeSetFileTestItemGenerator.TestWorkRootDir}\タイプ設定_000_UDB0.dbtypeset",
-                DBTypeSetFileTestItemGenerator.GenerateUDB0Data(),
-                545
-            },
-            new object[]
-            {
-                $@"{DBTypeSetFileTestItemGenerator.TestWorkRootDir}\タイプ設定_000_あいうえお.dbtypeset",
-                DBTypeSetFileTestItemGenerator.GenerateCDB0Data(),
-                508
-            },
-        };
+            IDBTypeSetSettings settings = CreateSettingsDto();
 
-        [TestCaseSource(nameof(ToBinaryTestCaseSource))]
-        public static void ToBinaryTest(string testFilePath, DBTypeSet generatedData, int fileSize)
+            // 以下、ビルドエラーが発生しないこと
+            _ = settings.TypeDefinition;
+            Assert.Pass();
+        }
+
+        #endregion
+
+        #region SettingsDto
+
+        /// <summary>
+        ///     設定DTOに意図したプロパティがすべて実装されていること。
+        /// </summary>
+        [Test]
+        public static void SettingsDtoPropertyTest()
         {
-            var generatedDataBuf = generatedData.ToBinary();
+            var dto = CreateSettingsDto();
 
-            using (var fs = new FileStream(testFilePath, FileMode.Open))
+            // 以下、ビルドエラーが発生しないこと
+            _ = dto.TypeDefinition;
+            Assert.Pass();
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        #region NoParam
+
+        /// <summary>
+        ///     引数なしコンストラクタが正常に終了すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorTest_NoParam_Success()
+        {
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new DBTypeSet(),
+                instanceVerifier: ValueVerifier<DBTypeSet>.AreItemEquals(new DBTypeSetSettings())
+            );
+        }
+
+        #endregion
+
+        #region SettingsDto
+
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorTest_SettingsDto_Success()
+        {
+            var settings = CreateSettingsDto();
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new DBTypeSet(settings),
+                instanceVerifier: ValueVerifier<DBTypeSet>.AreItemEquals(settings)
+            );
+        }
+
+        /// <summary>
+        ///     settings が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorTest_SettingsDto_Failure_NullArgs()
+        {
+            IDBTypeSetSettings settings = null!;
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new DBTypeSet(settings),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
+        }
+
+        /// <summary>
+        ///     設定DTOのプロパティに不適切な null 要素が指定されている場合、
+        ///     ArgumentException が発生すること。
+        /// </summary>
+        [TestCase(nameof(DBTypeSetSettings.TypeDefinition))]
+        public static void ConstructorTest_SettingsDto_Failure_NullPropertyRecord(string nullProperty)
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new DBTypeSet(CreateSettingsDto(nullProperty: nullProperty)),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Methods
+
+        #region EditableClass
+
+        #region public
+
+        #region ItemEquals
+
+        #region Settings
+
+        /// <summary>
+        ///     対象インスタンスと other が同じインスタンスの場合 true が返却されること。
+        /// </summary>
+        [Test]
+        public static void ItemEqualsTest_Settings_True_SameObject()
+        {
+            var left = new DBTypeSet(CreateSettingsDto());
+            IDBTypeSetSettings right = left;
+            itemEqualsTestHelper.ItemEquals(
+                left,
+                right,
+                expected: true
+            );
+        }
+
+        /// <summary>
+        ///     対象インスタンスと同じ値を持つ設定DTOと比較した場合 true が返却されること。
+        /// </summary>
+        [Test]
+        public static void ItemEqualsTest_Settings_True_EqualityObject()
+        {
+            var left = new DBTypeSet(CreateSettingsDto());
+            IDBTypeSetSettings right = CreateSettingsDto();
+            itemEqualsTestHelper.ItemEquals(
+                left,
+                right,
+                expected: true
+            );
+        }
+
+        /// <summary>
+        ///     null と比較した場合 false が返却されること。
+        /// </summary>
+        [Test]
+        public static void ItemEqualsTest_Settings_False_NullObject()
+        {
+            var left = new DBTypeSet(CreateSettingsDto());
+            IDBTypeSetSettings? right = null;
+            itemEqualsTestHelper.ItemEquals(
+                left,
+                right,
+                expected: false
+            );
+        }
+
+        /// <summary>
+        ///     値が異なるプロパティを持つ設定DTOと比較した場合 false が返却されること。
+        /// </summary>
+        [TestCase(nameof(DBTypeSetSettings.TypeDefinition))]
+        public static void ItemEqualsTest_Settings_False_DifferProperty(string replaceProperty)
+        {
+            var left = new DBTypeSet(CreateSettingsDto());
+            IDBTypeSetSettings right = CreateSettingsDto(replaceProperty: replaceProperty);
+            itemEqualsTestHelper.ItemEquals(
+                left,
+                right,
+                expected: false
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #region DeepClone
+
+        /// <summary>
+        ///     ディープコピーがコピー元と同一値であること。
+        /// </summary>
+        [Test]
+        public static void DeepCloneTest()
+        {
+            var instance = new DBTypeSet(CreateSettingsDto());
+
+            deepCloneTestHelper.DeepClone(
+                instance,
+                resultValueVerifier: null
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region テスト用Settings作成
+
+        /// <summary>
+        ///     設定DTO作成
+        /// </summary>
+        /// <param name="nullProperty">
+        ///     null を設定するプロパティ名。<br/>
+        ///     null の場合いずれのプロパティにも null を設定しない。
+        /// </param>
+        /// <param name="replaceProperty">
+        ///     この引数で指定したプロパティは、指定しなかった場合とは違う値を設定する。
+        /// </param>
+        /// <returns></returns>
+        private static DBTypeSetSettings CreateSettingsDto(
+            string? nullProperty = null,
+            string? replaceProperty = null
+        )
+        {
+            // @formatter:off
+            return new DBTypeSetSettings
             {
-                var length = (int) fs.Length;
-                // ファイルサイズが規定でない場合誤作動防止の為テスト失敗にする
-                Assert.AreEqual(length, fileSize);
-
-
-                var fileData = new byte[length];
-                fs.Read(fileData, 0, length);
-
-                // binデータ出力
-                fileData.Select((s, index) => $"=\"[{index}] = {{byte}} {s}\"").ToList()
-                    .ForEach(Console.WriteLine);
-
-                Console.WriteLine();
-
-                generatedDataBuf.Select((s, index) => $"=\"[{index}] = {{byte}} {s}\"").ToList()
-                    .ForEach(Console.WriteLine);
-
-                for (var i = 0; i < generatedDataBuf.Length; i++)
+                TypeDefinition = (nullProperty == nameof(DBTypeSetSettings.TypeDefinition), replaceProperty == nameof(DBTypeSetSettings.TypeDefinition)) switch
                 {
-                    if (i == fileData.Length)
-                        Assert.Fail(
-                            $"データ帳が異なります。（期待値：{fileData.Length}, 実際：{generatedDataBuf.Length}）");
-
-                    if (fileData[i] != generatedDataBuf[i])
-                        Assert.Fail(
-                            $"offset: {i} のバイナリが異なります。（期待値：{fileData[i]}, 実際：{generatedDataBuf[i]}）");
-                }
-
-                if (fileData.Length != generatedDataBuf.Length)
-                    Assert.Fail(
-                        $"データ帳が異なります。（期待値：{fileData.Length}, 実際：{generatedDataBuf.Length}）");
-            }
+                    // null?  replace?  setValue
+                    (  false, false) => DatabaseTestData.CreateDatabaseTypeDefinitionType1(),
+                    (  false, true ) => DatabaseTestData.CreateDatabaseTypeDefinitionType2(),
+                    (  true,  _    ) => null!,
+                },
+            };
+            // @formatter:on
         }
 
-        [OneTimeTearDown]
-        public static void TearDown()
-        {
-            // テスト用ファイル削除
-            DBTypeSetFileTestItemGenerator.DeleteFile();
-        }
+        #endregion
     }
 }

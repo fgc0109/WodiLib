@@ -15,15 +15,9 @@ namespace WodiLib.IO
     ///     CommonEvent.Datファイル名
     /// </summary>
     [FilePathStringObjectValue(
-        SafetyPattern = @"^CommonEvent\.dat$"
+        SafetyPattern = @"^(.+\\)?CommonEvent\.dat$"
     )]
-    public partial class CommonEventDatFilePath : FilePath
+    public partial record CommonEventDatFilePath : FilePath
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Override Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>空文字許可フラグ</summary>
-        protected override bool IsAllowEmptyString => false;
     }
 }

@@ -24,7 +24,7 @@ namespace WodiLib.Sys.Collections
         /// <param name="buildFromSelfAndIndex">要素生成処理</param>
         public SimpleListValueBuilder(Func<SimpleList<T>, int, T> buildFromSelfAndIndex)
         {
-            this.builderImpl = buildFromSelfAndIndex;
+            builderImpl = buildFromSelfAndIndex;
         }
 
         /// <summary>

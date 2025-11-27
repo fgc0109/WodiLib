@@ -14,14 +14,8 @@ namespace WodiLib.IO
     /// <summary>
     ///     MapTree.dat ファイルパス
     /// </summary>
-    [FilePathStringObjectValue(SafetyPattern = @"^MapTree\.dat$")]
-    public partial class MapTreeDataFilePath : FilePath
+    [FilePathStringObjectValue(SafetyPattern = @"^(.+\\)?MapTree\.dat$")]
+    public partial record MapTreeDataFilePath : FilePath
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Override Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>空文字許可フラグ</summary>
-        protected override bool IsAllowEmptyString => false;
     }
 }

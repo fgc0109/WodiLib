@@ -147,6 +147,8 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
             ModelInformation modelInfo
         )
         {
+            var useConstructorExpansion = modelInfo is { IsExtendClass: false, UseConstructorExpansion: true };
+
             return SourceTextFormatter.Format(
                 __,
                 $"private {modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword}(",
@@ -155,18 +157,36 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"{__}Func<int, {modelInfo.ElementSettingsType}, {modelInfo.ElementType}> itemBuilder",
                 $")",
                 $"{{",
-                $"    var validator = BuildValidator(settings, itemsImpl);",
-                $"    validator?.Constructor((nameof(settings), settings));",
-                $"    Items = new ExtendedList<{modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword}, {modelInfo.ElementType}, {modelInfo.ElementSettingsType}>(",
-                $"        itemsImpl,",
-                $"        minCapacity: MaxCapacity,",
-                $"        maxCapacity: MinCapacity,",
-                $"        validator,",
-                $"        buildItemFromSettings: (index, modelSettings) => itemBuilder(index, modelSettings)",
-                $"    );",
-                $"    PropagatePropertyChangeEvent(Items);",
-                $"    PropagateCollectionChangeEvent(Items);",
-                $"}}"
+                $"{__}var validator = BuildValidator(settings, itemsImpl);",
+                $"{__}validator?.Constructor((nameof(settings), settings));",
+                $"{__}Items = new ExtendedList<{modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword}, {modelInfo.ElementType}, {modelInfo.ElementSettingsType}>(",
+                $"{__}{__}itemsImpl,",
+                $"{__}{__}minCapacity: MaxCapacity,",
+                $"{__}{__}maxCapacity: MinCapacity,",
+                $"{__}{__}validator,",
+                $"{__}{__}buildItemFromSettings: (index, modelSettings) => itemBuilder(index, modelSettings)",
+                $"{__});",
+                $"{__}PropagatePropertyChangeEvent(Items);",
+                $"{__}PropagateCollectionChangeEvent(Items);",
+                SourceTextFormatter.If(
+                    useConstructorExpansion,
+                    new SourceFormatTarget[]
+                    {
+                        $"{__}DoConstructorExpansion(settings);",
+                    }
+                ),
+                $"}}",
+                SourceTextFormatter.If(
+                    useConstructorExpansion,
+                    new SourceFormatTarget[]
+                    {
+                        $"/// <summary>",
+                        $"///     コンストラクタの最後で呼び出す処理",
+                        $"/// </summary>",
+                        $"/// <param name=\"settings\">設定DTO</param>",
+                        $"protected virtual partial void DoConstructorExpansion({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword} settings);",
+                    }
+                )
             );
         }
 

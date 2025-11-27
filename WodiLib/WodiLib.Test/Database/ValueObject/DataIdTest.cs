@@ -1,137 +1,205 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Database;
 using WodiLib.Test.Tools;
 
-namespace WodiLib.Test.Database
+namespace WodiLib.Test.Database.ValueObject
 {
     [TestFixture]
-    public class DataIdTest
+    public class DataIdTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-        [TestCase(-1, true)]
-        [TestCase(0, false)]
-        [TestCase(9999, false)]
-        [TestCase(10000, true)]
-        public static void ConstructorTest(int value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = new DataId(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+        #region Constructor
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-        }
-
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase(0)]
         [TestCase(9999)]
-        public static void ToIntTest(int value)
+        public static void ConstructorIntTest_Success(int value)
         {
-            var instance = new DataId(value);
-
-            var intValue = instance.ToInt();
-
-            // セットした値と取得した値が一致すること
-            Assert.AreEqual(intValue, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new DataId(value),
+                instanceVerifier: new ValueVerifier<DataId>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(-1, true)]
-        [TestCase(0, false)]
-        [TestCase(9999, false)]
-        [TestCase(10000, true)]
-        public static void CastFromIntTest(int value, bool isError)
+        /// <summary>
+        ///     引数に許容範囲外の値を指定した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(-1)]
+        [TestCase(10000)]
+        public static void ConstructorIntTest_Failure_OutOfRange(int value)
         {
-            var instance = default(DataId);
-            var errorOccured = false;
-            try
-            {
-                instance = value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // キャストした結果が一致すること
-            Assert.AreEqual((int) instance, value);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new DataId(value),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
         }
 
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     int から DataId に暗黙的型変換できること。
+        /// </summary>
         [TestCase(0)]
         [TestCase(9999)]
-        public static void CastToIntTest(int value)
+        public static void CastIntToDataIdTest_Success(int value)
         {
-            var instance = new DataId(value);
-
-            var castedValue = 0;
-
-            var errorOccured = false;
-            try
-            {
-                castedValue = instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // キャストした結果が一致すること
-            Assert.AreEqual(castedValue, value);
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => value,
+                resultValueVerifier: ValueVerifier<DataId>.AreEquals(value)
+            );
         }
 
-        private static readonly object[] EqualTestCaseSource =
+        /// <summary>
+        ///     許容範囲外の値から DataId に暗黙的型変換した場合、
+        ///     ArgumentOutOfRangeException が発生すること。
+        /// </summary>
+        [TestCase(-1)]
+        [TestCase(10000)]
+        public static void CastIntToDataIdTest_Failure_OutOfRange(int value)
         {
-            new object[] {0, 0, true},
-            new object[] {0, 3, false},
+            staticFunctionTestHelper.StaticFuncFailure<DataId>(
+                execFunc: () => value,
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentOutOfRangeException))
+            );
+        }
+
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     DataId から int に暗黙的型変換できること。
+        /// </summary>
+        [TestCase(0)]
+        [TestCase(9999)]
+        public static void CastDataIdToIntTest_Success(int value)
+        {
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => new DataId(value),
+                resultValueVerifier: ValueVerifier<int>.AreEquals(value)
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと。
+        /// </summary>
+        [TestCase(0, 0, true)]
+        [TestCase(0, 9999, false)]
+        public static void OperatorEqualTest(int left, int right, bool expected)
+        {
+            var leftValue = (DataId)left;
+            var rightValue = (DataId)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと。
+        /// </summary>
+        [TestCase(0, 0, false)]
+        [TestCase(0, 9999, true)]
+        public static void OperatorNotEqualTest(int left, int right, bool expected)
+        {
+            var leftValue = (DataId)left;
+            var rightValue = (DataId)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCase(0, 0, true)]
+        [TestCase(0, 9999, false)]
+        public static void OperatorEqualsTest(int left, int right, bool expected)
+        {
+            var leftValue = (DataId)left;
+            var rightValue = (DataId)right;
+
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: leftValue,
+                execFunc: target => target.Equals(rightValue),
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCase(1, 1, true)]
+        [TestCase(1, 2, false)]
+        [TestCase(1, null, false)]
+        public static void EqualsTest_DataId(int left, int? right, bool expected)
+        {
+            var leftValue = (DataId)left;
+            var rightValue = (DataId?)right;
+
+            equalsTestHelper.Equals(
+                leftValue,
+                rightValue,
+                expected
+            );
+        }
+
+        private static readonly object?[][] EqualsObjectTestCaseSource =
+        {
+            // [left, right, expected]
+            new object?[] { 1, new DataId(1), true },
+            new object?[] { 1, new DataId(2), false },
+            new object?[] { 1, 1, false },
+            new object?[] { 1, "1", false },
+            new object?[] { 1, null, false },
         };
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualTest(int left, int right, bool isEqual)
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCaseSource(nameof(EqualsObjectTestCaseSource))]
+        public static void EqualsTest_Object(int left, object? right, bool expected)
         {
-            var leftInstance = (DataId) left;
-            var rightInstance = (DataId) right;
-            Assert.AreEqual(leftInstance == rightInstance, isEqual);
+            var leftValue = (DataId)left;
+
+            equalsTestHelper.Equals(
+                leftValue,
+                right,
+                expected
+            );
         }
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorNotEqualTest(int left, int right, bool isEqual)
-        {
-            var leftInstance = (DataId) left;
-            var rightInstance = (DataId) right;
-            Assert.AreEqual(leftInstance != rightInstance, !isEqual);
-        }
+        #endregion
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualsTest(int left, int right, bool isEqual)
-        {
-            var leftInstance = (DataId) left;
-            var rightInstance = (DataId) right;
-            Assert.AreEqual(leftInstance.Equals(rightInstance), isEqual);
-        }
+        #endregion
     }
 }

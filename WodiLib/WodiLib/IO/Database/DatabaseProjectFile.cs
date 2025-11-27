@@ -13,17 +13,17 @@ using WodiLib.Sys;
 namespace WodiLib.IO
 {
     /// <summary>
-    /// XXXDatabase.projectファイルクラス
+    ///     XXXDatabase.projectファイル
     /// </summary>
-    public class DatabaseProjectFile : WoditorFileBase<DatabaseProjectFilePath, DatabaseProject,
-        DatabaseProjectFileWriter, DatabaseProjectFileReader>
+    public class DatabaseProjectFile : WoditorFileBase<DatabaseProjectFilePath, DBProject,
+        DBProjectFileWriter, DBProjectFileReader>
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Constructor
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Constructors
+
+        #region Required
 
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
         /// <param name="filePath">ファイルパス</param>
         /// <exception cref="ArgumentNullException">filePathがnullの場合</exception>
@@ -31,40 +31,56 @@ namespace WodiLib.IO
         {
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Static Method
+        #endregion
+
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
+        #region Methods
+
+        #region protected
+
         /// <summary>
-        /// ファイル書き出しクラスを生成する。
+        ///     ファイル書き出しクラスを生成する。
         /// </summary>
         /// <param name="filePath">書き出しファイル名</param>
         /// <returns>ライターインスタンス</returns>
-        /// <exception cref="ArgumentNullException">filePathがnullの場合</exception>
-        protected override DatabaseProjectFileWriter MakeFileWriter(DatabaseProjectFilePath filePath)
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="filePath"/> が <see langword="null"/> の場合。
+        /// </exception>
+        protected override DBProjectFileWriter MakeFileWriter(DatabaseProjectFilePath filePath)
         {
             if (filePath is null)
                 throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(filePath)));
+                    ErrorMessage.NotNull(nameof(filePath))
+                );
 
-            var writer = new DatabaseProjectFileWriter(filePath);
+            var writer = new DBProjectFileWriter(filePath);
             return writer;
         }
 
         /// <summary>
-        /// ファイル読み込みクラスを生成する。
+        ///     ファイル読み込みクラスを生成する。
         /// </summary>
         /// <param name="filePath">読み込みファイル名</param>
         /// <returns>リーダーインスタンス</returns>
-        /// <exception cref="ArgumentNullException">filePathがnullの場合</exception>
-        protected override DatabaseProjectFileReader MakeFileReader(DatabaseProjectFilePath filePath)
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="filePath"/> が <see langword="null"/> の場合。
+        /// </exception>
+        protected override DBProjectFileReader MakeFileReader(DatabaseProjectFilePath filePath)
         {
             if (filePath is null)
                 throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(filePath)));
+                    ErrorMessage.NotNull(nameof(filePath))
+                );
 
-            var reader = new DatabaseProjectFileReader(filePath, filePath.DBKind);
+            var reader = new DBProjectFileReader(filePath, filePath.DbKind);
             return reader;
         }
+
+        #endregion
+
+        #endregion
     }
 }

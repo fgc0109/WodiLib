@@ -1,94 +1,80 @@
-using System;
 using NUnit.Framework;
 using WodiLib.Database;
 using WodiLib.IO;
+using WodiLib.Test.IO.TestData.Database;
 using WodiLib.Test.Tools;
 
 namespace WodiLib.Test.IO
 {
     [TestFixture]
-    public class DatabaseMergedDataWriterTest
+    public class DatabaseMergedDataWriterTest : TestFixtureBase
     {
+        [SetUp]
+        public static void Setup()
+        {
+            InitializeTestHelpers();
+        }
+
         [OneTimeSetUp]
         public static void OneTimeSetUp()
         {
-            var outputDir = $@"{DatabaseMergedDataTestItemGenerator.TestWorkRootDir}\DatabaseMergedDataWriterTest";
-            // テスト用ファイル出力
-            outputDir.CreateDirectoryIfNeed();
+            // テスト用ファイル出力先
+            TestDirHelper.CreateDirIfNeed("DatabaseMergedDataWriterTest");
         }
 
         private static readonly object[] WriteSyncTestCaseSource =
         {
+            // [outputData, dbKind]
             new object[]
             {
-                DatabaseMergedDataTestItemGenerator.GenerateCDB0MergedData(),
-                DBKind.Changeable
+                DatabaseSchemaTestItemGenerator.GenerateCDB0MergedData(),
+                DatabaseKind.Changeable,
             },
             new object[]
             {
-                DatabaseMergedDataTestItemGenerator.GenerateUDB0MergedData(),
-                DBKind.User
+                DatabaseSchemaTestItemGenerator.GenerateUDB0MergedData(),
+                DatabaseKind.User,
             },
         };
 
+        /// <summary>
+        ///     処理が正常に終了すること。
+        /// </summary>
         [TestCaseSource(nameof(WriteSyncTestCaseSource))]
-        public static void WriteSyncTest(DatabaseMergedData outputDat, DBKind dbKind)
+        public static void WriteSyncTest(DatabaseSchema outputData, DatabaseKind dbKind)
         {
-            DatabaseMergedDataWriter writer = null;
-            if (dbKind == DBKind.User)
+            DatabaseSchemaWriter writer = null!;
+            if (dbKind == DatabaseKind.User)
             {
                 var datFilePath =
-                    (ChangeableDatabaseDatFilePath)
-                    $@"{DatabaseMergedDataTestItemGenerator.TestWorkRootDir}\DatabaseMergedDataWriterTest\CDatabase.dat";
+                    new ChangeableDatabaseDatFilePath(
+                        $@"{IoTestDataConstants.TestWorkRootDir}\DatabaseMergedDataWriterTest\CDatabase.dat"
+                    );
                 var projectFilePath =
-                    (ChangeableDatabaseProjectFilePath)
-                    $@"{DatabaseMergedDataTestItemGenerator.TestWorkRootDir}\DatabaseMergedDataWriterTest\CDatabase.project";
-                writer = new DatabaseMergedDataWriter(outputDat, datFilePath, projectFilePath);
+                    new ChangeableDatabaseProjectFilePath(
+                        $@"{IoTestDataConstants.TestWorkRootDir}\DatabaseMergedDataWriterTest\CDatabase.project"
+                    );
+                writer = new DatabaseSchemaWriter(datFilePath, projectFilePath);
             }
-            else if (dbKind == DBKind.System)
+            else if (dbKind == DatabaseKind.Changeable)
             {
                 var datFilePath =
-                    (ChangeableDatabaseDatFilePath)
-                    $@"{DatabaseMergedDataTestItemGenerator.TestWorkRootDir}\DatabaseMergedDataWriterTest\SysDatabase.dat";
+                    new ChangeableDatabaseDatFilePath(
+                        $@"{IoTestDataConstants.TestWorkRootDir}\DatabaseMergedDataWriterTest\CDatabase.dat"
+                    );
                 var projectFilePath =
-                    (ChangeableDatabaseProjectFilePath)
-                    $@"{DatabaseMergedDataTestItemGenerator.TestWorkRootDir}\DatabaseMergedDataWriterTest\SysDatabase.project";
-                writer = new DatabaseMergedDataWriter(outputDat, datFilePath, projectFilePath);
-            }
-            else if (dbKind == DBKind.Changeable)
-            {
-                var datFilePath =
-                    (ChangeableDatabaseDatFilePath)
-                    $@"{DatabaseMergedDataTestItemGenerator.TestWorkRootDir}\DatabaseMergedDataWriterTest\CDatabase.dat";
-                var projectFilePath =
-                    (ChangeableDatabaseProjectFilePath)
-                    $@"{DatabaseMergedDataTestItemGenerator.TestWorkRootDir}\DatabaseMergedDataWriterTest\CDatabase.project";
-                writer = new DatabaseMergedDataWriter(outputDat, datFilePath, projectFilePath);
+                    new ChangeableDatabaseProjectFilePath(
+                        $@"{IoTestDataConstants.TestWorkRootDir}\DatabaseMergedDataWriterTest\CDatabase.project"
+                    );
+                writer = new DatabaseSchemaWriter(datFilePath, projectFilePath);
             }
 
             Assert.NotNull(writer);
 
-            var isSuccess = false;
-            var errorMessage = "";
-
-            try
-            {
-                writer.WriteSync();
-                isSuccess = true;
-            }
-            catch (Exception e)
-            {
-                errorMessage = e.Message;
-            }
-
-            // 出力成功すること
-            if (!isSuccess)
-            {
-                throw new InvalidOperationException(
-                    $"Error message: {errorMessage}");
-            }
-
-            Assert.True(true);
+            pureActionTestHelper.PureActionSuccess(
+                instance: writer,
+                execAction: target => target.WriteSync(outputData)
+            );
         }
     }
 }

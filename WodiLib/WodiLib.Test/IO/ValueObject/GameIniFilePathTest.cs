@@ -1,5 +1,4 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.IO;
 using WodiLib.Test.Tools;
@@ -7,50 +6,42 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.IO.ValueObject
 {
     [TestFixture]
-    public class GameIniFilePathTest
+    public class GameIniFilePathTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-
-        [TestCase(null, true)]
-        [TestCase("", true)]
-        [TestCase("Game.ini", false)]
-        [TestCase("GAME.INI", false)]
-        [TestCase("GameIni", false)]
-        [TestCase("Game.ini.bak", false)]
-        [TestCase("./game.ini", false)]
-        [TestCase(@".\Data\Game.ini", false)]
-        [TestCase(@"c:\MyProject\Data\Game.ini", false)]
-        [TestCase(@"c:\MyProject\Data\Game.in", false)]
-        public static void ConstructorTest(string path, bool isError)
+        [TestCase("Game.ini")]
+        [TestCase("./GAME.INI")]
+        [TestCase(@".\Data\Game.ini")]
+        [TestCase(@"c:\MyProject\Data\Game.ini")]
+        public static void ConstructorTest_Success(string value)
         {
-            GameIniFilePath instance = null;
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new GameIniFilePath(value),
+                instanceVerifier: new ValueVerifier<GameIniFilePath>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
+        }
 
-            var errorOccured = false;
-            try
-            {
-                instance = new GameIniFilePath(path);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 内容が一致すること
-            Assert.AreEqual((string)instance, path);
+        /// <summary>
+        ///     引数が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NullArgs()
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new GameIniFilePath(null!),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
         }
     }
 }

@@ -7,142 +7,112 @@
 // ========================================
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+using System.Diagnostics.Contracts;
+using WodiLib.SourceGenerator.Domain.Model.Attributes;
 using WodiLib.Sys;
 
 namespace WodiLib.Database
 {
-    /// <summary>
-    /// DBタイプセット（XXX.dbtypeset）
-    /// </summary>
-    [Serializable]
-    public class DBTypeSet : ModelBase<DBTypeSet>
+    [Model(Description = "DBタイプセット（XXX.dbtypeset）")]
+    public partial class DBTypeSet
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Properties
+
+        #region public
 
         /// <summary>
-        /// ファイルヘッダ
+        ///     DBタイプ情報
         /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public static readonly byte[] Header =
+        [ImmutableProperty(
+            ReturnType = typeof(ReadOnlyDatabaseTypeDefinition)
+        )]
+        [SettingsProperty(
+            ReturnType = typeof(IDatabaseTypeDefinitionSettings),
+            DefaultValue = "new DatabaseTypeDefinitionSettings()"
+        )]
+        public DatabaseTypeDefinition TypeDefinition
         {
-            0xB9, 0x22, 0x2D, 0x02
-        };
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>DBタイプ名</summary>
-        /// <exception cref="PropertyNullException">nullをセットした場合</exception>
-        public TypeName TypeName
-        {
-            get => TypeDesc.TypeName;
-            set => TypeDesc.TypeName = value;
-        }
-
-        /// <summary>項目設定リスト</summary>
-        public DBItemSettingList ItemSettingList => TypeDesc.WritableItemSettingList;
-
-        /// <summary>メモ</summary>
-        /// <exception cref="PropertyNullException">nullをセットした場合</exception>
-        public DatabaseMemo Memo
-        {
-            get => TypeDesc.Memo;
-            set => TypeDesc.Memo = value;
-        }
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        private DatabaseTypeDesc TypeDesc { get; } = DatabaseTypeDesc.Factory.CreateForDBTypeSet();
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     InnerNotifyChanged
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>
-        /// タイプ情報プロパティ変更通知
-        /// </summary>
-        /// <param name="sender">送信元</param>
-        /// <param name="args">情報</param>
-        private void OnTypeDescPropertyChanged(object sender, PropertyChangedEventArgs args)
-        {
-            switch (args.PropertyName)
+            get => typeDefinition;
+            set
             {
-                case nameof(DatabaseTypeDesc.TypeName):
-                case nameof(DatabaseTypeDesc.Memo):
-                    NotifyPropertyChanged(args.PropertyName);
-                    break;
+                ThrowHelper.ValidatePropertyNotNull(value is null, nameof(TypeDefinition));
 
-                case nameof(DatabaseTypeDesc.WritableItemSettingList):
-                    NotifyPropertyChanged(nameof(ItemSettingList));
-                    break;
+                SetField(ref typeDefinition, value);
             }
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Constructor
+        #endregion
+
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
+        #region Fields
+
+        private DatabaseTypeDefinition typeDefinition;
+
+        #endregion
+
+        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Constructors
+
+        #region Required
+
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
-        public DBTypeSet()
+        /// <param name="settings">設定DTO</param>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合。
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="settings"/> に不適切な <see langword="null"/> 要素が含まれる場合。
+        /// </exception>
+        public DBTypeSet(IDBTypeSetSettings settings)
         {
-            TypeDesc.PropertyChanged += OnTypeDescPropertyChanged;
+            ThrowHelper.ValidateArgumentNotNull(settings is null, nameof(settings));
+            ThrowHelper.ValidateArgumentPropertyNotNull(
+                settings.TypeDefinition is null,
+                nameof(settings),
+                nameof(settings.TypeDefinition)
+            );
+
+            typeDefinition = new DatabaseTypeDefinition(settings.TypeDefinition);
         }
 
-        /// <summary>
-        /// コンストラクタ
-        /// </summary>
-        /// <param name="itemSettingList">初期項目設定リスト</param>
-        /// <exception cref="ArgumentNullException">dataNameList, itemSettingList が null の場合</exception>
-        /// <exception cref="ArgumentException">dataNameList, itemSettingList に null 要素が含まれる場合</exception>
-        public DBTypeSet(DBItemSettingList itemSettingList) : this()
-        {
-            if (itemSettingList is null)
-                throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(itemSettingList)));
+        #endregion
 
-            TypeDesc = DatabaseTypeDesc.Factory.CreateForDBTypeSet(itemSettingList);
+        #region Convenience
+
+        /// <summary>
+        ///     コンストラクタ
+        /// </summary>
+        public DBTypeSet() : this(new DBTypeSetSettings())
+        {
         }
 
-        /// <summary>
-        /// 値を比較する。
-        /// </summary>
-        /// <param name="other">比較対象</param>
-        /// <returns>一致する場合、true</returns>
-        public override bool ItemEquals(DBTypeSet? other)
+        #endregion
+
+        #endregion
+
+        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Methods
+
+        #region public
+
+        /// <inheritdoc/>
+        [Pure]
+        public bool ItemEquals(IDBTypeSetSettings? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return TypeDesc.Equals(other.TypeDesc);
+            return TypeDefinition.ItemEquals(other.TypeDefinition);
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Common
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #endregion
 
-        /// <summary>
-        /// バイナリ変換する。
-        /// </summary>
-        /// <returns>バイナリデータ</returns>
-        public byte[] ToBinary()
-        {
-            var result = new List<byte>();
-
-            // ヘッダ
-            result.AddRange(Header);
-
-            // 要素
-            result.AddRange(TypeDesc.ToBinaryForDBTypeSet());
-
-            return result.ToArray();
-        }
+        #endregion
     }
 }

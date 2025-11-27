@@ -7,7 +7,6 @@
 // ========================================
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using WodiLib.Cmn;
 using WodiLib.Sys;
@@ -15,7 +14,7 @@ using WodiLib.Sys;
 namespace WodiLib.IO
 {
     /// <summary>
-    /// ウディタ関連ファイル書き出し基底クラス
+    ///     ウディタ関連ファイル書き出し基底クラス
     /// </summary>
     /// <typeparam name="TFilePath">ファイルパス</typeparam>
     /// <typeparam name="TFileData">書き出し対象クラス</typeparam>
@@ -23,46 +22,48 @@ namespace WodiLib.IO
         where TFilePath : FilePath
     {
         /// <summary>書き出しファイルパス</summary>
-        [NotNull]
         public TFilePath FilePath { get; }
 
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
         /// <param name="filePath">書き出しファイルパス</param>
-        /// <exception cref="ArgumentNullException">filePathがnullの場合</exception>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="filePath"/> が <see langword="null"/> の場合。
+        /// </exception>
         public WoditorFileWriterBase(TFilePath filePath)
         {
-            if (filePath is null)
-                throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(filePath)));
+            ThrowHelper.ValidateArgumentNotNull(filePath is null, nameof(filePath));
 
             FilePath = filePath;
         }
 
         /// <summary>
-        /// ファイルを同期的に書き出す。
+        ///     ファイルを同期的に書き出す。
         /// </summary>
         /// <param name="data">出力データ</param>
         /// <exception cref="ArgumentNullException">
-        ///    data が null の場合
+        ///     <paramref name="data"/> が <see langword="null"/> の場合。
         /// </exception>
         /// <exception cref="InvalidOperationException">
         ///     ファイル名が正しくない場合、
-        ///     またはFilePathが非ファイルデバイスを参照している場合
+        ///     または <see cref="FilePath"/> が非ファイルデバイスを参照している場合
         /// </exception>
-        public abstract void WriteSync([NotNull] TFileData data);
+        public abstract void WriteSync(TFileData data);
 
         /// <summary>
-        /// ファイルを同期的に書き出す。
+        ///     ファイルを非同期的に書き出す。
         /// </summary>
         /// <param name="data">出力データ</param>
         /// <returns>書き出しTask</returns>
-        /// <exception cref="ArgumentException">
-        ///     ファイル名が正しくない場合、
-        ///     またはpathが非ファイルデバイスを参照している場合
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="data"/> が <see langword="null"/> の場合。
         /// </exception>
-        public async Task WriteAsync([NotNull] TFileData data)
+        /// <exception cref="InvalidOperationException">
+        ///     ファイル名が正しくない場合、
+        ///     または <see cref="FilePath"/> が非ファイルデバイスを参照している場合
+        /// </exception>
+        public async Task WriteAsync(TFileData data)
         {
             await Task.Run(() => WriteSync(data));
         }

@@ -18,15 +18,15 @@ namespace WodiLib.Test.Database.Helper
 
         #region Create
 
-        #region From SettingsUnion
+        #region From Settings
 
         /// <summary>
         ///     意図した値が取得されること。
         /// </summary>
         [Test]
-        public static void CreateFromSettingsUnionTest_Success_FromNormalSettingsUnion()
+        public static void CreateFromSettingsTest_Success_FromNormalSettings()
         {
-            var settings = new DatabaseFieldSpecialSettingDefinitionSettingsUnion(
+            var settings = new DatabaseFieldSpecialSettingDefinitionSettings(
                 new DatabaseFieldSpecialSettingDefinitionNormalSettings
                 {
                     InitValue = new DatabaseValueInt(100),
@@ -38,10 +38,10 @@ namespace WodiLib.Test.Database.Helper
                 resultValueVerifier: new ValueVerifier<IDatabaseFieldSpecialSettingDefinition>(result =>
                     {
                         // DatabaseFieldSpecialSettingDefinitionNormal 型インスタンスであること
-                        Assert.AreEqual(typeof(DatabaseFieldSpecialSettingDefinitionNormal), result.GetType());
+                        Assert.AreEqual(DatabaseFieldSpecialSettingType.Normal, result.SettingType);
 
                         // settings と同一値であること
-                        Assert.IsTrue(settings.AsNormalSettings().ItemEquals(result));
+                        Assert.IsTrue(settings.ItemEquals(result));
                     }
                 )
             );
@@ -51,9 +51,9 @@ namespace WodiLib.Test.Database.Helper
         ///     意図した値が取得されること。
         /// </summary>
         [Test]
-        public static void CreateFromSettingsUnionTest_Success_FromLoadFileSettingsUnion()
+        public static void CreateFromSettingsTest_Success_FromLoadFileSettings()
         {
-            var settings = new DatabaseFieldSpecialSettingDefinitionSettingsUnion(
+            var settings = new DatabaseFieldSpecialSettingDefinitionSettings(
                 new DatabaseFieldSpecialSettingDefinitionLoadFileSettings
                 {
                     FolderName = "TestDirName",
@@ -66,10 +66,10 @@ namespace WodiLib.Test.Database.Helper
                 resultValueVerifier: new ValueVerifier<IDatabaseFieldSpecialSettingDefinition>(result =>
                     {
                         // DatabaseFieldSpecialSettingDefinitionLoadFile 型インスタンスであること
-                        Assert.AreEqual(typeof(DatabaseFieldSpecialSettingDefinitionLoadFile), result.GetType());
+                        Assert.AreEqual(DatabaseFieldSpecialSettingType.LoadFile, result.SettingType);
 
                         // settings と同一値であること
-                        Assert.IsTrue(settings.AsLoadFileSettings().ItemEquals(result));
+                        Assert.IsTrue(settings.ItemEquals(result));
                     }
                 )
             );
@@ -79,9 +79,9 @@ namespace WodiLib.Test.Database.Helper
         ///     意図した値が取得されること。
         /// </summary>
         [Test]
-        public static void CreateFromSettingsUnionTest_Success_FromDatabaseReferenceSettingsUnion()
+        public static void CreateFromSettingsTest_Success_FromDatabaseReferenceSettings()
         {
-            var settings = new DatabaseFieldSpecialSettingDefinitionSettingsUnion(
+            var settings = new DatabaseFieldSpecialSettingDefinitionSettings(
                 new DatabaseFieldSpecialSettingDefinitionDatabaseReferenceSettings
                 {
                     DatabaseDbTypeId = 2,
@@ -99,13 +99,10 @@ namespace WodiLib.Test.Database.Helper
                 resultValueVerifier: new ValueVerifier<IDatabaseFieldSpecialSettingDefinition>(result =>
                     {
                         // DatabaseFieldSpecialSettingDefinitionDatabaseReference 型インスタンスであること
-                        Assert.AreEqual(
-                            typeof(DatabaseFieldSpecialSettingDefinitionDatabaseReference),
-                            result.GetType()
-                        );
+                        Assert.AreEqual(DatabaseFieldSpecialSettingType.ReferDatabase, result.SettingType);
 
                         // settings と同一値であること
-                        Assert.IsTrue(settings.AsDatabaseReferenceSettings().ItemEquals(result));
+                        Assert.IsTrue(result.ItemEquals(settings));
                     }
                 )
             );
@@ -115,9 +112,9 @@ namespace WodiLib.Test.Database.Helper
         ///     意図した値が取得されること。
         /// </summary>
         [Test]
-        public static void CreateFromSettingsUnionTest_Success_FromManualSettingsUnion()
+        public static void CreateFromSettingsTest_Success_FromManualSettings()
         {
-            var settings = new DatabaseFieldSpecialSettingDefinitionSettingsUnion(
+            var settings = new DatabaseFieldSpecialSettingDefinitionSettings(
                 new DatabaseFieldSpecialSettingDefinitionManualSettings
                 {
                     SpecialCases = new DatabaseValueCaseListSettings(
@@ -136,10 +133,10 @@ namespace WodiLib.Test.Database.Helper
                 resultValueVerifier: new ValueVerifier<IDatabaseFieldSpecialSettingDefinition>(result =>
                     {
                         // DatabaseFieldSpecialSettingDefinitionManual 型インスタンスであること
-                        Assert.AreEqual(typeof(DatabaseFieldSpecialSettingDefinitionManual), result.GetType());
+                        Assert.AreEqual(DatabaseFieldSpecialSettingType.Manual, result.SettingType);
 
                         // settings と同一値であること
-                        Assert.IsTrue(settings.AsManualSettings().ItemEquals(result));
+                        Assert.IsTrue(settings.ItemEquals(result));
                     }
                 )
             );
@@ -150,7 +147,7 @@ namespace WodiLib.Test.Database.Helper
         ///     ArgumentNullException が発生すること。
         /// </summary>
         [Test]
-        public static void CreateFromSettingsUnionTest_Failure_NullArgs()
+        public static void CreateFromSettingsTest_Failure_NullArgs()
         {
             staticFunctionTestHelper.StaticFuncFailure(
                 execFunc: () => DatabaseFieldSpecialSettingDefinitionFactory.Create(null!),
@@ -199,7 +196,7 @@ namespace WodiLib.Test.Database.Helper
                 resultValueVerifier: new ValueVerifier<IDatabaseFieldSpecialSettingDefinition>(result =>
                     {
                         Assert.AreEqual(DatabaseFieldSpecialSettingType.LoadFile, result.SettingType);
-                        Assert.IsTrue(result.AsLoadFileSettings().ItemEquals(expected));
+                        Assert.IsTrue(result.ItemEquals(expected));
                     }
                 )
             );
@@ -222,7 +219,7 @@ namespace WodiLib.Test.Database.Helper
                 resultValueVerifier: new ValueVerifier<IDatabaseFieldSpecialSettingDefinition>(result =>
                     {
                         Assert.AreEqual(DatabaseFieldSpecialSettingType.ReferDatabase, result.SettingType);
-                        Assert.IsTrue(result.AsDatabaseReferenceSettings().ItemEquals(expected));
+                        Assert.IsTrue(result.ItemEquals(expected));
                     }
                 )
             );
@@ -242,7 +239,7 @@ namespace WodiLib.Test.Database.Helper
                 resultValueVerifier: new ValueVerifier<IDatabaseFieldSpecialSettingDefinition>(result =>
                     {
                         Assert.AreEqual(DatabaseFieldSpecialSettingType.Manual, result.SettingType);
-                        Assert.IsTrue(result.AsManualSettings().ItemEquals(expected));
+                        Assert.IsTrue(result.ItemEquals(expected));
                     }
                 )
             );

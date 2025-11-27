@@ -7,110 +7,123 @@
 // ========================================
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+using System.Diagnostics.Contracts;
+using WodiLib.SourceGenerator.Domain.Model.Attributes;
 using WodiLib.Sys;
 
 namespace WodiLib.Database
 {
-    /// <summary>
-    /// DBデータ（XXX.dbdata）
-    /// </summary>
-    [Serializable]
-    public class DBData : IEquatable<DBData>
+    [Model(Description = "DBデータ（XXX.dbdata）")]
+    public partial class DBData
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Properties
+
+        #region public
 
         /// <summary>
-        /// ファイルヘッダ
+        ///     データリスト
         /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public static readonly byte[] Header =
+        [ImmutableProperty(
+            ReturnType = typeof(ReadOnlyDatabaseNamedDataTable)
+        )]
+        [SettingsProperty(
+            ReturnType = typeof(IDatabaseNamedDataTableSettings),
+            DefaultValue = "new DatabaseNamedDataTableSettings()"
+        )]
+        public DatabaseNamedDataTable DataTable
         {
-            0x40, 0x78, 0xA1, 0x02,
-        };
+            get => dataTable;
+            set
+            {
+                ThrowHelper.ValidatePropertyNotNull(value is null, nameof(DataTable));
+
+                SetField(ref dataTable, value);
+            }
+        }
+
+        #endregion
+
+        #endregion
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        /// <summary>データリスト</summary>
-        public DatabaseDataDescList DataDescList => TypeDesc.DataDescList;
+        #region Fields
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        private DatabaseNamedDataTable dataTable;
 
-        private DatabaseTypeDesc TypeDesc { get; } = DatabaseTypeDesc.Factory.CreateForDBData();
+        #endregion
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
         //     Constructor
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
+        #region Constructor
+
+        #region Required
+
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
-        public DBData()
+        /// <param name="settings">設定DTO</param>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="settings"/> が <see langword="null"/> の場合。
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="settings"/> に不適切な <see langword="null"/> 要素が含まれる場合。
+        /// </exception>
+        public DBData(IDBDataSettings settings)
+        {
+            ThrowHelper.ValidateArgumentNotNull(settings is null, nameof(settings));
+            ThrowHelper.ValidateArgumentPropertyNotNull(
+                settings.DataTable is null,
+                nameof(settings),
+                nameof(settings.DataTable)
+            );
+            ThrowHelper.ValidateArgumentPropertyNotNull(
+                settings.DataTable.Settings is null,
+                nameof(settings),
+                nameof(settings.DataTable.Settings)
+            );
+            ThrowHelper.ValidateArgumentPropertyItemsHasNotNull(
+                settings.DataTable.Settings.HasNullItem(),
+                nameof(settings),
+                nameof(settings.DataTable.Settings)
+            );
+
+            dataTable = new DatabaseNamedDataTable(settings.DataTable);
+        }
+
+        #endregion
+
+        #region Convenience
+
+        /// <summary>
+        ///     コンストラクタ
+        /// </summary>
+        public DBData() : this(new DBDataSettings())
         {
         }
 
-        /// <summary>
-        /// コンストラクタ
-        /// </summary>
-        /// <param name="dataDescList">初期データ情報リスト</param>
-        /// <exception cref="ArgumentNullException">dataDescList が null の場合</exception>
-        public DBData(DatabaseDataDescList dataDescList)
-        {
-            if (dataDescList is null)
-                throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(dataDescList)));
+        #endregion
 
-            TypeDesc = DatabaseTypeDesc.Factory.CreateForDBData(dataDescList);
-        }
+        #endregion
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        /// <summary>
-        /// 値を比較する。
-        /// </summary>
-        /// <param name="other">比較対象</param>
-        /// <returns>一致する場合、true</returns>
-        public bool Equals(DBData? other)
+        #region Methods
+
+        #region public
+
+        /// <inheritdoc/>
+        [Pure]
+        public bool ItemEquals(IDBDataSettings? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return TypeDesc.Equals(other.TypeDesc);
+            return DataTable.ItemEquals(other.DataTable);
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Common
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #endregion
 
-        /// <summary>
-        /// バイナリ変換する。
-        /// </summary>
-        /// <returns>バイナリデータ</returns>
-        public byte[] ToBinary()
-        {
-            var result = new List<byte>();
-
-            // ヘッダ
-            result.AddRange(Header);
-
-            // データ数
-            result.AddRange(DataDescList.Count.ToWoditorIntBytes());
-
-            // データ
-            foreach (var dataDesc in DataDescList)
-            {
-                result.AddRange(dataDesc.ToBinaryForDBData());
-            }
-
-            return result.ToArray();
-        }
+        #endregion
     }
 }

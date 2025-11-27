@@ -1,5 +1,4 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.IO;
 using WodiLib.Test.Tools;
@@ -7,50 +6,42 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.IO.ValueObject
 {
     [TestFixture]
-    public class SystemDatabaseProjectFilePathTest
+    public class SystemDatabaseProjectFilePathTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-
-        [TestCase(null, true)]
-        [TestCase("", true)]
-        [TestCase("SysDataBase.project", false)]
-        [TestCase("SYSDATABASE.PROJECT", false)]
-        [TestCase("Database.project", false)]
-        [TestCase("SysDatabase.project.bak", false)]
-        [TestCase("./SysDataBase.project", false)]
-        [TestCase(@".\Data\SysDataBase.project", false)]
-        [TestCase(@"c:\MyProject\Data\SysDataBase.project", false)]
-        [TestCase(@"c:\MyProject\Data\SysDataBase.proj", false)]
-        public static void ConstructorTest(string path, bool isError)
+        [TestCase("SysDataBase.project")]
+        [TestCase("./Database.project")]
+        [TestCase(@".\Data\SysDataBase.project")]
+        [TestCase(@"c:\MyProject\Data\SysDataBase.project")]
+        public static void ConstructorTest_Success(string value)
         {
-            SystemDatabaseProjectFilePath instance = null;
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new SystemDatabaseProjectFilePath(value),
+                instanceVerifier: new ValueVerifier<SystemDatabaseProjectFilePath>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
+        }
 
-            var errorOccured = false;
-            try
-            {
-                instance = new SystemDatabaseProjectFilePath(path);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 内容が一致すること
-            Assert.AreEqual((string)instance, path);
+        /// <summary>
+        ///     引数が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NullArgs()
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new SystemDatabaseProjectFilePath(null!),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
         }
     }
 }

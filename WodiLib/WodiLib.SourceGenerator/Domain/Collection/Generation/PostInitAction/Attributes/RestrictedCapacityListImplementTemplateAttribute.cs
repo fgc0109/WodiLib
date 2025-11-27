@@ -87,9 +87,17 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
         {
             Name = nameof(BaseModelClass),
             Type = typeof(Type).FullName!,
-            Summary = "読取専用クラスが継承するモデルクラス（デフォルトでは ModelBase を継承する）。",
+            Summary = "読取専用クラスが継承するモデルクラス（デフォルトでは ModelBase を継承する）",
             Remarks = "\"NONE\" の場合何も継承しない。",
             DefaultValue = "null",
+        };
+
+        public static readonly PropertyInfo UseConstructorExpansion = new()
+        {
+            Name = nameof(UseConstructorExpansion),
+            Type = typeof(bool).FullName!,
+            Summary = "protected virtual partial void DoConstructorExpansion メソッドを定義するか",
+            DefaultValue = "false",
         };
 
         /// <inheritdoc/>
@@ -107,6 +115,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
                 MaxCapacity,
                 MinCapacity,
                 BaseModelClass,
+                UseConstructorExpansion,
             };
 
         private RestrictedCapacityListImplementTemplateAttribute()

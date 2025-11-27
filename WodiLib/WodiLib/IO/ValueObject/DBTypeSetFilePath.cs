@@ -14,14 +14,8 @@ namespace WodiLib.IO
     /// <summary>
     ///     XXX.dbtypeset ファイルパス
     /// </summary>
-    [FilePathStringObjectValue(SafetyPattern = @"^(.*)\.dbtypeset$")]
-    public partial class DBTypeSetFilePath : FilePath
+    [FilePathStringObjectValue(SafetyPattern = @"^.+\.dbtypeset$")]
+    public partial record DBTypeSetFilePath : FilePath
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Override Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>空文字許可フラグ</summary>
-        protected override bool IsAllowEmptyString => false;
     }
 }

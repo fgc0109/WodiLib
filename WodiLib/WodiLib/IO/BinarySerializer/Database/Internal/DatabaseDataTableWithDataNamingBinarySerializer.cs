@@ -19,6 +19,10 @@ namespace WodiLib.IO
     /// </summary>
     internal static class DatabaseDataTableWithDataNamingBinarySerializer
     {
+        /// <inheritdoc cref="Serialize(IEnumerable{ReadOnlyDatabaseDataTableWithDataNamingDefinition})"/>
+        public static byte[] Serialize(this IEnumerable<DatabaseDataTableWithDataNamingDefinition> src)
+            => Serialize(src.Select(item => (ReadOnlyDatabaseDataTableWithDataNamingDefinition)item));
+
         /// <summary>
         ///     <see cref="ReadOnlyDatabaseDataTableWithDataNamingDefinition"/> 列挙をバイナリ配列に変換する。
         /// </summary>
@@ -27,6 +31,10 @@ namespace WodiLib.IO
         public static byte[] Serialize(this IEnumerable<ReadOnlyDatabaseDataTableWithDataNamingDefinition> src)
             => src.SelectMany(Serialize).ToArray();
 
+        /// <inheritdoc cref="Serialize(ReadOnlyDatabaseDataTableWithDataNamingDefinitionList)"/>
+        public static byte[] Serialize(this DatabaseDataTableWithDataNamingDefinitionList src)
+            => Serialize((ReadOnlyDatabaseDataTableWithDataNamingDefinitionList)src);
+
         /// <summary>
         ///     <see cref="ReadOnlyDatabaseDataTableWithDataNamingDefinitionList"/> をバイナリ配列に変換する。
         /// </summary>
@@ -34,6 +42,10 @@ namespace WodiLib.IO
         /// <returns><see cref="ReadOnlyDatabaseDataTableWithDataNamingDefinitionList"/> を変換したバイナリ配列</returns>
         public static byte[] Serialize(this ReadOnlyDatabaseDataTableWithDataNamingDefinitionList src)
             => src.SelectMany(Serialize).ToArray();
+
+        /// <inheritdoc cref="Serialize(ReadOnlyDatabaseDataTableWithDataNamingDefinition)"/>
+        public static byte[] Serialize(this DatabaseDataTableWithDataNamingDefinition src)
+            => Serialize((ReadOnlyDatabaseDataTableWithDataNamingDefinition)src);
 
         /// <summary>
         ///     <see cref="ReadOnlyDatabaseDataTableWithDataNamingDefinition"/> をバイナリ配列に変換する。

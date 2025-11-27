@@ -203,12 +203,12 @@ namespace WodiLib.Test.Database.Helper
                                     new(),
                                 }
                             ),
-                            FieldDefinitionList = new DatabaseFieldDefinitionListSettings(
-                                new List<IDatabaseFieldDefinitionSettings>
+                            FieldMetadataList = new DatabaseFieldMetadataListSettings(
+                                new List<IDatabaseFieldMetadataSettings>
                                 {
-                                    new DatabaseFieldDefinitionSettings(),
-                                    new DatabaseFieldDefinitionSettings(),
-                                    new DatabaseFieldDefinitionSettings(), // ここが超過している
+                                    new DatabaseFieldMetadataSettings(),
+                                    new DatabaseFieldMetadataSettings(),
+                                    new DatabaseFieldMetadataSettings(), // ここが超過している
                                 }
                             ),
                         },
@@ -250,7 +250,7 @@ namespace WodiLib.Test.Database.Helper
                         {
                             FieldName = "Type0-Field0",
                             FieldType = DatabaseFieldType.Int,
-                            SpecialSettingDefinition = new DatabaseFieldSpecialSettingDefinitionSettingsUnion(
+                            SpecialSettingDefinition = new DatabaseFieldSpecialSettingDefinitionSettings(
                                 new DatabaseFieldSpecialSettingDefinitionNormalSettings()
                             ),
                             FieldMemo = "Type0-Field0 メモ",
@@ -259,7 +259,7 @@ namespace WodiLib.Test.Database.Helper
                         {
                             FieldName = "Type0-Field1",
                             FieldType = DatabaseFieldType.String,
-                            SpecialSettingDefinition = new DatabaseFieldSpecialSettingDefinitionSettingsUnion(
+                            SpecialSettingDefinition = new DatabaseFieldSpecialSettingDefinitionSettings(
                                 new DatabaseFieldSpecialSettingDefinitionNormalSettings()
                             ),
                             FieldMemo = "Type0-Field1 メモ",
@@ -296,8 +296,8 @@ namespace WodiLib.Test.Database.Helper
                         {
                             FieldName = "Type1-Field0",
                             FieldType = DatabaseFieldType.String,
-                            SpecialSettingDefinition = new DatabaseFieldSpecialSettingDefinitionSettingsUnion(
-                                new DatabaseFieldSpecialSettingDefinitionLoadFileSettings()
+                            SpecialSettingDefinition = new DatabaseFieldSpecialSettingDefinitionSettings(
+                                new DatabaseFieldSpecialSettingDefinitionLoadFileSettings
                                 {
                                     FolderName = "FolderName",
                                     IsOmitFolderName = true,
@@ -308,7 +308,7 @@ namespace WodiLib.Test.Database.Helper
                         {
                             FieldName = "Type1-Field1",
                             FieldType = DatabaseFieldType.String,
-                            SpecialSettingDefinition = new DatabaseFieldSpecialSettingDefinitionSettingsUnion(
+                            SpecialSettingDefinition = new DatabaseFieldSpecialSettingDefinitionSettings(
                                 new DatabaseFieldSpecialSettingDefinitionNormalSettings()
                             ),
                         },
@@ -400,7 +400,7 @@ namespace WodiLib.Test.Database.Helper
                         {
                             TypeName = Type0Settings.TypeName,
                             Memo = Type0Settings.Memo,
-                            FieldDefinitionList = Type0Settings.FieldDefinitionList,
+                            FieldMetadataList = Type0Settings.FieldDefinitionList.TransformMetadataSettings(),
                             DataNameList = new DatabaseDataNameListSettings(
                                 Type0Settings.Settings.Select(namedRow => namedRow.DataName).ToArray()
                             ),
@@ -409,7 +409,7 @@ namespace WodiLib.Test.Database.Helper
                         {
                             TypeName = Type1Settings.TypeName,
                             Memo = Type1Settings.Memo,
-                            FieldDefinitionList = Type1Settings.FieldDefinitionList,
+                            FieldMetadataList = Type1Settings.FieldDefinitionList.TransformMetadataSettings(),
                             DataNameList = new DatabaseDataNameListSettings(
                                 Type1Settings.Settings.Select(namedRow => namedRow.DataName).ToArray()
                             ),
@@ -418,7 +418,7 @@ namespace WodiLib.Test.Database.Helper
                         {
                             TypeName = Type2Settings.TypeName,
                             Memo = Type2Settings.Memo,
-                            FieldDefinitionList = Type2Settings.FieldDefinitionList,
+                            FieldMetadataList = Type2Settings.FieldDefinitionList.TransformMetadataSettings(),
                             DataNameList = new DatabaseDataNameListSettings(
                                 Type2Settings.Settings.Select(namedRow => namedRow.DataName).ToArray()
                             ),

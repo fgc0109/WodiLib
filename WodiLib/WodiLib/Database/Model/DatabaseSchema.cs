@@ -14,7 +14,7 @@ using WodiLib.Sys;
 namespace WodiLib.Database
 {
     [Model(Description = "DB情報")]
-    public partial class ReadOnlyDatabaseSchema
+    public partial class DatabaseSchema
     {
         #region Properties
 
@@ -23,33 +23,27 @@ namespace WodiLib.Database
         /// <summary>
         ///     DB種別
         /// </summary>
-        [MutableProperty]
+        [ImmutableProperty]
         [SettingsProperty(DefaultValue = "null")]
         public DatabaseKind? DbKind
         {
-            get => dbKind;
-            protected set => SetField(ref dbKind, value);
+            [Pure] get => dbKind;
+            set => SetField(ref dbKind, value);
         }
 
         /// <summary>
         ///     [InstanceNotChange] データベーススキーマリスト
         /// </summary>
-        [MutableProperty(
-            Accessibility = "NONE",
-            ReturnType = typeof(DatabaseTypeTableList)
+        [ImmutableProperty(
+            ReturnType = typeof(ReadOnlyDatabaseTypeTableList)
         )]
         [SettingsProperty(
             ReturnType = typeof(IDatabaseTypeTableListSettings),
             DefaultValue = "new DatabaseTypeTableListSettings()"
         )]
         [InstanceNotChange]
-        public ReadOnlyDatabaseTypeTableList TypeTableList => typeTableList;
-
-        #endregion
-
-        #region Interface Implementations
-
-        IDatabaseTypeTableListSettings IDatabaseSchemaSettings.TypeTableList => TypeTableList;
+        [Pure]
+        public DatabaseTypeTableList TypeTableList { get; }
 
         #endregion
 
@@ -60,7 +54,6 @@ namespace WodiLib.Database
         #region Fields
 
         private DatabaseKind? dbKind = null;
-        private readonly DatabaseTypeTableList typeTableList;
 
         #endregion
 
@@ -80,8 +73,7 @@ namespace WodiLib.Database
         /// <exception cref="ArgumentException">
         ///     <paramref name="settings"/> に不適切な <see langword="null"/> 要素が含まれる場合。
         /// </exception>
-        [MutableConstructor]
-        public ReadOnlyDatabaseSchema(IDatabaseSchemaSettings settings)
+        public DatabaseSchema(IDatabaseSchemaSettings settings)
         {
             ThrowHelper.ValidateArgumentNotNull(settings is null, nameof(settings));
             ThrowHelper.ValidateArgumentPropertyNotNull(
@@ -101,7 +93,7 @@ namespace WodiLib.Database
             );
 
             DbKind = settings.DbKind;
-            typeTableList = new DatabaseTypeTableList(settings.TypeTableList);
+            TypeTableList = new DatabaseTypeTableList(settings.TypeTableList);
         }
 
         #endregion
@@ -111,8 +103,7 @@ namespace WodiLib.Database
         /// <summary>
         ///     コンストラクタ
         /// </summary>
-        [MutableConstructor]
-        public ReadOnlyDatabaseSchema() : this(new DatabaseSchemaSettings())
+        public DatabaseSchema() : this(new DatabaseSchemaSettings())
         {
         }
 

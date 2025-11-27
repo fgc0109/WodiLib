@@ -1,145 +1,245 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Database;
 using WodiLib.Test.Tools;
 
-namespace WodiLib.Test.Database
+namespace WodiLib.Test.Database.ValueObject
 {
     [TestFixture]
-    public class DataNameTest
+    public class DataNameTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-        [TestCase(null, true)]
-        [TestCase("", false)]
-        [TestCase("abc", false)]
-        [TestCase("あいうえお", false)]
-        [TestCase("Hello\r\nWorld!", true)]
-        [TestCase("Wolf\nRPG\nEditor.", true)]
-        public static void ConstructorTest(string value, bool isError)
-        {
-            var errorOccured = false;
-            try
-            {
-                var _ = new DataName(value);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+        #region Constructor
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-        }
-
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
         [TestCase("")]
         [TestCase("abc")]
         [TestCase("あいうえお")]
-        public static void ToStringTest(string value)
+        public static void ConstructorStringTest_Success(string value)
         {
-            var instance = new DataName(value);
-
-            var strValue = instance.ToString();
-
-            // セットした値と取得した値が一致すること
-            Assert.AreEqual(strValue, value);
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new DataName(value),
+                instanceVerifier: new ValueVerifier<DataName>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
         }
 
-        [TestCase(null)]
-        [TestCase("")]
-        [TestCase("abc")]
-        [TestCase("あいうえお")]
-        public static void CastToStringTest(string value)
+        /// <summary>
+        ///     引数が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NullArgs()
         {
-            var instance = value != null
-                ? new DataName(value)
-                : null;
-
-            var errorOccured = false;
-            try
-            {
-                var _ = (string) instance;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // キャストした結果が一致すること
-            Assert.AreEqual((string) instance, value);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new DataName(null!),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
         }
 
-        [TestCase(null, false)]
-        [TestCase("", false)]
-        [TestCase("abc", false)]
-        [TestCase("あいうえお", false)]
-        [TestCase("Hello\r\nWorld!", true)]
-        [TestCase("Wolf\nRPG\nEditor.", true)]
-        public static void CastFromStringTest(string value, bool isError)
+        /// <summary>
+        ///     引数に改行が含まれる場合、
+        ///     ArgumentException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NewLine()
         {
-            DataName instance = null;
-
-            var errorOccured = false;
-            try
-            {
-                instance = value;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // キャストした結果が一致すること
-            Assert.AreEqual((string) instance, value);
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new DataName("Hello\r\nWorld!"),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
+            );
         }
 
-        private static readonly object[] EqualTestCaseSource =
+        #endregion
+
+        #region Methods
+
+        #region public
+
+        #region GetHashCode
+
+        [Test]
+        public static void GetHashCodeTest()
         {
-            new object[] {"a", "a", true},
-            new object[] {"a", "b", false},
+            var instance1 = new DataName("a");
+            var instance2 = new DataName("a");
+            var instance3 = new DataName("aa");
+
+            // 同じ値は同じハッシュコードを返すこと
+            Assert.AreEqual(instance1.GetHashCode(), instance2.GetHashCode());
+
+            // 異なる値は異なるハッシュコードを返すこと
+            Assert.AreNotEqual(instance1.GetHashCode(), instance3.GetHashCode());
+        }
+
+        #endregion
+
+        #region ToString
+
+        [Test]
+        public static void ToStringTest_Success()
+        {
+            const string value = "String TestValue";
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: new DataName(value),
+                execFunc: target => target.ToString(),
+                resultValueVerifier: ValueVerifier.AreEquals(value)
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Cast
+
+        #region From
+
+        /// <summary>
+        ///     string から DataName に暗黙的型変換できること。
+        /// </summary>
+        [Test]
+        public static void CastStringToDataNameTest_Success()
+        {
+            const string value = "abc";
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => value,
+                resultValueVerifier: ValueVerifier<DataName>.AreEquals(value)
+            );
+        }
+
+        /// <summary>
+        ///     改行を含む文字 から DataName に暗黙的型変換した場合、
+        ///     ArgumentException が発生すること。
+        /// </summary>
+        [Test]
+        public static void CastStringToDataNameTest_Failure_NewLine()
+        {
+            staticFunctionTestHelper.StaticFuncFailure<DataName>(
+                execFunc: () => (string)"Wolf\nRPG\nEditor.",
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
+            );
+        }
+
+        #endregion
+
+        #region To
+
+        /// <summary>
+        ///     DataName から string に暗黙的型変換できること。
+        /// </summary>
+        [Test]
+        public static void CastDataNameToStringTest_Success()
+        {
+            const string value = "abc";
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => new DataName(value),
+                resultValueVerifier: ValueVerifier.AreEquals(value)
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Operation
+
+        #region Equal / Equals(Method)
+
+        /// <summary>
+        ///     等価比較演算 == が意図した値を返すこと。
+        /// </summary>
+        [TestCase("a", "a", true)]
+        [TestCase("a", "b", false)]
+        [TestCase("a", null, false)]
+        [TestCase(null, "b", false)]
+        public static void OperatorEqualTest(string? left, string? right, bool expected)
+        {
+            var leftValue = (DataName?)left;
+            var rightValue = (DataName?)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue == rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     等価比較演算 != が意図した値を返すこと。
+        /// </summary>
+        [TestCase("a", "a", false)]
+        [TestCase("a", "b", true)]
+        [TestCase("a", null, true)]
+        [TestCase(null, "b", true)]
+        public static void OperatorNotEqualTest(string? left, string? right, bool expected)
+        {
+            var leftValue = (DataName?)left;
+            var rightValue = (DataName?)right;
+
+            staticFunctionTestHelper.StaticFuncSuccess(
+                execFunc: () => leftValue != rightValue,
+                resultValueVerifier: ValueVerifier.AreEquals(expected)
+            );
+        }
+
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCase("a", "a", true)]
+        [TestCase("a", "b", false)]
+        [TestCase("a", null, false)]
+        public static void EqualsTest_DataName(string left, string? right, bool expected)
+        {
+            var leftValue = (DataName)left;
+            var rightValue = (DataName?)right;
+
+            equalsTestHelper.Equals(
+                leftValue,
+                rightValue,
+                expected
+            );
+        }
+
+        private static readonly object?[][] EqualsObjectTestCaseSource =
+        {
+            // [left, right, expected]
+            new object?[] { "abc", new DataName("abc"), true },
+            new object?[] { "abc", new DataName("cba"), false },
+            new object?[] { "abc", "abc", false },
+            new object?[] { "abc", 10, false },
+            new object?[] { "abc", null, false },
         };
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualTest(string left, string right, bool isEqual)
+        /// <summary>
+        ///     Equals メソッドが意図した値を返すこと。
+        /// </summary>
+        [TestCaseSource(nameof(EqualsObjectTestCaseSource))]
+        public static void EqualsTest_Object(string left, object? right, bool expected)
         {
-            var leftIndex = (DataName) left;
-            var rightIndex = (DataName) right;
-            Assert.AreEqual(leftIndex == rightIndex, isEqual);
+            var leftValue = (DataName)left;
+
+            equalsTestHelper.Equals(
+                leftValue,
+                right,
+                expected
+            );
         }
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorNotEqualTest(string left, string right, bool isEqual)
-        {
-            var leftIndex = (DataName) left;
-            var rightIndex = (DataName) right;
-            Assert.AreEqual(leftIndex != rightIndex, !isEqual);
-        }
+        #endregion
 
-        [TestCaseSource(nameof(EqualTestCaseSource))]
-        public static void OperatorEqualsTest(string left, string right, bool isEqual)
-        {
-            var leftIndex = (DataName) left;
-            var rightIndex = (DataName) right;
-            Assert.AreEqual(leftIndex.Equals(rightIndex), isEqual);
-        }
+        #endregion
     }
 }

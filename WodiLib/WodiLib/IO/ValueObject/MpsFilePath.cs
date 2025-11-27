@@ -14,14 +14,8 @@ namespace WodiLib.IO
     /// <summary>
     ///     XXX.mps ファイルパス
     /// </summary>
-    [FilePathStringObjectValue(SafetyPattern = @"^(.*)\.mps$")]
-    public partial class MpsFilePath : FilePath
+    [FilePathStringObjectValue(SafetyPattern = @"^.+\.mps$")]
+    public partial record MpsFilePath : FilePath
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Override Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>空文字許可フラグ</summary>
-        protected override bool IsAllowEmptyString => false;
     }
 }

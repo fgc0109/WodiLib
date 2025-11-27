@@ -200,6 +200,14 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
             DefaultValue = "null",
         };
 
+        public static readonly PropertyInfo UseConstructorExpansion = new()
+        {
+            Name = nameof(UseConstructorExpansion),
+            Type = typeof(bool).FullName!,
+            Summary = "protected virtual partial void DoConstructorExpansion メソッドを定義するか",
+            DefaultValue = "false",
+        };
+
         /// <inheritdoc/>
         public override AttributeTargets AttributeTargets
             => AttributeTargets.Class;
@@ -227,6 +235,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.PostInitAction.At
                 ColumnLogicalName,
                 CellPhysicalName,
                 CellLogicalName,
+                UseConstructorExpansion,
             };
 
         private FixedLength2DListImplementTemplateAttribute()

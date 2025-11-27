@@ -16,20 +16,9 @@ namespace WodiLib.IO
     ///     データベースプロジェクトファイル名
     /// </summary>
     [FilePathStringObjectValue]
-    public abstract partial class DatabaseProjectFilePath : FilePath
+    public abstract partial record DatabaseProjectFilePath : FilePath
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Override Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>空文字許可フラグ</summary>
-        protected override bool IsAllowEmptyString => false;
-
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Abstract Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
         /// <summary>DB種別</summary>
-        public abstract DBKind DBKind { get; }
+        public abstract DatabaseKind DbKind { get; }
     }
 }

@@ -8,6 +8,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using WodiLib.Sys;
 
 namespace WodiLib.Database
@@ -107,6 +108,8 @@ namespace WodiLib.Database
                 var dataTable = dataTableWithDataNamingDefinition.DataTable;
                 var projectType = projectTypeList[typeId];
 
+                var fieldTypes = dataTable.GetFieldTypes().ToArray();
+
                 var rowSettingsList = new List<IDatabaseNamedDataRowSettings>();
 
                 // 1行ずつ作成
@@ -122,7 +125,11 @@ namespace WodiLib.Database
                 var typeTableSettings = new DatabaseTypeTableSettings(rowSettingsList)
                 {
                     DataNamingDefinition = dataTableWithDataNamingDefinition.DataNamingDefinition,
-                    FieldDefinitionList = projectType.FieldDefinitionList,
+                    FieldDefinitionList = new DatabaseFieldDefinitionListSettings(
+                        projectType.FieldMetadataList
+                            .Select((metadata, i) => metadata.TransformMetadataSettings(fieldTypes[i]))
+                            .ToArray()
+                    ),
                     TypeName = projectType.TypeName,
                     Memo = projectType.Memo,
                 };

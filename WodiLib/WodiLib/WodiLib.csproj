@@ -3,9 +3,9 @@
     <PropertyGroup>
         <Nullable>enable</Nullable>
         <PackageId>WodiLib</PackageId>
-        <PackageVersion>2.3.65534.43</PackageVersion>
+        <PackageVersion>2.3.65534.44</PackageVersion>
         <Copyright>Copyright 2019 kameske</Copyright>
-        <Version>2.3.65534.43</Version>
+        <Version>2.3.65534.44</Version>
         <PackageProjectUrl>https://github.com/kameske/WodiLib</PackageProjectUrl>
         <PackageLicenseUrl/>
         <RepositoryUrl>https://github.com/kameske/WodiLib.git</RepositoryUrl>
@@ -14,7 +14,7 @@
         <Authors>Kameske</Authors>
         <RootNamespace>WodiLib</RootNamespace>
         <Product>WodiLib</Product>
-        <AssemblyVersion>2.3.65534.43</AssemblyVersion>
+        <AssemblyVersion>2.3.65534.44</AssemblyVersion>
         <AssemblyName>WodiLib</AssemblyName>
         <LangVersion>9</LangVersion>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -43,11 +43,15 @@
         <ProjectReference Include="..\WodiLib.SourceGenerator\WodiLib.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
         <!--    <Compile Remove="Generated\**\*.cs" />-->
         <Compile Remove="Common\**"/>
-        <Compile Remove="Database\**"/>
         <Compile Remove="Event\**"/>
         <Compile Remove="Map\**"/>
         <Compile Remove="Project\**"/>
-        <Compile Remove="IO\**"/>
+        <Compile Remove="IO\BinarySerializer\Event\**"/>
+        <Compile Remove="IO\BinarySerializer\Map\**"/>
+        <Compile Remove="IO\Common\**"/>
+        <Compile Remove="IO\Event\**"/>
+        <Compile Remove="IO\Ini\**"/>
+        <Compile Remove="IO\Map\**"/>
         <Compile Remove="Ini\**"/>
     </ItemGroup>
 
@@ -77,21 +81,29 @@
             <LastGenOutput>_CharaMoveCommandNoCommandValuesImplementTemplate.cs</LastGenOutput>
         </None>
         <None Remove="Common\**"/>
-        <None Remove="Database\**"/>
         <None Remove="Event\**"/>
         <None Remove="Map\**"/>
         <None Remove="Project\**"/>
-        <None Remove="IO\**"/>
+        <None Remove="IO\BinarySerializer\Event\**"/>
+        <None Remove="IO\BinarySerializer\Map\**"/>
+        <None Remove="IO\Common\**"/>
+        <None Remove="IO\Event\**"/>
+        <None Remove="IO\Ini\**"/>
+        <None Remove="IO\Map\**"/>
         <None Remove="Ini\**"/>
     </ItemGroup>
 
     <ItemGroup>
         <EmbeddedResource Remove="Common\**"/>
-        <EmbeddedResource Remove="Database\**"/>
         <EmbeddedResource Remove="Event\**"/>
         <EmbeddedResource Remove="Map\**"/>
         <EmbeddedResource Remove="Project\**"/>
-        <EmbeddedResource Remove="IO\**"/>
+        <EmbeddedResource Remove="IO\BinarySerializer\Event\**"/>
+        <EmbeddedResource Remove="IO\BinarySerializer\Map\**"/>
+        <EmbeddedResource Remove="IO\Common\**"/>
+        <EmbeddedResource Remove="IO\Event\**"/>
+        <EmbeddedResource Remove="IO\Ini\**"/>
+        <EmbeddedResource Remove="IO\Map\**"/>
         <EmbeddedResource Remove="Ini\**"/>
     </ItemGroup>
 </Project>

@@ -7,7 +7,6 @@
 // ========================================
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using WodiLib.Cmn;
@@ -17,7 +16,7 @@ using WodiLib.Sys.Cmn;
 namespace WodiLib.IO
 {
     /// <summary>
-    /// ウディタ関連バイナリファイル書き出し基底クラス
+    ///     ウディタ関連バイナリファイル書き出し基底クラス
     /// </summary>
     /// <typeparam name="TFilePath">ファイルパス</typeparam>
     /// <typeparam name="TFileData">書き出し対象クラス</typeparam>
@@ -28,10 +27,10 @@ namespace WodiLib.IO
         /// <summary>ロガー</summary>
         private WodiLibLogger WodiLibLogger { get; } = WodiLibLogger.GetInstance();
 
-        private readonly object writeLock = new object();
+        private readonly object writeLock = new();
 
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
         /// <param name="filePath">書き出しファイルパス</param>
         /// <exception cref="ArgumentNullException">filePathがnullの場合</exception>
@@ -40,21 +39,22 @@ namespace WodiLib.IO
         }
 
         /// <summary>
-        /// ファイルを同期的に書き出す。
+        ///     ファイルを同期的に書き出す。
         /// </summary>
         /// <param name="data">出力データ</param>
         /// <exception cref="ArgumentNullException">
-        ///    data が null の場合
+        ///     data が null の場合
         /// </exception>
         /// <exception cref="InvalidOperationException">
         ///     ファイル名が正しくない場合、
         ///     またはFilePathが非ファイルデバイスを参照している場合
         /// </exception>
-        public override void WriteSync([NotNull] TFileData data)
+        public override void WriteSync(TFileData data)
         {
             if (data is null)
                 throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(data)));
+                    ErrorMessage.NotNull(nameof(data))
+                );
 
             lock (writeLock)
             {
@@ -71,10 +71,10 @@ namespace WodiLib.IO
         }
 
         /// <summary>
-        /// 出力データのバイナリデータを取得する。
+        ///     出力データのバイナリデータを取得する。
         /// </summary>
         /// <param name="data">出力データ</param>
         /// <returns>出力バイナリデータ</returns>
-        protected abstract byte[] GetDataBytes([NotNull] TFileData data);
+        protected abstract byte[] GetDataBytes(TFileData data);
     }
 }

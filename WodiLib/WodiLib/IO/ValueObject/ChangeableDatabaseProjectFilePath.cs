@@ -15,15 +15,11 @@ namespace WodiLib.IO
     ///     可変データベースプロジェクトファイル名
     /// </summary>
     [FilePathStringObjectValue(
-        SafetyPattern = @"^CDataBase\.project$"
+        SafetyPattern = @"^(.+\\)?CDataBase\.project$"
     )]
-    public partial class ChangeableDatabaseProjectFilePath : DatabaseProjectFilePath
+    public partial record ChangeableDatabaseProjectFilePath : DatabaseProjectFilePath
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Override Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
         /// <summary>DB種別</summary>
-        public override DBKind DBKind => DBKind.Changeable;
+        public override DatabaseKind DbKind => DatabaseKind.Changeable;
     }
 }

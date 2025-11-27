@@ -1,5 +1,4 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.IO;
 using WodiLib.Test.Tools;
@@ -7,50 +6,42 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.IO.ValueObject
 {
     [TestFixture]
-    public class TileSetDataFilePathTest
+    public class TileSetDataFilePathTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-
-        [TestCase(null, true)]
-        [TestCase("", true)]
-        [TestCase("TileSetData.dat", false)]
-        [TestCase("TILESETDATA.DAT", false)]
-        [TestCase("TileSetData_.dat", false)]
-        [TestCase("TileSetData.dat.bak", false)]
-        [TestCase("./TileSetData.dat", false)]
-        [TestCase(@".\Data\TileSetData.dat", false)]
-        [TestCase(@"c:\MyProject\Data\TileSetData.dat", false)]
-        [TestCase(@"c:\MyProject\Data\TileSetData.data", false)]
-        public static void ConstructorTest(string path, bool isError)
+        [TestCase("TileSetData.dat")]
+        [TestCase("./TileSetData_.dat")]
+        [TestCase(@".\Data\TileSetData.dat")]
+        [TestCase(@"c:\MyProject\Data\TileSetData.dat")]
+        public static void ConstructorTest_Success(string value)
         {
-            TileSetDataFilePath instance = null;
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new TileSetDataFilePath(value),
+                instanceVerifier: new ValueVerifier<TileSetDataFilePath>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
+        }
 
-            var errorOccured = false;
-            try
-            {
-                instance = new TileSetDataFilePath(path);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 内容が一致すること
-            Assert.AreEqual((string)instance, path);
+        /// <summary>
+        ///     引数が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NullArgs()
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new TileSetDataFilePath(null!),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
         }
     }
 }

@@ -143,6 +143,11 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 )
                 ?.FullName();
 
+            var useConstructorExpansion = selfAttributeData
+                .GetPropertyDataRecursive<bool>(
+                    RestrictedCapacityListImplementTemplateAttribute.UseConstructorExpansion.Name
+                );
+
             var baseModelClassNoGeneric = baseModelClass?.Split('<')[0];
 
             var isExtendClass = baseModelClass is not null;
@@ -220,6 +225,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 isAbstract,
                 maxCapacity,
                 minCapacity,
+                useConstructorExpansion,
                 new SettingsInterfaceInformation(
                     settingsInterfaceName,
                     settingsInterfaceNameWithoutIOKeyword,
@@ -292,6 +298,7 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
             bool IsAbstract,
             string MaxCapacity,
             string MinCapacity,
+            bool UseConstructorExpansion,
             SettingsInterfaceInformation SettingsInterfaceInfo,
             SettingsDtoInformation SettingsDtoInfo,
             RestrictedCapacityListInformation RestrictedCapacityListInfo,

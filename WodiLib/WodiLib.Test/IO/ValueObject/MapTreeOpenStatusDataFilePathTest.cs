@@ -1,5 +1,4 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.IO;
 using WodiLib.Test.Tools;
@@ -7,50 +6,42 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.IO.ValueObject
 {
     [TestFixture]
-    public class MapTreeOpenStatusDataFilePathTest
+    public class MapTreeOpenStatusDataFilePathTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-
-        [TestCase(null, true)]
-        [TestCase("", true)]
-        [TestCase("MapTreeOpenStatus.dat", false)]
-        [TestCase("MAPTREEOPENSTATUS.DAT", false)]
-        [TestCase("MapTreeOpenStatus_.dat", false)]
-        [TestCase("MapTreeOpenStatus.dat.bak", false)]
-        [TestCase("./MapTreeOpenStatus.dat", false)]
-        [TestCase(@".\Data\MapTreeOpenStatus.dat", false)]
-        [TestCase(@"c:\MyProject\Data\MapTreeOpenStatus.dat", false)]
-        [TestCase(@"c:\MyProject\Data\MapTreeOpenStatus.data", false)]
-        public static void ConstructorTest(string path, bool isError)
+        [TestCase("MapTreeOpenStatus.dat")]
+        [TestCase("./MapTreeOpenStatus_.dat")]
+        [TestCase(@".\Data\MapTreeOpenStatus.dat")]
+        [TestCase(@"c:\MyProject\Data\MapTreeOpenStatus.dat")]
+        public static void ConstructorTest_Success(string value)
         {
-            MapTreeOpenStatusDataFilePath instance = null;
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new MapTreeOpenStatusDataFilePath(value),
+                instanceVerifier: new ValueVerifier<MapTreeOpenStatusDataFilePath>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
+        }
 
-            var errorOccured = false;
-            try
-            {
-                instance = new MapTreeOpenStatusDataFilePath(path);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 内容が一致すること
-            Assert.AreEqual((string)instance, path);
+        /// <summary>
+        ///     引数が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NullArgs()
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new MapTreeOpenStatusDataFilePath(null!),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
         }
     }
 }

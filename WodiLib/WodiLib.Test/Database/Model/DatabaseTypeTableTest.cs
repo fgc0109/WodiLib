@@ -201,7 +201,7 @@ namespace WodiLib.Test.Database.Model
         #region FieldDefinitionList
 
         /// <summary>
-        ///     プロパティ FieldDefinitionList の取得・編集に成功すること。
+        ///     プロパティ FieldDefinitionList の取得に成功すること。
         /// </summary>
         [Test]
         public static void FieldDefinitionListGetAndSetTest_Success()
@@ -211,7 +211,7 @@ namespace WodiLib.Test.Database.Model
             propertyTestHelper.PropertyGetSuccess(
                 instance,
                 getter: x => x.FieldDefinitionList,
-                getValueVerifier: ValueVerifier<DatabaseFieldDefinitionList>.IsType(typeof(DatabaseFieldDefinitionList))
+                getValueVerifier: null
             );
         }
 
@@ -500,7 +500,7 @@ namespace WodiLib.Test.Database.Model
                         FieldMemo = $"FieldMemo_{i}",
                         FieldType = DatabaseFieldType.Int,
                         SpecialSettingDefinition =
-                            DatabaseTestData.CreateDatabaseFieldSpecialSettingDefinitionSettingsUnionType1(
+                            DatabaseTestData.CreateDatabaseFieldSpecialSettingDefinitionSettingsType1(
                                 initValue: new DatabaseValueInt(234)
                             ),
                     }

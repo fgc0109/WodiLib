@@ -200,6 +200,8 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
             ModelInformation modelInfo
         )
         {
+            var useConstructorExpansion = modelInfo is { IsExtendClass: false, UseConstructorExpansion: true };
+
             return SourceTextFormatter.Format(
                 __,
                 $"private protected {modelInfo.RestrictedCapacityListInfo.RestrictedCapacityListClassNameWithoutInOutKeyword}({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword} settings, SimpleList<{modelInfo.RowType}> itemsImpl)",
@@ -224,7 +226,25 @@ namespace WodiLib.SourceGenerator.Domain.Collection.Generation.Main.Common
                 $"{__}{__});",
                 $"{__}PropagatePropertyChangeEvent(Table);",
                 $"{__}PropagateCollectionChangeEvent(Table);",
-                $"}}"
+                SourceTextFormatter.If(
+                    useConstructorExpansion,
+                    new SourceFormatTarget[]
+                    {
+                        $"{__}DoConstructorExpansion(settings);",
+                    }
+                ),
+                $"}}",
+                SourceTextFormatter.If(
+                    useConstructorExpansion,
+                    new SourceFormatTarget[]
+                    {
+                        $"/// <summary>",
+                        $"///     コンストラクタの最後で呼び出す処理",
+                        $"/// </summary>",
+                        $"/// <param name=\"settings\">設定DTO</param>",
+                        $"protected virtual partial void DoConstructorExpansion({modelInfo.SettingsInterfaceInfo.SettingsInterfaceNameWithoutIOKeyword} settings);",
+                    }
+                )
             );
         }
 

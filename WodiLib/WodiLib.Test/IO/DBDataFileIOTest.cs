@@ -1,22 +1,19 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Database;
 using WodiLib.IO;
+using WodiLib.Test.IO.TestData.Database;
 using WodiLib.Test.Tools;
 
 namespace WodiLib.Test.IO
 {
     [TestFixture]
-    public class DBDataFileIOTest
+    public class DBDataFileIOTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
         [OneTimeSetUp]
@@ -26,49 +23,53 @@ namespace WodiLib.Test.IO
             DBDataFileTestItemGenerator.OutputFile();
         }
 
-        // ################################################################################
-        //    Resourceファイルの内容をDBDataインスタンスに変換してバイナリ変換した後
-        //    別ファイルとして書き出すテスト
-        // ################################################################################
-
-        [TestCase("┣ 主人公行動AI_データ_003to018_.dbdata", "Output┣ 主人公行動AI_データ_003to018_.dbdata")]
-        [TestCase("状態設定_データ_000to023_戦闘不能.dbdata", "Output状態設定_データ_000to023_戦闘不能.dbdata")]
-        public static void DBDataIOTest(string inputFileName, string outputFileName)
+        private static readonly object[][] DBDataIOTestCaseSource =
         {
-            var reader =
-                new DBDataFileReader(
-                    $@"{DBDataFileTestItemGenerator.TestWorkRootDir}\{inputFileName}");
-            var isSuccessRead = false;
-            DBData data = null;
-            try
+            // [inputFilePath, outputFilePath]
+            new object[]
             {
-                data = reader.ReadAsync().GetAwaiter().GetResult();
-                isSuccessRead = true;
-            }
-            catch (Exception ex)
+                new DBDataFilePath($@"{IoTestDataConstants.TestWorkRootDir}\┣ 主人公行動AI_データ_003to018_.dbdata"),
+                new DBDataFilePath($@"{IoTestDataConstants.TestWorkRootDir}\Output┣ 主人公行動AI_データ_003to018_.dbdata"),
+            },
+            new object[]
             {
-                logger.Exception(ex);
-            }
+                new DBDataFilePath($@"{IoTestDataConstants.TestWorkRootDir}\状態設定_データ_000to023_戦闘不能.dbdata"),
+                new DBDataFilePath($@"{IoTestDataConstants.TestWorkRootDir}\Output状態設定_データ_000to023_戦闘不能.dbdata"),
+            },
+        };
 
-            Assert.IsTrue(isSuccessRead);
+        /// <summary>
+        ///     読み取りと書き出しが正常に終了すること。
+        /// </summary>
+        [TestCaseSource(nameof(DBDataIOTestCaseSource))]
+        public static void DBDataIOTest(DBDataFilePath inputFilePath, DBDataFilePath outputFilePath)
+        {
+            // ----------------------------------------
+            // 読み取りテスト
 
-            var writer = new DBDataFileWriter(
-                $@"{DBDataFileTestItemGenerator.TestWorkRootDir}\{outputFileName}");
-            var isSuccessWrite = false;
-            try
-            {
-                writer.WriteAsync(data).GetAwaiter().GetResult();
-                isSuccessWrite = true;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-            }
+            var reader = new DBDataFileReader(inputFilePath);
 
-            Assert.IsTrue(isSuccessWrite);
+            DBData data = null!;
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: reader,
+                execFunc: target => target.ReadAsync().GetAwaiter().GetResult(),
+                resultValueVerifier: new ValueVerifier<DBData>(result => { data = result; })
+            );
+
+            // ----------------------------------------
+            // 書き込みテスト
+
+            var writer = new DBDataFileWriter(outputFilePath);
+            pureActionTestHelper.PureActionSuccess(
+                instance: writer,
+                execAction: target => target.WriteAsync(data).GetAwaiter().GetResult()
+            );
+
+            // ----------------------------------------
 
             Console.WriteLine(
-                $@"Written FilePath : {DBDataFileTestItemGenerator.TestWorkRootDir}\{outputFileName}");
+                $@"Written FilePath : {outputFilePath}"
+            );
         }
 
         [OneTimeTearDown]

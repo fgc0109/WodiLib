@@ -39,13 +39,41 @@
         </Compile>
         <Compile Remove="Generated\**\*.cs"/>
         <Compile Remove="Common\**"/>
-        <Compile Remove="Database\**"/>
         <Compile Remove="Event\**"/>
-        <Compile Remove="IO\**"/>
         <Compile Remove="Map\**"/>
         <Compile Remove="Project\**"/>
         <Compile Remove="Ini\**"/>
-        <Compile Remove="Cmn\**"/>
+        <Compile Remove="IO\TestData\Common\**"/>
+        <Compile Remove="IO\TestData\CommonEventDat\**"/>
+        <Compile Remove="IO\TestData\Ini\**"/>
+        <Compile Remove="IO\TestData\Mps\**"/>
+        <Compile Remove="IO\CommonEventDataFileIOTest.cs"/>
+        <Compile Remove="IO\CommonEventDataFileReaderTest.cs"/>
+        <Compile Remove="IO\CommonEventDataFileWriterTest.cs"/>
+        <Compile Remove="IO\CommonFileIOTest.cs"/>
+        <Compile Remove="IO\CommonFileReaderTest.cs"/>
+        <Compile Remove="IO\CommonFileWriterTest.cs"/>
+        <Compile Remove="IO\EditorIniFileIOTest.cs"/>
+        <Compile Remove="IO\EditorIniFileReaderTest.cs"/>
+        <Compile Remove="IO\EditorIniFileWriterTest.cs"/>
+        <Compile Remove="IO\GameIniFileIOTest.cs"/>
+        <Compile Remove="IO\GameIniFileReaderTest.cs"/>
+        <Compile Remove="IO\GameIniFileWriterTest.cs"/>
+        <Compile Remove="IO\MapFileIOTest.cs"/>
+        <Compile Remove="IO\MapFileReaderTest.cs"/>
+        <Compile Remove="IO\MapFileWriterTest.cs"/>
+        <Compile Remove="IO\MapTreeDataFileIOTest.cs"/>
+        <Compile Remove="IO\MapTreeDataFileReaderTest.cs"/>
+        <Compile Remove="IO\MapTreeDataFileWriterTest.cs"/>
+        <Compile Remove="IO\MapTreeOpenStatusDataFileIOTest.cs"/>
+        <Compile Remove="IO\MapTreeOpenStatusDataFileReaderTest.cs"/>
+        <Compile Remove="IO\MapTreeOpenStatusDataFileWriterTest.cs"/>
+        <Compile Remove="IO\TileSetDataFileIOTest.cs"/>
+        <Compile Remove="IO\TileSetDataFileReaderTest.cs"/>
+        <Compile Remove="IO\TileSetDataFileWriterTest.cs"/>
+        <Compile Remove="IO\TileSetFileIOTest.cs"/>
+        <Compile Remove="IO\TileSetFileReaderTest.cs"/>
+        <Compile Remove="IO\TileSetFileWriterTest.cs"/>
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Update="TestResources.resx">
@@ -53,13 +81,14 @@
             <LastGenOutput>TestResources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
         <EmbeddedResource Remove="Common\**"/>
-        <EmbeddedResource Remove="Database\**"/>
         <EmbeddedResource Remove="Event\**"/>
-        <EmbeddedResource Remove="IO\**"/>
         <EmbeddedResource Remove="Map\**"/>
         <EmbeddedResource Remove="Project\**"/>
         <EmbeddedResource Remove="Ini\**"/>
-        <EmbeddedResource Remove="Cmn\**"/>
+        <EmbeddedResource Remove="IO\TestData\Common\**"/>
+        <EmbeddedResource Remove="IO\TestData\CommonEventDat\**"/>
+        <EmbeddedResource Remove="IO\TestData\Ini\**"/>
+        <EmbeddedResource Remove="IO\TestData\Mps\**"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -84,12 +113,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="Database\**"/>
-        <None Remove="Cmn\**"/>
         <None Remove="Common\**"/>
         <None Remove="Event\**"/>
         <None Remove="Ini\**"/>
-        <None Remove="IO\**"/>
+        <None Remove="IO\TestData\Common\**"/>
+        <None Remove="IO\TestData\CommonEventDat\**"/>
+        <None Remove="IO\TestData\Ini\**"/>
+        <None Remove="IO\TestData\Mps\**"/>
         <None Remove="Map\**"/>
         <None Remove="Project\**"/>
     </ItemGroup>

@@ -13,24 +13,38 @@ using WodiLib.Sys;
 namespace WodiLib.IO
 {
     /// <summary>
-    /// ファイル読み込み状態クラス
+    ///     ファイル読み込み状態クラス
     /// </summary>
     internal class FileReadStatus
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        // TODO: ファイル全体をメモリに読み込んでいるが、Streamで扱うようにする
+
+        #region Properties
+
+        #region public
+
+        public int Offset { get; private set; }
+
+        #endregion
+
+        #region private
+
         private byte[] DataBuffer { get; }
 
         private int BufferLength { get; }
 
-        public int Offset { get; private set; }
+        #endregion
+
+        #endregion
 
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Constructor
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+        #region Constructors
+
+        #region Required
+
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
         /// <param name="filePath">読み込みmpsファイルフルパス</param>
         /// <exception cref="FileNotFoundException">ファイルが存在しない場合</exception>
@@ -38,28 +52,35 @@ namespace WodiLib.IO
         public FileReadStatus(string filePath)
         {
             if (!File.Exists(filePath))
-                throw new FileNotFoundException($"指定されたファイルが見つかりませんでした。 file: {filePath}");
+            {
+                throw new FileNotFoundException("指定されたファイルが見つかりませんでした。", filePath);
+            }
 
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 var bufLength = stream.Length;
                 if (bufLength > int.MaxValue)
                     throw new InvalidOperationException(
-                        "ファイルサイズが大きすぎるため、扱うことができません。");
-                BufferLength = (int) stream.Length;
+                        "ファイルサイズが大きすぎるため、扱うことができません。"
+                    );
+                BufferLength = (int)stream.Length;
                 DataBuffer = new byte[BufferLength];
-                stream.Read(DataBuffer, 0, BufferLength);
+                _ = stream.Read(DataBuffer, 0, BufferLength);
             }
 
             Offset = 0;
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Method
+        #endregion
+
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
+        #region Methods
+
         /// <summary>
-        /// 現在のオフセットから、1バイトのデータを取得する。
+        ///     現在のオフセットから、1バイトのデータを取得する。
         /// </summary>
         /// <returns>バイトデータ</returns>
         public byte ReadByte()
@@ -68,7 +89,7 @@ namespace WodiLib.IO
         }
 
         /// <summary>
-        /// 現在のオフセットを起点に、Int値を取得する。
+        ///     現在のオフセットを起点に、Int値を取得する。
         /// </summary>
         /// <returns>Int値</returns>
         public int ReadInt()
@@ -77,7 +98,7 @@ namespace WodiLib.IO
         }
 
         /// <summary>
-        /// 現在のオフセットを起点に、文字列を取得する。
+        ///     現在のオフセットを起点に、文字列を取得する。
         /// </summary>
         /// <returns>文字列</returns>
         public WoditorString ReadString()
@@ -86,7 +107,7 @@ namespace WodiLib.IO
         }
 
         /// <summary>
-        /// オフセットに加算する。
+        ///     オフセットに加算する。
         /// </summary>
         /// <param name="i">加算値</param>
         /// <exception cref="ArgumentException">オフセットがバッファサイズを超える場合</exception>
@@ -94,24 +115,26 @@ namespace WodiLib.IO
         {
             if (Offset + i > BufferLength)
                 throw new ArgumentException(
-                    "オフセットがバッファサイズを超えるため、オフセットを増やせません。");
+                    "オフセットがバッファサイズを超えるため、オフセットを増やせません。"
+                );
             Offset += i;
         }
 
         /// <summary>
-        /// オフセットを1バイト分インクリーズする。
+        ///     オフセットを1バイト分インクリーズする。
         /// </summary>
         /// <exception cref="ArgumentException">オフセットがバッファサイズを超える場合</exception>
         public void IncreaseByteOffset()
         {
             if (Offset + 1 > BufferLength)
                 throw new ArgumentException(
-                    "オフセットがバッファサイズを超えるため、オフセットを増やせません。");
+                    "オフセットがバッファサイズを超えるため、オフセットを増やせません。"
+                );
             AddOffset(1);
         }
 
         /// <summary>
-        /// オフセットを1Int分インクリーズする。
+        ///     オフセットを1Int分インクリーズする。
         /// </summary>
         /// <exception cref="ArgumentException">オフセットがバッファサイズを超える場合</exception>
         public void IncreaseIntOffset()
@@ -119,8 +142,11 @@ namespace WodiLib.IO
             const int intSize = 4;
             if (Offset + intSize > BufferLength)
                 throw new ArgumentException(
-                    "オフセットがバッファサイズを超えるため、オフセットを増やせません。");
+                    "オフセットがバッファサイズを超えるため、オフセットを増やせません。"
+                );
             AddOffset(intSize);
         }
+
+        #endregion
     }
 }

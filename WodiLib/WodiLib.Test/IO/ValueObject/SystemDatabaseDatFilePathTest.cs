@@ -1,5 +1,4 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.IO;
 using WodiLib.Test.Tools;
@@ -7,50 +6,42 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.IO.ValueObject
 {
     [TestFixture]
-    public class SystemDatabaseDatFilePathTest
+    public class SystemDatabaseDatFilePathTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-
-        [TestCase(null, true)]
-        [TestCase("", true)]
-        [TestCase("SysDataBase.dat", false)]
-        [TestCase("SYSDATABASE.DAT", false)]
-        [TestCase("CDatabase.dat", false)]
-        [TestCase("SysDatabase.dat.bak", false)]
-        [TestCase("./SysDataBase.dat", false)]
-        [TestCase(@".\Data\SysDataBase.dat", false)]
-        [TestCase(@"c:\MyProject\Data\SysDataBase.dat", false)]
-        [TestCase(@"c:\MyProject\Data\SysDataBase.data", false)]
-        public static void ConstructorTest(string path, bool isError)
+        [TestCase("SysDataBase.dat")]
+        [TestCase("./SysDatabase.dat.bak")]
+        [TestCase(@".\Data\SysDataBase.dat")]
+        [TestCase(@"c:\MyProject\Data\SysDataBase.dat")]
+        public static void ConstructorTest_Success(string value)
         {
-            SystemDatabaseDatFilePath instance = null;
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new SystemDatabaseDatFilePath(value),
+                instanceVerifier: new ValueVerifier<SystemDatabaseDatFilePath>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
+        }
 
-            var errorOccured = false;
-            try
-            {
-                instance = new SystemDatabaseDatFilePath(path);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 内容が一致すること
-            Assert.AreEqual((string)instance, path);
+        /// <summary>
+        ///     引数が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NullArgs()
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new SystemDatabaseDatFilePath(null!),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
         }
     }
 }

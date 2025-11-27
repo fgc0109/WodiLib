@@ -14,14 +14,8 @@ namespace WodiLib.IO
     /// <summary>
     ///     Editor.ini ファイルパス
     /// </summary>
-    [FilePathStringObjectValue(SafetyPattern = @"^Editor\.ini$")]
-    public partial class EditorIniFilePath : FilePath
+    [FilePathStringObjectValue(SafetyPattern = @"^(.+\\)?Editor\.ini$")]
+    public partial record EditorIniFilePath : FilePath
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Override Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>空文字許可フラグ</summary>
-        protected override bool IsAllowEmptyString => false;
     }
 }

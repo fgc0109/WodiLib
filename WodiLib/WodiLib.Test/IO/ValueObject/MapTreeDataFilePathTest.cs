@@ -1,5 +1,4 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.IO;
 using WodiLib.Test.Tools;
@@ -7,50 +6,42 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.IO.ValueObject
 {
     [TestFixture]
-    public class MapTreeDataFilePathTest
+    public class MapTreeDataFilePathTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-
-        [TestCase(null, true)]
-        [TestCase("", true)]
-        [TestCase("MapTree.dat", false)]
-        [TestCase("MAPTREE.DAT", false)]
-        [TestCase("Map_Tree.dat", false)]
-        [TestCase("MapTree.dat.bak", false)]
-        [TestCase("./MapTree.dat", false)]
-        [TestCase(@".\Data\MapTree.dat", false)]
-        [TestCase(@"c:\MyProject\Data\MapTree.dat", false)]
-        [TestCase(@"c:\MyProject\Data\MapTree.data", false)]
-        public static void ConstructorTest(string path, bool isError)
+        [TestCase("MapTree.dat")]
+        [TestCase("./Map_Tree.dat")]
+        [TestCase(@".\Data\MapTree.dat")]
+        [TestCase(@"c:\MyProject\Data\MapTree.dat")]
+        public static void ConstructorTest_Success(string value)
         {
-            MapTreeDataFilePath instance = null;
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new ChangeableDatabaseDatFilePath(value),
+                instanceVerifier: new ValueVerifier<ChangeableDatabaseDatFilePath>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
+        }
 
-            var errorOccured = false;
-            try
-            {
-                instance = new MapTreeDataFilePath(path);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 内容が一致すること
-            Assert.AreEqual((string)instance, path);
+        /// <summary>
+        ///     引数が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NullArgs()
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new ChangeableDatabaseDatFilePath(null!),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
         }
     }
 }

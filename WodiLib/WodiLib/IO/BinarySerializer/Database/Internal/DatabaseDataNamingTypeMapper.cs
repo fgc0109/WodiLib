@@ -39,8 +39,14 @@ namespace WodiLib.IO
                 catch
                 {
                     // DB種別が取得できない場合は適切な値ではない
-                    throw new ArgumentException($"{nameof(DatabaseDataNamingType)}の取得に失敗しました。条件値：{value}");
+                    throw CreateArgumentExceptionBecauseSettingsValueNotFound(value);
                 }
+
+            if (value == -1)
+            {
+                // 便宜上 "-1" を定義しているが、設定値 = -1 は取得させない
+                throw CreateArgumentExceptionBecauseSettingsValueNotFound(value);
+            }
 
             try
             {
@@ -48,8 +54,13 @@ namespace WodiLib.IO
             }
             catch
             {
-                throw new ArgumentException($"{nameof(DatabaseDataNamingType)}の取得に失敗しました。条件値：{value}");
+                throw CreateArgumentExceptionBecauseSettingsValueNotFound(value);
             }
+        }
+
+        private static ArgumentException CreateArgumentExceptionBecauseSettingsValueNotFound(int value)
+        {
+            return new ArgumentException($"{nameof(DatabaseDataNamingType)}の取得に失敗しました。条件値：{value}");
         }
     }
 }

@@ -1,98 +1,90 @@
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using WodiLib.Database;
 using WodiLib.Test.Tools;
 
-namespace WodiLib.Test.IO
+namespace WodiLib.Test.IO.TestData.Database
 {
     public static class DBDataFileTestItemGenerator
     {
         public static DBData GenerateUDB0DBData()
         {
-            var result = new DBData();
-            result.DataDescList.Overwrite(0, new List<DatabaseDataDesc>
-            {
-                // データ1
-                new()
+            return new DBData(
+                new DBDataSettings
                 {
-                    DataName = "7",
-                    ItemValueList =
-                    {
-                        (DBValueInt)6,
-                        (DBValueString)"7",
-                        (DBValueString)"MapData/Map002.mps",
-                        (DBValueString)"",
-                        (DBValueInt)0,
-                        (DBValueInt)(-3),
-                        (DBValueInt)9
-                    }
-                },
-                // データ2
-                new()
-                {
-                    DataName = "うでぃた",
-                    ItemValueList =
-                    {
-                        (DBValueInt)0,
-                        (DBValueString)"うでぃた",
-                        (DBValueString)"",
-                        (DBValueString)"",
-                        (DBValueInt)0,
-                        (DBValueInt)0,
-                        (DBValueInt)9
-                    }
-                },
-                // データ3
-                new()
-                {
-                    DataName = "",
-                    ItemValueList =
-                    {
-                        (DBValueInt)0,
-                        (DBValueString)"",
-                        (DBValueString)"まっぷでーた",
-                        (DBValueString)"Map007.mps",
-                        (DBValueInt)0,
-                        (DBValueInt)(-1),
-                        (DBValueInt)3
-                    }
+                    DataTable = new DatabaseNamedDataTableSettings(
+                        new List<IDatabaseNamedDataRowSettings>
+                        {
+                            new DatabaseNamedDataRowSettings(
+                                GetSortedValueList(TestItems.DatabaseFieldValueList.Udb_Type0_Data1)
+                            )
+                            {
+                                DataName = TestItems.DatabaseDataName.Udb_Type0_Data1,
+                            },
+                            new DatabaseNamedDataRowSettings(
+                                GetSortedValueList(TestItems.DatabaseFieldValueList.Udb_Type0_Data2)
+                            )
+                            {
+                                DataName = TestItems.DatabaseDataName.Udb_Type0_Data2,
+                            },
+                            new DatabaseNamedDataRowSettings(
+                                GetSortedValueList(TestItems.DatabaseFieldValueList.Udb_Type0_Data3)
+                            )
+                            {
+                                DataName = TestItems.DatabaseDataName.Udb_Type0_Data3,
+                            },
+                        }
+                    ),
                 }
-            });
-            return result;
+            );
         }
 
         public static DBData GenerateCDB0DBData()
         {
-            var result = new DBData();
-            result.DataDescList.Overwrite(0, new List<DatabaseDataDesc>
-            {
-                // データ0
-                new()
+            return new DBData(
+                new DBDataSettings
                 {
-                    DataName = "a",
-                    ItemValueList =
-                    {
-                        (DBValueString)"",
-                        (DBValueInt)255,
-                        (DBValueString)"",
-                        (DBValueString)"CharaChip/[Animal]ChickenTX.png",
-                        (DBValueInt)122,
-                        (DBValueInt)8,
-                        (DBValueInt)6,
-                        (DBValueInt)1,
-                        (DBValueString)"234"
-                    }
+                    DataTable = new DatabaseNamedDataTableSettings(
+                        new List<IDatabaseNamedDataRowSettings>
+                        {
+                            new DatabaseNamedDataRowSettings(
+                                GetSortedValueList(TestItems.DatabaseFieldValueList.Cdb_Type0_Data0)
+                            )
+                            {
+                                DataName = TestItems.DatabaseDataName.Cdb_Type0_Data0,
+                            },
+                        }
+                    ),
                 }
-            });
-            return result;
+            );
         }
 
+        /// <summary>
+        ///     Int値 -> String値 の順に並べ替えたリストに変換する。
+        /// </summary>
+        /// <param name="original">変換元</param>
+        /// <returns>ソートした結果（<paramref name="original"/> とは別インスタンス）</returns>
+        private static List<DatabaseFieldValue> GetSortedValueList(List<DatabaseFieldValue> original)
+        {
+            var intList = new List<DatabaseFieldValue>();
+            var stringList = new List<DatabaseFieldValue>();
 
-        /// ========================================
-        /// テスト用ファイル出力
-        /// ========================================
-        /// <summary>テストディレクトリルート</summary>
-        public static string TestWorkRootDir => MapFileTestItemGenerator.TestWorkRootDir;
+            foreach (var value in original)
+            {
+                if (value.Type == DatabaseFieldType.Int)
+                {
+                    intList.Add(value);
+                }
+                else
+                {
+                    stringList.Add(value);
+                }
+            }
+
+            return intList.Added(stringList).ToList();
+        }
+
+        #region テスト用ファイル出力処理
 
         /// <summary>テストファイルデータ</summary>
         public static readonly IEnumerable<(string, byte[])> TestFiles = new List<(string, byte[])>
@@ -100,7 +92,7 @@ namespace WodiLib.Test.IO
             ("UDB0_データ_001to003_7.dbdata", TestResources.UDB0_1to3DBData),
             ("あいうえお_データ_000to000_a.dbdata", TestResources.CDB0_0to0DBData),
             ("┣ 主人公行動AI_データ_003to018_.dbdata", TestResources.CDB2_3to18DBData),
-            ("状態設定_データ_000to023_戦闘不能.dbdata", TestResources.UDB8_0to23DBData)
+            ("状態設定_データ_000to023_戦闘不能.dbdata", TestResources.UDB8_0to23DBData),
         };
 
         /// <summary>
@@ -108,15 +100,7 @@ namespace WodiLib.Test.IO
         /// </summary>
         public static void OutputFile()
         {
-            TestWorkRootDir.CreateDirectoryIfNeed();
-
-            foreach (var (fileName, bytes) in TestFiles)
-            {
-                using (var fs = new FileStream(MakeFileFullPath(fileName), FileMode.Create))
-                {
-                    fs.Write(bytes, 0, bytes.Length);
-                }
-            }
+            TestDirHelper.OutputFiles(TestFiles);
         }
 
         /// <summary>
@@ -124,24 +108,9 @@ namespace WodiLib.Test.IO
         /// </summary>
         public static void DeleteFile()
         {
-            foreach (var (fileName, _) in TestFiles)
-            {
-                var fileFullPath = MakeFileFullPath(fileName);
-                if (!File.Exists(fileFullPath)) continue;
-                try
-                {
-                    File.Delete(fileFullPath);
-                }
-                catch
-                {
-                    // 削除に失敗しても何もしない
-                }
-            }
+            TestDirHelper.DeleteFiles(TestFiles);
         }
 
-        private static string MakeFileFullPath(string fileName)
-        {
-            return $@"{TestWorkRootDir}\{fileName}";
-        }
+        #endregion
     }
 }

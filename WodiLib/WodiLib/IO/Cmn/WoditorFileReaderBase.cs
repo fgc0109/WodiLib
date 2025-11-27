@@ -8,15 +8,16 @@
 
 using System;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using WodiLib.Cmn;
 using WodiLib.Sys;
 
 namespace WodiLib.IO
 {
+    // TODO: ファイル全体をメモリに読み込んでいるが、Streamで扱うようにする
+
     /// <summary>
-    /// ウディタ関連ファイル読み込み基底クラス
+    ///     ウディタ関連ファイル読み込み基底クラス
     /// </summary>
     /// <typeparam name="TFilePath">ファイルパス</typeparam>
     /// <typeparam name="TFileData">読み込み結果クラス</typeparam>
@@ -25,38 +26,37 @@ namespace WodiLib.IO
         where TFilePath : FilePath
     {
         /// <summary>読み込みファイルパス</summary>
-        [NotNull]
         public TFilePath FilePath { get; }
 
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
         /// <param name="filePath">読み込みファイルパス</param>
-        /// <exception cref="ArgumentNullException">filePathがnullの場合</exception>
-        public WoditorFileReaderBase([NotNull] TFilePath filePath)
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="filePath"/> が <see langword="null"/> の場合。
+        /// </exception>
+        protected WoditorFileReaderBase(TFilePath filePath)
         {
-            if (filePath is null)
-                throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(filePath)));
+            ThrowHelper.ValidateArgumentNotNull(filePath is null, nameof(filePath));
 
             FilePath = filePath;
         }
 
         /// <summary>
-        /// ファイルを同期的に読み込む。
+        ///     ファイルを同期的に読み込む。
         /// </summary>
         /// <returns>読み込んだデータ</returns>
-        /// <exception cref="InvalidOperationException">
-        ///     ファイルが正しく読み込めなかった場合
+        /// <exception cref="BinaryFormatterException">
+        ///     ファイルが正しく読み込めなかった場合。
         /// </exception>
         public abstract TFileData ReadSync();
 
         /// <summary>
-        /// ファイルを非同期的に読み込む。
+        ///     ファイルを非同期的に読み込む。
         /// </summary>
         /// <returns>読み込み成否</returns>
-        /// <exception cref="InvalidOperationException">
-        ///     ファイルが正しく読み込めなかった場合
+        /// <exception cref="BinaryFormatterException">
+        ///     ファイルが正しく読み込めなかった場合。
         /// </exception>
         public async Task<TFileData> ReadAsync()
         {

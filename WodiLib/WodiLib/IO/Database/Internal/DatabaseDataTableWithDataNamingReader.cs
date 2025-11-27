@@ -131,7 +131,7 @@ namespace WodiLib.IO
                 status.IncreaseByteOffset();
             }
 
-            WodiLibLogger.Debug($"{nameof(DatabaseDatFileReader)} ヘッダチェックOK");
+            WodiLibLogger.Debug($"{nameof(DBDatFileReader)} ヘッダチェックOK");
         }
 
         /// <summary>
@@ -158,7 +158,7 @@ namespace WodiLib.IO
             );
 
             var definition = BuildDataNameSpecificationDefinitionIfDataNamingTypeIsDesignated(
-                DatabaseDataNamingType.DesignatedType,
+                dataNamingType,
                 typeCode
             );
             var namingDefinition = new DatabaseDataNamingDefinition(dataNamingType, definition);

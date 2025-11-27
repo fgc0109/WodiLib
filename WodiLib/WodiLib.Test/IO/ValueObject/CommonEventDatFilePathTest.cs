@@ -1,5 +1,4 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.IO;
 using WodiLib.Test.Tools;
@@ -7,49 +6,42 @@ using WodiLib.Test.Tools;
 namespace WodiLib.Test.IO.ValueObject
 {
     [TestFixture]
-    public class CommonEventDatFilePathTest
+    public class CommonEventDatFilePathTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-        [TestCase(null, true)]
-        [TestCase("", true)]
-        [TestCase("CommonEvent.dat", false)]
-        [TestCase("commonevent.dat", false)]
-        [TestCase("CommonEven.dat", false)]
-        [TestCase("CommonEven.dat.bak", false)]
-        [TestCase("./CommonEvent.dat", false)]
-        [TestCase(@".\Data\CommonEvent.dat", false)]
-        [TestCase(@"c:\MyProject\Data\CommonEvent.dat", false)]
-        [TestCase(@"c:\MyProject\Data\Common_Event.dat", false)]
-        public static void ConstructorTest(string path, bool isError)
+        [TestCase("CommonEvent.dat")]
+        [TestCase("./commonevent.dat")]
+        [TestCase(@".\Data\CommonEvent.dat")]
+        [TestCase(@"c:\MyProject\Data\CommonEvent.dat")]
+        public static void ConstructorTest_Success(string value)
         {
-            CommonEventDatFilePath instance = null;
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new CommonEventDatFilePath(value),
+                instanceVerifier: new ValueVerifier<CommonEventDatFilePath>(instance =>
+                    {
+                        // インスタンスが意図したとおり作成されること
+                        Assert.AreEqual(instance.RawValue, value);
+                    }
+                )
+            );
+        }
 
-            var errorOccured = false;
-            try
-            {
-                instance = new CommonEventDatFilePath(path);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 内容が一致すること
-            Assert.AreEqual((string)instance, path);
+        /// <summary>
+        ///     引数が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorStringTest_Failure_NullArgs()
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new CommonEventDatFilePath(null!),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
         }
     }
 }

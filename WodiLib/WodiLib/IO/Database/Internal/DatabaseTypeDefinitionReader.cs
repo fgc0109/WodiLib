@@ -95,7 +95,7 @@ namespace WodiLib.IO
             if (isReadDataNameList)
             {
                 // データ名
-                ReadDataName(status, dataNameListSettings);
+                ReadDataName(status, out dataNameListSettings);
             }
 
             // メモ
@@ -198,7 +198,7 @@ namespace WodiLib.IO
         /// </summary>
         /// <param name="status">読み込み経過状態</param>
         /// <param name="settings">結果格納インスタンス</param>
-        private static void ReadDataName(FileReadStatus status, DatabaseDataNameListSettings settings)
+        private static void ReadDataName(FileReadStatus status, out DatabaseDataNameListSettings settings)
         {
             var length = status.ReadInt();
             status.IncreaseIntOffset();
@@ -210,6 +210,8 @@ namespace WodiLib.IO
                     length
                 )
             );
+
+            var dataNameList = new List<DataName>();
 
             for (var i = 0; i < length; i++)
             {
@@ -224,8 +226,10 @@ namespace WodiLib.IO
                     )
                 );
 
-                settings.Settings.Add(name.ToString());
+                dataNameList.Add(name.ToString());
             }
+
+            settings = new DatabaseDataNameListSettings(dataNameList);
         }
 
         /// <summary>
@@ -537,16 +541,18 @@ namespace WodiLib.IO
             {
                 var thisDescriptions = descriptionLists[i];
                 var thisCaseNumbers = caseNumberLists[i];
+                var initValue = initValues[i];
 
                 var thisItemSettingType = specialSettingTypes[i];
 
-                DatabaseFieldSpecialSettingDefinitionSettingsUnion specialSettingDefinitionSettings;
+                DatabaseFieldSpecialSettingDefinitionSettings specialSettingDefinitionSettings;
                 try
                 {
                     specialSettingDefinitionSettings = MakeSpecialSettingDefinitionSettings(
                         thisItemSettingType,
                         thisCaseNumbers,
-                        thisDescriptions
+                        thisDescriptions,
+                        initValue
                     );
                 }
                 catch (Exception ex)
@@ -578,34 +584,36 @@ namespace WodiLib.IO
         /// <param name="type">特殊指定タイプ</param>
         /// <param name="numbers">選択肢番号リスト</param>
         /// <param name="descriptions">選択肢文字列リスト</param>
+        /// <param name="initValue">初期値</param>
         /// <returns>選択肢リスト</returns>
         /// <exception cref="BinaryFormatterException">
         ///     選択肢番号リストまたは文字列リストが不正の場合。
         /// </exception>
-        private static DatabaseFieldSpecialSettingDefinitionSettingsUnion MakeSpecialSettingDefinitionSettings(
+        private static DatabaseFieldSpecialSettingDefinitionSettings MakeSpecialSettingDefinitionSettings(
             DatabaseFieldSpecialSettingType type,
             IReadOnlyList<DatabaseValueCaseNumber> numbers,
-            IReadOnlyList<DatabaseValueCaseDescription> descriptions
+            IReadOnlyList<DatabaseValueCaseDescription> descriptions,
+            DatabaseFieldValue initValue
         )
         {
             if (type == DatabaseFieldSpecialSettingType.Normal)
             {
-                return MakeSpecialSettingDefinitionSettingsNormal(numbers, descriptions);
+                return MakeSpecialSettingDefinitionSettingsNormal(numbers, descriptions, initValue);
             }
 
             if (type == DatabaseFieldSpecialSettingType.LoadFile)
             {
-                return MakeSpecialSettingDefinitionSettingsLoadFile(numbers, descriptions);
+                return MakeSpecialSettingDefinitionSettingsLoadFile(numbers, descriptions, initValue);
             }
 
             if (type == DatabaseFieldSpecialSettingType.ReferDatabase)
             {
-                return MakeSpecialSettingDefinitionSettingsReferDatabase(numbers, descriptions);
+                return MakeSpecialSettingDefinitionSettingsReferDatabase(numbers, descriptions, initValue);
             }
 
             if (type == DatabaseFieldSpecialSettingType.Manual)
             {
-                return MakeSpecialSettingDefinitionSettingsManual(numbers, descriptions);
+                return MakeSpecialSettingDefinitionSettingsManual(numbers, descriptions, initValue);
             }
 
             // 通常ここには来ない
@@ -614,9 +622,10 @@ namespace WodiLib.IO
             );
         }
 
-        private static DatabaseFieldSpecialSettingDefinitionSettingsUnion MakeSpecialSettingDefinitionSettingsNormal(
+        private static DatabaseFieldSpecialSettingDefinitionSettings MakeSpecialSettingDefinitionSettingsNormal(
             IReadOnlyList<DatabaseValueCaseNumber> numbers,
-            IReadOnlyList<DatabaseValueCaseDescription> descriptions
+            IReadOnlyList<DatabaseValueCaseDescription> descriptions,
+            DatabaseFieldValue initValue
         )
         {
             var type = DatabaseFieldSpecialSettingType.Normal;
@@ -639,13 +648,17 @@ namespace WodiLib.IO
                 }
             }
 
-            var settings = new DatabaseFieldSpecialSettingDefinitionNormalSettings();
-            return new DatabaseFieldSpecialSettingDefinitionSettingsUnion(settings);
+            var settings = new DatabaseFieldSpecialSettingDefinitionNormalSettings
+            {
+                InitValue = initValue,
+            };
+            return new DatabaseFieldSpecialSettingDefinitionSettings(settings);
         }
 
-        private static DatabaseFieldSpecialSettingDefinitionSettingsUnion MakeSpecialSettingDefinitionSettingsLoadFile(
+        private static DatabaseFieldSpecialSettingDefinitionSettings MakeSpecialSettingDefinitionSettingsLoadFile(
             IReadOnlyList<DatabaseValueCaseNumber> numbers,
-            IReadOnlyList<DatabaseValueCaseDescription> descriptions
+            IReadOnlyList<DatabaseValueCaseDescription> descriptions,
+            DatabaseFieldValue initValue
         )
         {
             var type = DatabaseFieldSpecialSettingType.LoadFile;
@@ -686,14 +699,16 @@ namespace WodiLib.IO
             {
                 FolderName = descriptions[0].RawValue,
                 IsOmitFolderName = numbers[0] == 1,
+                InitValue = initValue,
             };
-            return new DatabaseFieldSpecialSettingDefinitionSettingsUnion(settings);
+            return new DatabaseFieldSpecialSettingDefinitionSettings(settings);
         }
 
-        private static DatabaseFieldSpecialSettingDefinitionSettingsUnion
+        private static DatabaseFieldSpecialSettingDefinitionSettings
             MakeSpecialSettingDefinitionSettingsReferDatabase(
                 IReadOnlyList<DatabaseValueCaseNumber> numbers,
-                IReadOnlyList<DatabaseValueCaseDescription> descriptions
+                IReadOnlyList<DatabaseValueCaseDescription> descriptions,
+                DatabaseFieldValue initValue
             )
         {
             var type = DatabaseFieldSpecialSettingType.ReferDatabase;
@@ -710,11 +725,12 @@ namespace WodiLib.IO
                 DatabaseReferKind = DatabaseReferType.FromCode(numbers[0]),
                 DatabaseDbTypeId = new TypeId(numbers[1]),
                 IsUseAdditionalItems = numbers[2] == 1,
+                InitValue = initValue,
             };
 
             if (!settings.IsUseAdditionalItems)
             {
-                return new DatabaseFieldSpecialSettingDefinitionSettingsUnion(settings);
+                return new DatabaseFieldSpecialSettingDefinitionSettings(settings);
             }
 
             if (descriptions.Count < 3)
@@ -738,12 +754,13 @@ namespace WodiLib.IO
             settings.AdditionalCase2 = descriptions[1].RawValue;
             settings.AdditionalCase3 = descriptions[2].RawValue;
 
-            return new DatabaseFieldSpecialSettingDefinitionSettingsUnion(settings);
+            return new DatabaseFieldSpecialSettingDefinitionSettings(settings);
         }
 
-        private static DatabaseFieldSpecialSettingDefinitionSettingsUnion MakeSpecialSettingDefinitionSettingsManual(
+        private static DatabaseFieldSpecialSettingDefinitionSettings MakeSpecialSettingDefinitionSettingsManual(
             IReadOnlyList<DatabaseValueCaseNumber> numbers,
-            IReadOnlyList<DatabaseValueCaseDescription> descriptions
+            IReadOnlyList<DatabaseValueCaseDescription> descriptions,
+            DatabaseFieldValue initValue
         )
         {
             var type = DatabaseFieldSpecialSettingType.Manual;
@@ -761,8 +778,9 @@ namespace WodiLib.IO
             var settings = new DatabaseFieldSpecialSettingDefinitionManualSettings
             {
                 SpecialCases = new DatabaseValueCaseListSettings(cases),
+                InitValue = initValue,
             };
-            return new DatabaseFieldSpecialSettingDefinitionSettingsUnion(settings);
+            return new DatabaseFieldSpecialSettingDefinitionSettings(settings);
         }
 
         #endregion

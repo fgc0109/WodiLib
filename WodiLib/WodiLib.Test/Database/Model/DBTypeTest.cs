@@ -1,780 +1,302 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Database;
-using WodiLib.Test.IO;
+using WodiLib.Sys;
 using WodiLib.Test.Tools;
+using WodiLib.Test.Tools.TestData;
 
-namespace WodiLib.Test.Database
+namespace WodiLib.Test.Database.Model
 {
     [TestFixture]
-    public class DBTypeTest
+    public class DBTypeTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
-        [OneTimeSetUp]
-        public static void OneTimeSetUp()
-        {
-            // テスト用ファイル出力
-            DBTypeFileTestItemGenerator.OutputFile();
-        }
+        #region Properties
 
-        private static readonly object[] TypeNameTestCaseSource =
-        {
-            new object[] {(TypeName) "TypeName", false},
-            new object[] {null, true},
-        };
+        #region MutableClass
 
-        [TestCaseSource(nameof(TypeNameTestCaseSource))]
-        public static void TypeNameTest(TypeName typeName, bool isError)
-        {
-            var instance = new DBType();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
+        #region public
 
-            var errorOccured = false;
-            try
-            {
-                instance.TypeName = typeName;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
+        #region TypeMetadataTable
 
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (!errorOccured)
-            {
-                var setValue = instance.TypeName;
-
-                // セットした値と取得した値が一致すること
-                Assert.IsTrue(setValue.Equals(typeName));
-            }
-
-            // 意図したとおりプロパティ変更通知が発火していること
-            if (errorOccured)
-            {
-                Assert.AreEqual(changedPropertyList.Count, 0);
-            }
-            else
-            {
-                Assert.AreEqual(changedPropertyList.Count, 1);
-                Assert.IsTrue(changedPropertyList[0].Equals(nameof(DBType.TypeName)));
-            }
-        }
-
-        private static readonly object[] MemoTestCaseSource =
-        {
-            new object[] {(DatabaseMemo) "Memo", false},
-            new object[] {null, true},
-        };
-
-        [TestCaseSource(nameof(MemoTestCaseSource))]
-        public static void MemoTest(DatabaseMemo memo, bool isError)
-        {
-            var instance = new DBType();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
-
-            var errorOccured = false;
-            try
-            {
-                instance.Memo = memo;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (!errorOccured)
-            {
-                var setValue = instance.Memo;
-
-                // セットした値と取得した値が一致すること
-                Assert.IsTrue(setValue.Equals(memo));
-            }
-
-            // 意図したとおりプロパティ変更通知が発火していること
-            if (errorOccured)
-            {
-                Assert.AreEqual(changedPropertyList.Count, 0);
-            }
-            else
-            {
-                Assert.AreEqual(changedPropertyList.Count, 1);
-                Assert.IsTrue(changedPropertyList[0].Equals(nameof(DBType.Memo)));
-            }
-        }
-
+        /// <summary>
+        ///     プロパティ TypeMetadataTable の取得・編集に成功すること。
+        /// </summary>
         [Test]
-        public static void DataSettingTypeGetterTest()
+        public static void TypeMetadataTableGetAndSetTest_Success()
         {
             var instance = new DBType();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
+            var setItem = DatabaseTestData.CreateDatabaseTypeMetadataTableType2();
 
-            var errorOccured = false;
-            try
-            {
-                var _ = instance.DataSettingType;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // プロパティ変更通知が発火していないこと
-            Assert.AreEqual(changedPropertyList.Count, 0);
+            propertyTestHelper.PropertyGetAndSetSuccess(
+                instance,
+                propertyName: nameof(DBType.TypeMetadataTable),
+                setItem,
+                isValueEqualsBefore: false,
+                setter: (x, v) => x.TypeMetadataTable = v,
+                getter: x => x.TypeMetadataTable,
+                getValueVerifier: ValueVerifier.AreEquals(setItem)
+            );
         }
 
-        private static readonly object[] DBKindGetterTestCaseSource =
-        {
-            new object[] {DBDataSettingType.Manual, true},
-            new object[] {DBDataSettingType.EqualBefore, true},
-            new object[] {DBDataSettingType.DesignatedType, false},
-            new object[] {DBDataSettingType.FirstStringData, true},
-        };
-
-        [TestCaseSource(nameof(DBKindGetterTestCaseSource))]
-        public static void DBKindGetterTest(DBDataSettingType type, bool isError)
-        {
-#pragma warning disable 618 // TODO Ver 2.6 で削除するテスト
-            var instance = new DBType();
-            instance.SetDataSettingType(type, DBKind.User, 10);
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
-
-            var errorOccured = false;
-            try
-            {
-                var _ = instance.DBKind;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            // プロパティ変更通知が発火していないこと
-            Assert.AreEqual(changedPropertyList.Count, 0);
-#pragma warning restore 618
-        }
-
-        private static readonly object[] TypeIdGetterTestCaseSource =
-        {
-            new object[] {DBDataSettingType.Manual, true},
-            new object[] {DBDataSettingType.EqualBefore, true},
-            new object[] {DBDataSettingType.DesignatedType, false},
-            new object[] {DBDataSettingType.FirstStringData, true},
-        };
-
-        [TestCaseSource(nameof(TypeIdGetterTestCaseSource))]
-        public static void TypeIdGetterTest(DBDataSettingType type, bool isError)
-        {
-#pragma warning disable 618 // TODO Ver 2.6 で削除するテスト
-            var instance = new DBType();
-            instance.SetDataSettingType(type, DBKind.User, 10);
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
-
-            var errorOccured = false;
-            try
-            {
-                var _ = instance.TypeId;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            // プロパティ変更通知が発火していないこと
-            Assert.AreEqual(changedPropertyList.Count, 0);
-#pragma warning restore 618
-        }
-
-        private static readonly object[] ReferDatabaseDescGetterTestCaseSource =
-        {
-            new object[] {DBDataSettingType.Manual, true},
-            new object[] {DBDataSettingType.EqualBefore, true},
-            new object[] {DBDataSettingType.DesignatedType, false},
-            new object[] {DBDataSettingType.FirstStringData, true},
-        };
-
-        [TestCaseSource(nameof(ReferDatabaseDescGetterTestCaseSource))]
-        public static void ReferDatabaseDescGetterTest(DBDataSettingType type, bool isError)
-        {
-            var instance = new DBType();
-            instance.SetDataSettingType(type, new DataIdSpecificationDesc(DBKind.User, 10));
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
-
-            var errorOccured = false;
-            try
-            {
-                var _ = instance.ReferDatabaseDesc;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            // プロパティ変更通知が発火していないこと
-            Assert.AreEqual(changedPropertyList.Count, 0);
-        }
-
+        /// <summary>
+        ///     プロパティ TypeMetadataTable に null を設定した場合、
+        ///     PropertyNullException が発生すること。
+        /// </summary>
         [Test]
-        public static void ItemDescListGetterTest()
+        public static void TypeMetadataTableSetTest_Failure_PropertyNullException()
         {
             var instance = new DBType();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
 
-            var errorOccured = false;
-            try
-            {
-                var _ = instance.ItemDescList;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // プロパティ変更通知が発火していないこと
-            Assert.AreEqual(changedPropertyList.Count, 0);
+            propertyTestHelper.PropertySetFailure(
+                instance,
+                setItem: (DatabaseTypeMetadataTable)null!,
+                setter: (x, v) => x.TypeMetadataTable = v,
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(PropertyNullException))
+            );
         }
 
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region SettingsInterface
+
+        /// <summary>
+        ///     設定DTOインタフェースに意図したプロパティがすべて定義されていること。
+        /// </summary>
         [Test]
-        public static void DataDescListGetterTest()
+        public static void SettingInterfacePropertyTest()
         {
-            var instance = new DBType();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
+            IDBTypeSettings settings = CreateSettingsDto();
 
-            var errorOccured = false;
-            try
-            {
-                var _ = instance.DataDescList;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーが発生しないこと
-            Assert.IsFalse(errorOccured);
-
-            // プロパティ変更通知が発火していないこと
-            Assert.AreEqual(changedPropertyList.Count, 0);
+            // 以下、ビルドエラーが発生しないこと
+            _ = settings.TypeMetadataTable;
+            Assert.Pass();
         }
 
-        private static readonly object[] ConstructorATestCaseSource =
+        #endregion
+
+        #region SettingsDto
+
+        /// <summary>
+        ///     設定DTOに意図したプロパティがすべて実装されていること。
+        /// </summary>
+        [Test]
+        public static void SettingsDtoPropertyTest()
         {
-            new object[] {DBDataSettingType.Manual, DBKind.User, (TypeId) 3, false},
-            new object[] {DBDataSettingType.Manual, null, (TypeId) 3, false},
-            new object[] {DBDataSettingType.Manual, DBKind.User, null, false},
-            new object[] {DBDataSettingType.Manual, null, null, false},
-            new object[] {DBDataSettingType.EqualBefore, DBKind.User, (TypeId) 3, false},
-            new object[] {DBDataSettingType.EqualBefore, null, (TypeId) 3, false},
-            new object[] {DBDataSettingType.EqualBefore, DBKind.User, null, false},
-            new object[] {DBDataSettingType.EqualBefore, null, null, false},
-            new object[] {DBDataSettingType.DesignatedType, DBKind.User, (TypeId) 3, false},
-            new object[] {DBDataSettingType.DesignatedType, null, (TypeId) 3, true},
-            new object[] {DBDataSettingType.DesignatedType, DBKind.User, null, true},
-            new object[] {DBDataSettingType.DesignatedType, null, null, true},
-            new object[] {DBDataSettingType.FirstStringData, DBKind.User, (TypeId) 3, false},
-            new object[] {DBDataSettingType.FirstStringData, null, (TypeId) 3, false},
-            new object[] {DBDataSettingType.FirstStringData, DBKind.User, null, false},
-            new object[] {DBDataSettingType.FirstStringData, null, null, false},
-        };
+            var dto = CreateSettingsDto();
 
-        [TestCaseSource(nameof(ConstructorATestCaseSource))]
-        public static void ConstructorATest(DBDataSettingType type, DBKind dbKind, TypeId? typeId,
-            bool isError)
-        {
-#pragma warning disable 618 // TODO Ver 2.6 で削除するテスト
-            DBType instance = null;
-
-            var errorOccured = false;
-            try
-            {
-                instance = new DBType(type, dbKind, typeId);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 各プロパティがセットした値と一致すること
-            Assert.AreEqual(instance.DataSettingType, type);
-            if (type == DBDataSettingType.DesignatedType)
-            {
-                Assert.NotNull(dbKind);
-                Assert.AreEqual(instance.DBKind, dbKind);
-                Assert.NotNull(typeId);
-                Assert.AreEqual(instance.TypeId, typeId.Value);
-            }
-#pragma warning restore 618
+            // 以下、ビルドエラーが発生しないこと
+            _ = dto.TypeMetadataTable;
+            Assert.Pass();
         }
 
-        private static readonly object[] ConstructorA2TestCaseSource =
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        #region NoParam
+
+        /// <summary>
+        ///     引数なしコンストラクタが正常に終了すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorTest_NoParam_Success()
         {
-            new object[] {DBDataSettingType.Manual, new DataIdSpecificationDesc(DBKind.User, 3), false},
-            new object[] {DBDataSettingType.Manual, null, false},
-            new object[] {DBDataSettingType.EqualBefore, new DataIdSpecificationDesc(DBKind.User, 3), false},
-            new object[] {DBDataSettingType.EqualBefore, null, false},
-            new object[] {DBDataSettingType.DesignatedType, new DataIdSpecificationDesc(DBKind.User, 3), false},
-            new object[] {DBDataSettingType.DesignatedType, null, true},
-            new object[] {DBDataSettingType.FirstStringData, new DataIdSpecificationDesc(DBKind.User, 3), false},
-            new object[] {DBDataSettingType.FirstStringData, null, false},
-            new object[] {null, new DataIdSpecificationDesc(DBKind.User, 3), true},
-            new object[] {null, null, true},
-        };
-
-        [TestCaseSource(nameof(ConstructorA2TestCaseSource))]
-        public static void ConstructorA2Test(DBDataSettingType type, DataIdSpecificationDesc desc,
-            bool isError)
-        {
-            DBType instance = null;
-
-            var errorOccured = false;
-            try
-            {
-                instance = new DBType(type, desc);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // 各プロパティがセットした値と一致すること
-            Assert.AreEqual(instance.DataSettingType, type);
-            if (type == DBDataSettingType.DesignatedType)
-            {
-                Assert.NotNull(desc);
-                Assert.IsTrue(desc.Equals(instance.ReferDatabaseDesc));
-            }
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new DBType(),
+                instanceVerifier: ValueVerifier<DBType>.AreItemEquals(new DBTypeSettings())
+            );
         }
 
-        [TestCase(-1, -1, true)]
-        [TestCase(-1, 0, true)]
-        [TestCase(-1, 100, true)]
-        [TestCase(1, -1, true)]
-        [TestCase(1, 0, false)]
-        [TestCase(1, 100, false)]
-        [TestCase(10000, -1, true)]
-        [TestCase(10000, 0, false)]
-        [TestCase(10000, 100, false)]
-        public static void ConstructorBTest(int dataDescListLength, int itemDescListLength,
-            bool isError)
+        #endregion
+
+        #region SettingsDto
+
+        /// <summary>
+        ///     コンストラクタが正常に終了すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorTest_SettingsDto_Success()
         {
-            var dataDescList = CreateDataDescList(dataDescListLength, itemDescListLength);
-            var itemDescList = CreateItemDescList(itemDescListLength);
+            var settings = CreateSettingsDto();
+            constructorTestHelper.ConstructorSuccess(
+                factory: () => new DBType(settings),
+                instanceVerifier: ValueVerifier<DBType>.AreItemEquals(settings)
+            );
+        }
 
-            DBType instance = null;
+        /// <summary>
+        ///     settings が null の場合、
+        ///     ArgumentNullException が発生すること。
+        /// </summary>
+        [Test]
+        public static void ConstructorTest_SettingsDto_Failure_NullArgs()
+        {
+            IDBTypeSettings settings = null!;
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new DBType(settings),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentNullException))
+            );
+        }
 
-            var errorOccured = false;
-            try
+        /// <summary>
+        ///     設定DTOのプロパティに不適切な null 要素が指定されている場合、
+        ///     ArgumentException が発生すること。
+        /// </summary>
+        [TestCase(nameof(DBTypeSettings.TypeMetadataTable))]
+        public static void ConstructorTest_SettingsDto_Failure_NullPropertyRecord(string nullProperty)
+        {
+            constructorTestHelper.ConstructorFailure(
+                factory: () => new DBType(CreateSettingsDto(nullProperty: nullProperty)),
+                exceptionVerifier: ExceptionVerifier.IsType(typeof(ArgumentException))
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Methods
+
+        #region EditableClass
+
+        #region public
+
+        #region ItemEquals
+
+        #region Settings
+
+        /// <summary>
+        ///     対象インスタンスと other が同じインスタンスの場合 true が返却されること。
+        /// </summary>
+        [Test]
+        public static void ItemEqualsTest_Settings_True_SameObject()
+        {
+            var left = new DBType(CreateSettingsDto());
+            IDBTypeSettings right = left;
+            itemEqualsTestHelper.ItemEquals(
+                left,
+                right,
+                expected: true
+            );
+        }
+
+        /// <summary>
+        ///     対象インスタンスと同じ値を持つ設定DTOと比較した場合 true が返却されること。
+        /// </summary>
+        [Test]
+        public static void ItemEqualsTest_Settings_True_EqualityObject()
+        {
+            var left = new DBType(CreateSettingsDto());
+            IDBTypeSettings right = CreateSettingsDto();
+            itemEqualsTestHelper.ItemEquals(
+                left,
+                right,
+                expected: true
+            );
+        }
+
+        /// <summary>
+        ///     null と比較した場合 false が返却されること。
+        /// </summary>
+        [Test]
+        public static void ItemEqualsTest_Settings_False_NullObject()
+        {
+            var left = new DBType(CreateSettingsDto());
+            IDBTypeSettings? right = null;
+            itemEqualsTestHelper.ItemEquals(
+                left,
+                right,
+                expected: false
+            );
+        }
+
+        /// <summary>
+        ///     値が異なるプロパティを持つ設定DTOと比較した場合 false が返却されること。
+        /// </summary>
+        [TestCase(nameof(DBTypeSettings.TypeMetadataTable))]
+        public static void ItemEqualsTest_Settings_False_DifferProperty(string replaceProperty)
+        {
+            var left = new DBType(CreateSettingsDto());
+            IDBTypeSettings right = CreateSettingsDto(replaceProperty: replaceProperty);
+            itemEqualsTestHelper.ItemEquals(
+                left,
+                right,
+                expected: false
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #region DeepClone
+
+        /// <summary>
+        ///     ディープコピーがコピー元と同一値であること。
+        /// </summary>
+        [Test]
+        public static void DeepCloneTest()
+        {
+            var instance = new DBType(CreateSettingsDto());
+
+            deepCloneTestHelper.DeepClone(
+                instance,
+                resultValueVerifier: null
+            );
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region テスト用Settings作成
+
+        /// <summary>
+        ///     設定DTO作成
+        /// </summary>
+        /// <param name="nullProperty">
+        ///     null を設定するプロパティ名。<br/>
+        ///     null の場合いずれのプロパティにも null を設定しない。
+        /// </param>
+        /// <param name="replaceProperty">
+        ///     この引数で指定したプロパティは、指定しなかった場合とは違う値を設定する。
+        /// </param>
+        /// <returns></returns>
+        private static DBTypeSettings CreateSettingsDto(
+            string? nullProperty = null,
+            string? replaceProperty = null
+        )
+        {
+            // @formatter:off
+            return new DBTypeSettings
             {
-                instance = new DBType(dataDescList, itemDescList);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (errorOccured) return;
-
-            // データ情報がセットした情報と一致すること
-            var answerDataDescListCount = dataDescListLength == 0
-                ? 1
-                : dataDescListLength;
-            Assert.AreEqual(instance.DataDescList.Count, answerDataDescListCount);
-
-            Assert.AreEqual(instance.ItemDescList.Count, itemDescListLength);
-
-            if (dataDescListLength <= 0) return;
-
-            for (var i = 0; i < instance.DataDescList.Count; i++)
-            {
-                var valueList = instance.DataDescList[i].ItemValueList;
-                Assert.AreEqual(valueList.Count, itemDescListLength);
-                for (var j = 0; j < itemDescListLength; j++)
+                TypeMetadataTable = (nullProperty == nameof(DBTypeSettings.TypeMetadataTable), replaceProperty == nameof(DBTypeSettings.TypeMetadataTable)) switch
                 {
-                    Assert.AreEqual(valueList[j], (DBItemValue) CreateDBValue(i, j));
-                }
-            }
+                    // null?  replace?  setValue
+                    (  false, false) => DatabaseTestData.CreateDatabaseTypeMetadataTableType1(),
+                    (  false, true ) => DatabaseTestData.CreateDatabaseTypeMetadataTableType2(),
+                    (  true,  _    ) => null!,
+                },
+            };
+            // @formatter:on
         }
 
-        private static readonly object[] SetDataSettingTypeTestCaseSource =
-        {
-            new object[] {null, null, null, true},
-            new object[] {DBDataSettingType.Manual, null, null, false},
-            new object[] {DBDataSettingType.EqualBefore, null, null, false},
-            new object[] {DBDataSettingType.DesignatedType, DBKind.System, (TypeId) 10, false},
-            new object[] {DBDataSettingType.FirstStringData, null, null, false},
-        };
-
-        [TestCaseSource(nameof(SetDataSettingTypeTestCaseSource))]
-        public static void SetDataSettingTypeTestA(DBDataSettingType settingType, DBKind dbKind,
-            TypeId? typeId, bool isError)
-        {
-#pragma warning disable 618 // TODO Ver 2.6 で削除するテスト
-            var instance = new DBType();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
-
-            var errorOccured = false;
-            try
-            {
-                instance.SetDataSettingType(settingType, dbKind, typeId);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            // 意図したとおりプロパティ変更通知が発火していること
-            if (errorOccured)
-            {
-                Assert.AreEqual(changedPropertyList.Count, 0);
-            }
-            else
-            {
-                Assert.AreEqual(changedPropertyList.Count, 4);
-                Assert.IsTrue(changedPropertyList[0].Equals(nameof(DBType.DataSettingType)));
-                Assert.IsTrue(changedPropertyList[1].Equals(nameof(DBType.ReferDatabaseDesc)));
-                Assert.IsTrue(changedPropertyList[2].Equals(nameof(DBType.DBKind)));
-                Assert.IsTrue(changedPropertyList[3].Equals(nameof(DBType.TypeId)));
-            }
-#pragma warning restore 618
-        }
-
-        [TestCaseSource(nameof(SetDataSettingTypeTestCaseSource))]
-        public static void SetDataSettingTypeTestB(DBDataSettingType settingType, DBKind dbKind,
-            TypeId? typeId, bool isError)
-        {
-#pragma warning disable 618 // TODO Ver 2.6 で削除するテスト
-            var instance = new DBType();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
-
-            var setting = settingType == null ? null : new DBDataSetting(settingType, dbKind, typeId);
-
-            var errorOccured = false;
-            try
-            {
-                instance.SetDataSettingType(setting);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (!errorOccured)
-            {
-                // 各設定が意図した値と一致すること
-                Assert.AreEqual(instance.DataSettingType, settingType);
-                if (settingType == DBDataSettingType.DesignatedType)
-                {
-                    Assert.AreEqual(instance.DBKind, dbKind);
-                    Assert.AreEqual(instance.TypeId, typeId);
-                }
-            }
-
-
-            // 意図したとおりプロパティ変更通知が発火していること
-            if (errorOccured)
-            {
-                Assert.AreEqual(changedPropertyList.Count, 0);
-            }
-            else
-            {
-                Assert.AreEqual(changedPropertyList.Count, 4);
-                Assert.IsTrue(changedPropertyList[0].Equals(nameof(DBType.DataSettingType)));
-                Assert.IsTrue(changedPropertyList[1].Equals(nameof(DBType.ReferDatabaseDesc)));
-                Assert.IsTrue(changedPropertyList[2].Equals(nameof(DBType.DBKind)));
-                Assert.IsTrue(changedPropertyList[3].Equals(nameof(DBType.TypeId)));
-            }
-#pragma warning restore 618
-        }
-
-        private static readonly object[] SetDataSettingTypeTestCaseSource2 =
-        {
-            new object[] {null, null, true},
-            new object[] {DBDataSettingType.Manual, null, false},
-            new object[] {DBDataSettingType.EqualBefore, null, false},
-            new object[] {DBDataSettingType.DesignatedType, new DataIdSpecificationDesc(DBKind.System, 10), false},
-            new object[] {DBDataSettingType.FirstStringData, null, false},
-        };
-
-        [TestCaseSource(nameof(SetDataSettingTypeTestCaseSource2))]
-        public static void SetDataSettingTypeTestA2(DBDataSettingType settingType,
-            DataIdSpecificationDesc desc, bool isError)
-        {
-            var instance = new DBType();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
-
-            var errorOccured = false;
-            try
-            {
-                instance.SetDataSettingType(settingType, desc);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            // 意図したとおりプロパティ変更通知が発火していること
-            if (errorOccured)
-            {
-                Assert.AreEqual(changedPropertyList.Count, 0);
-            }
-            else
-            {
-                {
-                    // TODO: Ver 2.6 まで
-                    Assert.AreEqual(changedPropertyList.Count, 4);
-                    Assert.IsTrue(changedPropertyList[0].Equals(nameof(DBType.DataSettingType)));
-                    Assert.IsTrue(changedPropertyList[1].Equals(nameof(DBType.ReferDatabaseDesc)));
-                    Assert.IsTrue(changedPropertyList[2].Equals(nameof(DBType.DBKind)));
-                    Assert.IsTrue(changedPropertyList[3].Equals(nameof(DBType.TypeId)));
-                }
-                /*{        // TODO: Ver 2.6 以降
-                    Assert.AreEqual(changedPropertyList.Count, 2);
-                    Assert.IsTrue(changedPropertyList[0].Equals(nameof(DBType.DataSettingType)));
-                    Assert.IsTrue(changedPropertyList[1].Equals(nameof(DBType.ReferDatabaseDesc)));
-                }*/
-            }
-        }
-
-        [TestCaseSource(nameof(SetDataSettingTypeTestCaseSource2))]
-        public static void SetDataSettingTypeTestB2(DBDataSettingType settingType,
-            DataIdSpecificationDesc desc, bool isError)
-        {
-            var instance = new DBType();
-            var changedPropertyList = new List<string>();
-            instance.PropertyChanged += (sender, args) => { changedPropertyList.Add(args.PropertyName); };
-
-            var setting = settingType == null ? null : new DBDataSetting(settingType, desc);
-
-            var errorOccured = false;
-            try
-            {
-                instance.SetDataSettingType(setting);
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-                errorOccured = true;
-            }
-
-            // エラーフラグが一致すること
-            Assert.AreEqual(errorOccured, isError);
-
-            if (!errorOccured)
-            {
-                // 各設定が意図した値と一致すること
-                Assert.AreEqual(instance.DataSettingType, settingType);
-                if (settingType == DBDataSettingType.DesignatedType)
-                {
-                    Assert.IsTrue(desc.Equals(instance.ReferDatabaseDesc));
-                }
-            }
-
-            // 意図したとおりプロパティ変更通知が発火していること
-            if (errorOccured)
-            {
-                Assert.AreEqual(changedPropertyList.Count, 0);
-            }
-            else
-            {
-                {
-                    // TODO: Ver 2.6 まで
-                    Assert.AreEqual(changedPropertyList.Count, 4);
-                    Assert.IsTrue(changedPropertyList[0].Equals(nameof(DBType.DataSettingType)));
-                    Assert.IsTrue(changedPropertyList[1].Equals(nameof(DBType.ReferDatabaseDesc)));
-                    Assert.IsTrue(changedPropertyList[2].Equals(nameof(DBType.DBKind)));
-                    Assert.IsTrue(changedPropertyList[3].Equals(nameof(DBType.TypeId)));
-                }
-                /*{        // TODO: Ver 2.6 以降
-                    Assert.AreEqual(changedPropertyList.Count, 2);
-                    Assert.IsTrue(changedPropertyList[0].Equals(nameof(DBType.DataSettingType)));
-                    Assert.IsTrue(changedPropertyList[1].Equals(nameof(DBType.ReferDatabaseDesc)));
-                }*/
-            }
-        }
-
-        private static readonly object[] ToBinaryTestCaseSource =
-        {
-            new object[]
-            {
-                $@"{DBTypeFileTestItemGenerator.TestWorkRootDir}\タイプ(データ含む)_000_UDB0.dbtype",
-                DBTypeFileTestItemGenerator.GenerateUDB0DBType(),
-                822
-            },
-            new object[]
-            {
-                $@"{DBTypeFileTestItemGenerator.TestWorkRootDir}\タイプ(データ含む)_000_あいうえお.dbtype",
-                DBTypeFileTestItemGenerator.GenerateCDB0DBType(),
-                702
-            },
-        };
-
-        [TestCaseSource(nameof(ToBinaryTestCaseSource))]
-        public static void ToBinaryTest(string testFilePath, DBType generatedData, int fileSize)
-        {
-            var generatedDataBuf = generatedData.ToBinary();
-
-            using (var fs = new FileStream(testFilePath, FileMode.Open))
-            {
-                var length = (int) fs.Length;
-                // ファイルサイズが規定でない場合誤作動防止の為テスト失敗にする
-                Assert.AreEqual(length, fileSize);
-
-
-                var fileData = new byte[length];
-                fs.Read(fileData, 0, length);
-
-                // binデータ出力
-                fileData.Select((s, index) => $"=\"[{index}] = {{byte}} {s}\"").ToList()
-                    .ForEach(Console.WriteLine);
-
-                Console.WriteLine();
-
-                generatedDataBuf.Select((s, index) => $"=\"[{index}] = {{byte}} {s}\"").ToList()
-                    .ForEach(Console.WriteLine);
-
-                for (var i = 0; i < generatedDataBuf.Length; i++)
-                {
-                    if (i == fileData.Length)
-                        Assert.Fail(
-                            $"データ帳が異なります。（期待値：{fileData.Length}, 実際：{generatedDataBuf.Length}）");
-
-                    if (fileData[i] != generatedDataBuf[i])
-                        Assert.Fail(
-                            $"offset: {i} のバイナリが異なります。（期待値：{fileData[i]}, 実際：{generatedDataBuf[i]}）");
-                }
-
-                if (fileData.Length != generatedDataBuf.Length)
-                    Assert.Fail(
-                        $"データ帳が異なります。（期待値：{fileData.Length}, 実際：{generatedDataBuf.Length}）");
-            }
-        }
-
-        [OneTimeTearDown]
-        public static void TearDown()
-        {
-            // テスト用ファイル削除
-            DBTypeFileTestItemGenerator.DeleteFile();
-        }
-
-
-        private static DatabaseDataDescList CreateDataDescList(int length, int itemLength)
-        {
-            if (length == -1) return null;
-
-            var result = new List<DatabaseDataDesc>();
-            for (var i = 0; i < length; i++)
-            {
-                var itemValueList = new DBItemValueList();
-                for (var j = 0; j < itemLength; j++)
-                {
-                    itemValueList.Add(CreateDBValue(i, j));
-                }
-
-                result.Add(new DatabaseDataDesc(CreateDataName(i), itemValueList));
-            }
-
-            return new DatabaseDataDescList(result);
-        }
-
-        private static DatabaseItemDescList CreateItemDescList(int length)
-        {
-            if (length == -1) return null;
-
-            var result = new List<DatabaseItemDesc>();
-            for (var i = 0; i < length; i++)
-            {
-                result.Add(new DatabaseItemDesc
-                {
-                    ItemName = CreateItemName(i),
-                    ItemType = DBItemType.Int
-                });
-            }
-
-            return new DatabaseItemDescList(result);
-        }
-
-        private static DataName CreateDataName(int dataId) => $"data{dataId}";
-
-        private static DBValueInt CreateDBValue(int dataId, int itemId) => dataId * 100 + itemId;
-
-        private static ItemName CreateItemName(int itemId) => $"item{itemId}";
+        #endregion
     }
 }

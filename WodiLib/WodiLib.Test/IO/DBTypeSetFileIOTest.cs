@@ -1,22 +1,19 @@
 using System;
-using Commons;
 using NUnit.Framework;
 using WodiLib.Database;
 using WodiLib.IO;
+using WodiLib.Test.IO.TestData.Database;
 using WodiLib.Test.Tools;
 
 namespace WodiLib.Test.IO
 {
     [TestFixture]
-    public class DBTypeSetFileIOTest
+    public class DBTypeSetFileIOTest : TestFixtureBase
     {
-        private static Logger logger;
-
         [SetUp]
         public static void Setup()
         {
-            LoggerInitializer.SetupLoggerForDebug();
-            logger = Logger.GetInstance();
+            InitializeTestHelpers();
         }
 
         [OneTimeSetUp]
@@ -26,49 +23,53 @@ namespace WodiLib.Test.IO
             DBTypeSetFileTestItemGenerator.OutputFile();
         }
 
-        // ################################################################################
-        //    Resourceファイルの内容をDBTypeSetインスタンスに変換してバイナリ変換した後
-        //    別ファイルとして書き出すテスト
-        // ################################################################################
-
-        [TestCase("タイプ設定_002_┣ 主人公行動AI.dbtypeset", "Outputタイプ設定_002_┣ 主人公行動AI.dbtypeset")]
-        [TestCase("タイプ設定_008_状態設定.dbtypeset", "Outputタイプ設定_008_状態設定.dbtypeset")]
-        public static void TypeSetIOTest(string inputFileName, string outputFileName)
+        private static readonly object[][] TypeSetIOTestCaseSource =
         {
-            var reader =
-                new DBTypeSetFileReader(
-                    $@"{DBTypeSetFileTestItemGenerator.TestWorkRootDir}\{inputFileName}");
-            DBTypeSet data = null;
-            var isSuccessRead = false;
-            try
+            // [inputFilePath, outputFilePath]
+            new object[]
             {
-                data = reader.ReadAsync().GetAwaiter().GetResult();
-                isSuccessRead = true;
-            }
-            catch (Exception ex)
+                new DBTypeSetFilePath($@"{IoTestDataConstants.TestWorkRootDir}\タイプ設定_002_┣ 主人公行動AI.dbtypeset"),
+                new DBTypeSetFilePath($@"{IoTestDataConstants.TestWorkRootDir}\Outputタイプ設定_002_┣ 主人公行動AI.dbtypeset"),
+            },
+            new object[]
             {
-                logger.Exception(ex);
-            }
+                new DBTypeSetFilePath($@"{IoTestDataConstants.TestWorkRootDir}\タイプ設定_008_状態設定.dbtypeset"),
+                new DBTypeSetFilePath($@"{IoTestDataConstants.TestWorkRootDir}\Outputタイプ設定_008_状態設定.dbtypeset"),
+            },
+        };
 
-            Assert.IsTrue(isSuccessRead);
+        /// <summary>
+        ///     読み取りと書き出しが正常に終了すること。
+        /// </summary>
+        [TestCaseSource(nameof(TypeSetIOTestCaseSource))]
+        public static void TypeSetIOTest(DBTypeSetFilePath inputFilePath, DBTypeSetFilePath outputFilePath)
+        {
+            // ----------------------------------------
+            // 読み取りテスト
 
-            var writer = new DBTypeSetFileWriter(
-                $@"{DBTypeSetFileTestItemGenerator.TestWorkRootDir}\{outputFileName}");
-            var isSuccessWrite = false;
-            try
-            {
-                writer.WriteAsync(data).GetAwaiter().GetResult();
-                isSuccessWrite = true;
-            }
-            catch (Exception ex)
-            {
-                logger.Exception(ex);
-            }
+            var reader = new DBTypeSetFileReader(inputFilePath);
 
-            Assert.IsTrue(isSuccessWrite);
+            DBTypeSet data = null!;
+            pureFunctionTestHelper.PureFuncSuccess(
+                instance: reader,
+                execFunc: target => target.ReadAsync().GetAwaiter().GetResult(),
+                resultValueVerifier: new ValueVerifier<DBTypeSet>(result => { data = result; })
+            );
+
+            // ----------------------------------------
+            // 書き込みテスト
+
+            var writer = new DBTypeSetFileWriter(outputFilePath);
+            pureActionTestHelper.PureActionSuccess(
+                instance: writer,
+                execAction: target => target.WriteAsync(data).GetAwaiter().GetResult()
+            );
+
+            // ----------------------------------------
 
             Console.WriteLine(
-                $@"Written FilePath : {DBTypeSetFileTestItemGenerator.TestWorkRootDir}\{outputFileName}");
+                $@"Written FilePath : {outputFilePath}"
+            );
         }
 
         [OneTimeTearDown]

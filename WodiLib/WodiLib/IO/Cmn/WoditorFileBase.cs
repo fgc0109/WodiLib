@@ -17,7 +17,7 @@ using WodiLib.Sys;
 namespace WodiLib.IO
 {
     /// <summary>
-    /// ウディタファイル基底クラス
+    ///     ウディタファイル基底クラス
     /// </summary>
     /// <typeparam name="TFilePath">ファイルパス</typeparam>
     /// <typeparam name="TFileData">ファイルデータ</typeparam>
@@ -29,54 +29,66 @@ namespace WodiLib.IO
         where TWriter : WoditorFileWriterBase<TFilePath, TFileData>
         where TReader : WoditorFileReaderBase<TFilePath, TFileData>
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Property
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Properties
+
+        #region public
 
         /// <summary>
-        /// ファイルパス
+        ///     ファイルパス
         /// </summary>
         [NotNull]
         public TFilePath FilePath { get; }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Property
+        #endregion
+
+        #region private
+
+        private SemaphoreSlim Sem { get; } = new(1, 1);
+
+        #endregion
+
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
-        private SemaphoreSlim Sem { get; } = new SemaphoreSlim(1, 1);
+        #region Constructors
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Constructor
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #region Required
 
         /// <summary>
-        /// コンストラクタ
+        ///     コンストラクタ
         /// </summary>
         /// <param name="filePath">ファイル名</param>
-        /// <exception cref="ArgumentNullException">filePathがnullの場合</exception>
-        public WoditorFileBase([NotNull] TFilePath filePath)
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="filePath"/> が <see langword="null"/> の場合。
+        /// </exception>
+        public WoditorFileBase(TFilePath filePath)
         {
-            if (filePath is null)
-                throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(filePath)));
+            ThrowHelper.ValidateArgumentNotNull(filePath is null, nameof(filePath));
 
             FilePath = filePath;
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Public Method
+        #endregion
+
+        #endregion
+
         // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
+        #region Methods
+
+        #region public
+
         /// <summary>
-        /// ファイルを同期的に書き出す。
+        ///     ファイルを同期的に書き出す。
         /// </summary>
         /// <param name="data">書き出しデータ</param>
-        /// <exception cref="ArgumentNullException">data がnullの場合</exception>
-        public void WriteSync([NotNull] TFileData data)
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="data"/> が <see langword="null"/> の場合。
+        /// </exception>
+        public void WriteSync(TFileData data)
         {
-            if (data is null)
-                throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(data)));
+            ThrowHelper.ValidateArgumentNotNull(data is null, nameof(data));
 
             Sem.Wait();
             try
@@ -91,16 +103,19 @@ namespace WodiLib.IO
         }
 
         /// <summary>
-        /// ファイルを非同期的に書き出す。
+        ///     ファイルを非同期的に書き出す。
         /// </summary>
         /// <param name="data">書き出しデータ</param>
         /// <returns>非同期処理タスク</returns>
-        /// <exception cref="ArgumentNullException">data がnullの場合</exception>
-        public async Task WriteAsync([NotNull] TFileData data)
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="data"/> が <see langword="null"/> の場合。
+        /// </exception>
+        public async Task WriteAsync(TFileData data)
         {
             if (data is null)
                 throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(data)));
+                    ErrorMessage.NotNull(nameof(data))
+                );
 
             await Sem.WaitAsync().ConfigureAwait(false);
             try
@@ -115,7 +130,7 @@ namespace WodiLib.IO
         }
 
         /// <summary>
-        /// ファイルを同期的に読み込む。
+        ///     ファイルを同期的に読み込む。
         /// </summary>
         /// <returns>読み込みデータ</returns>
         public TFileData ReadSync()
@@ -135,7 +150,7 @@ namespace WodiLib.IO
         }
 
         /// <summary>
-        /// ファイルを非同期的に読み込む。
+        ///     ファイルを非同期的に読み込む。
         /// </summary>
         /// <returns>読み込みデータを返すタスク</returns>
         public async Task<TFileData> ReadAsync()
@@ -154,60 +169,65 @@ namespace WodiLib.IO
             }
         }
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Abstract Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #endregion
+
+        #region protected
 
         /// <summary>
-        /// ファイル書き出しクラスを生成する。
+        ///     ファイル書き出しクラスを生成する。
         /// </summary>
         /// <param name="filePath">書き出しファイル名</param>
         /// <returns>ライターインスタンス</returns>
         protected abstract TWriter MakeFileWriter(TFilePath filePath);
 
         /// <summary>
-        /// ファイル読み込みクラスを生成する。
+        ///     ファイル読み込みクラスを生成する。
         /// </summary>
-        /// <param name="filePath">[NotEmpty] 読み込みファイル名</param>
+        /// <param name="filePath">読み込みファイル名</param>
         /// <returns>リーダーインスタンス</returns>
-        /// <exception cref="ArgumentNullException">fileNameがnullの場合</exception>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="filePath"/> が <see langword="null"/> の場合。
+        /// </exception>
         protected abstract TReader MakeFileReader(TFilePath filePath);
 
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Private Method
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        #endregion
+
+        #region private
 
         /// <summary>
-        /// ファイル書き出しクラスを生成する。
+        ///     ファイル書き出しクラスを生成する。
         /// </summary>
         /// <param name="filePath">書き出しファイル名</param>
         /// <returns>ライターインスタンス</returns>
-        /// <exception cref="ArgumentNullException">filePath がnullの場合</exception>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="filePath"/> が <see langword="null"/> の場合。
+        /// </exception>
         private TWriter BuildFileWriter(TFilePath filePath)
         {
-            if (filePath is null)
-                throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(filePath)));
+            ThrowHelper.ValidateArgumentNotNull(filePath is null, nameof(filePath));
 
             var writer = MakeFileWriter(filePath);
             return writer;
         }
 
         /// <summary>
-        /// ファイル読み込みクラスを生成する。
+        ///     ファイル読み込みクラスを生成する。
         /// </summary>
         /// <param name="filePath">読み込みファイル名</param>
         /// <returns>リーダーインスタンス</returns>
-        /// <exception cref="ArgumentNullException">fileNameがnullの場合</exception>
-        /// <exception cref="ArgumentException">fileNameが空文字の場合</exception>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="filePath"/> が <see langword="null"/> の場合。
+        /// </exception>
         private TReader BuildFileReader(TFilePath filePath)
         {
-            if (filePath is null)
-                throw new ArgumentNullException(
-                    ErrorMessage.NotNull(nameof(filePath)));
+            ThrowHelper.ValidateArgumentNotNull(filePath is null, nameof(filePath));
 
             var reader = MakeFileReader(filePath);
             return reader;
         }
+
+        #endregion
+
+        #endregion
     }
 }

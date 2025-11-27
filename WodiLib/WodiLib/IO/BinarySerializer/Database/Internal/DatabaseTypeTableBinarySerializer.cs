@@ -19,6 +19,10 @@ namespace WodiLib.IO
     /// </summary>
     internal static class DatabaseTypeTableBinarySerializer
     {
+        /// <inheritdoc cref="Serialize(ReadOnlyDatabaseTypeTable)"/>
+        public static byte[] Serialize(this DatabaseTypeTable src)
+            => Serialize((ReadOnlyDatabaseTypeTable)src);
+
         /// <summary>
         ///     <see cref="ReadOnlyDatabaseTypeTable"/> をバイナリ配列に変換する。
         /// </summary>
@@ -49,7 +53,9 @@ namespace WodiLib.IO
             result.AddRange(src.FieldCount.ToWoditorIntBytes());
 
             // 項目名
-            result.AddRange(src.FieldDefinitionList.SerializeFieldNames());
+            result.AddRange(
+                src.FieldDefinitionList.Select(x => x).SerializeFieldNames()
+            );
 
             // データ数
             result.AddRange(src.DataCount.ToWoditorIntBytes());
@@ -61,7 +67,9 @@ namespace WodiLib.IO
             result.AddRange(((string)src.Memo).ToWoditorStringBytes());
 
             // 特殊指定
-            result.AddRange(src.FieldDefinitionList.SerializeSpecialSettingDescription());
+            result.AddRange(
+                src.FieldDefinitionList.SerializeSpecialSettingDescription()
+            );
 
             return result;
         }
@@ -103,7 +111,9 @@ namespace WodiLib.IO
             result.AddRange(src.FieldCount.ToWoditorIntBytes());
 
             // 設定種別 & 種別順列
-            result.AddRange(src.FieldDefinitionList.SerializeFieldTypesAndOrder());
+            result.AddRange(
+                src.FieldDefinitionList.SerializeFieldTypesAndOrder()
+            );
 
             // データ数
             result.AddRange(src.DataCount.ToWoditorIntBytes());

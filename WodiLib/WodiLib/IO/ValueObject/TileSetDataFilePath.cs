@@ -14,14 +14,8 @@ namespace WodiLib.IO
     /// <summary>
     ///     TileSetData.dat ファイルパス
     /// </summary>
-    [FilePathStringObjectValue(SafetyPattern = @"^TileSetData\.dat$")]
-    public partial class TileSetDataFilePath : FilePath
+    [FilePathStringObjectValue(SafetyPattern = @"^(.+\\)?TileSetData\.dat$")]
+    public partial record TileSetDataFilePath : FilePath
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Override Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>空文字許可フラグ</summary>
-        protected override bool IsAllowEmptyString => false;
     }
 }

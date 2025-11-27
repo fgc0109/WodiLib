@@ -16,6 +16,10 @@ namespace WodiLib.IO
     /// </summary>
     internal static class DatabaseNamedDataTableBinarySerializer
     {
+        /// <inheritdoc cref="SerializeValuesDividedType(ReadOnlyDatabaseNamedDataTable)"/>
+        public static byte[] SerializeValuesDividedType(this DatabaseNamedDataTable src)
+            => SerializeValuesDividedType((ReadOnlyDatabaseNamedDataTable)src);
+
         /// <summary>
         ///     <see cref="DatabaseFieldValue"/> 列挙を値種別ごとにバイナリ配列に変換する。
         /// </summary>

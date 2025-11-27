@@ -14,14 +14,8 @@ namespace WodiLib.IO
     /// <summary>
     ///     XXX.title ファイルパス
     /// </summary>
-    [FilePathStringObjectValue(SafetyPattern = @"^(.*)\.tile$")]
-    public partial class TileSetFilePath : FilePath
+    [FilePathStringObjectValue(SafetyPattern = @"^.+\.tile$")]
+    public partial record TileSetFilePath : FilePath
     {
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-        //     Protected Override Constant
-        // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
-        /// <summary>空文字許可フラグ</summary>
-        protected override bool IsAllowEmptyString => false;
     }
 }
