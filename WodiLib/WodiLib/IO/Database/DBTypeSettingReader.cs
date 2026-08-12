@@ -203,7 +203,15 @@ namespace WodiLib.IO
                 WodiLibLogger.Debug(FileIOMessage.SuccessRead(typeof(DBTypeSettingReader),
                     $"  データ名{i,4}", name.String));
 
-                dataNameList.Add(name.ToString());
+                // Real WOLF projects can contain line breaks in database data names even
+                // though the editor model exposes DataName as a single-line value object.
+                // Preserve the information as an escaped sequence instead of failing the
+                // entire .project metadata read.
+                string dataName = name.ToString()
+                    .Replace("\r\n", "\\n", StringComparison.Ordinal)
+                    .Replace("\r", "\\n", StringComparison.Ordinal)
+                    .Replace("\n", "\\n", StringComparison.Ordinal);
+                dataNameList.Add(dataName);
             }
 
             setting.DataNameList = new DataNameList(dataNameList);
